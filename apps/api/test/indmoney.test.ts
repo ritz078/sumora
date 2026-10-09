@@ -91,7 +91,7 @@ test('INDmoney refuses overlapping refresh, marks revoked access for reconnect a
 
 import {app} from '../src/index';
 test('INDmoney is mounted in the API and personal connection endpoints require authentication',async()=>{
- for(const [path,method] of [['/connection','GET'],['/connection','DELETE'],['/start','POST'],['/claim','POST']]) {
+ for(const [path,method] of [['/connection','GET'],['/connection','DELETE'],['/start','POST'],['/claim','POST'],['/sync','POST']]) {
   const response=await app.request('/v1/indmoney'+path,{method,headers:{'Content-Type':'application/json'},body:method==='POST'?'{}':undefined},{} as any);
   assert.equal(response.status,401);
  }

@@ -3,6 +3,7 @@ import { gullakRoutes } from './gullak';
 import {hdfcRoutes} from './hdfc';
 import {scheduledStatements} from './statement-jobs';
 import { Hono } from 'hono';
+import {scheduledINDmoney} from './indmoney-portfolio';
 import {indmoneyRoutes} from './indmoney-auth';
 import { refreshDailyPrices } from './daily-valuation-job';
 import { gmailRoutes, type GmailEnvironment } from './gmail';
@@ -40,7 +41,8 @@ app.notFound((c) => c.json({ error: { code: 'NOT_FOUND', message: 'Endpoint not 
 app.onError((_error, c) => c.json({ error: { code: 'INTERNAL_ERROR', message: 'Unable to load the sample portfolio.' } }, 500));
 export default {
   fetch: app.fetch,
-  async scheduled(_event: unknown, env: GmailEnvironment) {
+  async scheduled(event: {cron?:string}, env: GmailEnvironment) {
+    if(event.cron==='*/15 * * * *') { await scheduledINDmoney(env); return; }
     const gold = await refreshGoldPrice(env);
     console.log(JSON.stringify({ event: 'gold-prices', ...gold }));
     await scheduledStatements(env);

@@ -1,5 +1,6 @@
 import {Hono} from 'hono';
 import {APIError,appSession,randomToken,digest,encrypt,decrypt,type KiteEnvironment} from './zerodha';
+import {syncINDmoney} from './indmoney-portfolio';
 import {boundedJSON} from './gold-prices';
 export const IND_ENDPOINT='https://mcp.indmoney.com';
 export const IND_CALLBACK='https://sumora-api.rkritesh078.workers.dev/v1/indmoney/callback';
@@ -80,6 +81,10 @@ export function indmoneyRoutes(fetcher:typeof fetch=fetch,now=Date.now) {
    await c.env.DB.prepare('INSERT INTO indmoney_capabilities(id,schema,discovered_at) VALUES(1,?,?) ON CONFLICT(id) DO UPDATE SET schema=excluded.schema,discovered_at=excluded.discovered_at').bind(JSON.stringify(tools),now()).run();
   } catch { /* Schema discovery can be retried without asking the user to sign in again. */ }
   return c.json({connected:true});
+ });
+ app.post('/sync',async c=>{
+  const auth=await appSession(c.env,c.req.header('Authorization'),now);
+  return c.json(await syncINDmoney(c.env,auth.owner_id,fetcher,new Date(now())));
  });
  app.get('/connection',async c=>{
   const auth=await appSession(c.env,c.req.header('Authorization'),now);

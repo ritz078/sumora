@@ -16,14 +16,14 @@ struct INDmoneyConnectionSection: View {
      if let ms = status.lastSyncAt {
       Text("Last sync: \(Date(timeIntervalSince1970:ms/1000).formatted(date:.abbreviated,time:.shortened))").font(.caption).foregroundStyle(.secondary)
      }
-     if status.status == "reconnect" { Button("Reconnect INDmoney") { Task { await indmoney.connect() } } }
-     Button("Refresh connection") { Task { await indmoney.refresh() } }
+     if status.status == "reconnect" { Button("Reconnect INDmoney") { Task { await indmoney.connect(); if indmoney.status?.connected == true { await indmoney.sync(); if dependencies.isLivePortfolio { await store.refresh() } } } } }
+     Button("Sync now") { Task { await indmoney.sync(); if dependencies.isLivePortfolio { await store.refresh() } } }
      Button("Disconnect INDmoney",role:.destructive) { confirmDisconnect = true }
     } else {
-     Button("Connect INDmoney") { Task { await indmoney.connect() } }.accessibilityIdentifier("connect-indmoney")
+     Button("Connect INDmoney") { Task { await indmoney.connect(); if indmoney.status?.connected == true { await indmoney.sync(); if dependencies.isLivePortfolio { await store.refresh() } } } }.accessibilityIdentifier("connect-indmoney")
     }
    }
-   if indmoney.isBusy { ProgressView("Connecting to INDmoney…") }
+   if indmoney.isBusy { ProgressView("Updating INDmoney…") }
    if let error = indmoney.errorMessage ?? indmoney.status?.error { Text(error).font(.footnote).foregroundStyle(.orange) }
   } header: { Text("INDmoney · US stocks") } footer: {
    Text("Read-only access to US stocks held in your INDmoney account. Sign in on INDmoney’s page and approve access there. Credentials stay encrypted on the server.")

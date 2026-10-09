@@ -6,7 +6,7 @@ import UIKit
 
 struct INDmoneyStatus: Decodable {
  let connected: Bool
-  let status: String
+ let status: String
  let lastSyncAt: Double?
  let error: String?
 }
@@ -81,6 +81,17 @@ final class INDmoneyConnection: NSObject, ASWebAuthenticationPresentationContext
    if generation == current && (error as? ASWebAuthenticationSessionError)?.code != .canceledLogin { errorMessage = error.localizedDescription }
   }
  }
+ func sync() async {
+  guard token != nil, !isBusy else { return }
+  isBusy = true; errorMessage = nil; let current = generation
+  defer { if generation == current { isBusy = false } }
+  do {
+   let _: Synced = try await send("sync")
+   let value: INDmoneyStatus = try await send("connection", method: "GET")
+   guard generation == current else { return }
+   status = value
+  } catch { if generation == current { errorMessage = error.localizedDescription } }
+ }
  func disconnect() async {
   guard token != nil, !isBusy else { return }
   isBusy = true; let current = generation
@@ -110,5 +121,6 @@ final class INDmoneyConnection: NSObject, ASWebAuthenticationPresentationContext
  }
  private struct Start: Decodable { let state: String; let loginURL: String }
  private struct Claim: Decodable { let connected: Bool }
+ private struct Synced: Decodable { let imported: Int; let lastSyncAt: Double }
  private struct Disconnected: Decodable { let disconnected: Bool }
 }

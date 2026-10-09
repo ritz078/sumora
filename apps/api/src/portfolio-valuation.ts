@@ -3,7 +3,7 @@ import { priceTime, type MarketPrice } from './daily-prices';
 import type { zerodhaSnapshot } from './zerodha-portfolio';
 
 type BrokerPortfolio = ReturnType<typeof zerodhaSnapshot>;
-export type Portfolio = Omit<BrokerPortfolio, 'holdings'> & { holdings: (BrokerPortfolio['holdings'][number] & { costBasisKnown?: boolean; depositTerms?: {originalPrincipal:string;currentAmount:string;maturityAmount:string;rate:string;openedOn:string;maturesOn:string;lien:string} })[] };
+export type Portfolio = Omit<BrokerPortfolio, 'holdings' | 'connections'> & { connections: (Omit<BrokerPortfolio['connections'][number], 'lastSyncAt'> & {lastSyncAt:string|null})[]; holdings: (BrokerPortfolio['holdings'][number] & { costBasisKnown?: boolean; depositTerms?: {originalPrincipal:string;currentAmount:string;maturityAmount:string;rate:string;openedOn:string;maturesOn:string;lien:string} })[] };
 const Money = Decimal.clone({ precision: 50 });
 export function holdingISIN(h: Portfolio['holdings'][number]) {
   if (h.assetClass === 'fixedDeposit') return null;
@@ -42,7 +42,7 @@ export function portfolioTotals(snapshot: Portfolio): Portfolio {
   return { ...snapshot, capturedAt, id: `portfolio-${capturedAt}`, value: available ? value.toFixed() : null, invested:invested.toFixed(), coveredInvested: covered.toFixed(), gain: available && costKnown ? gain.toFixed() : null,
     gainPercent: available && costKnown && covered.gt(0) ? gain.div(covered).times(100).toFixed() : null,
     coverage: valued.length === holdings.length ? 'complete' : valued.length ? 'partial' : 'unavailable',
-    allocation: ['indianEquity','mutualFund','gold','fixedDeposit'].flatMap(assetClass => {
+    allocation: ['indianEquity','usEquity','mutualFund','gold','fixedDeposit'].flatMap(assetClass => {
       const total = valued.filter(h => h.assetClass === assetClass).reduce((s,h) => s.plus(h.value!), new Money(0));
       return total.gt(0) ? [{ assetClass, value: total.toFixed(), percent: total.div(value).times(100).toFixed() }] : [];
     }) };

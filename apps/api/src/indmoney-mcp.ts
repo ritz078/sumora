@@ -57,9 +57,9 @@ export async function indMCP(token:string,fetcher:typeof fetch=fetch) {
   }
  };
 }
-export async function withIndConnection<T>(env:KiteEnvironment,owner:string,operation:(token:string)=>Promise<T>,fetcher:typeof fetch=fetch,now=Date.now):Promise<T> {
+export async function withIndConnection<T>(env:KiteEnvironment,owner:string,operation:(token:string,connection:{generation:string;lease:number})=>Promise<T>,fetcher:typeof fetch=fetch,now=Date.now):Promise<T> {
  const lease=now()+300000;
- const row=await env.DB.prepare('UPDATE indmoney_connections SET lease_until=? WHERE owner_id=? AND lease_until<=? RETURNING generation,encrypted_credentials').bind(lease,owner,now()).first<{generation:string;encrypted_credentials:string}>();
+ const row=await env.DB.prepare('UPDATE indmoney_connections SET lease_until=?,last_attempt_at=? WHERE owner_id=? AND lease_until<=? RETURNING generation,encrypted_credentials').bind(lease,now(),owner,now()).first<{generation:string;encrypted_credentials:string}>();
  if(!row)throw new APIError(409,'INDMONEY_BUSY','Connect INDmoney or wait for the current sync to finish.');
  let error:string|null=null,status='connected';
  try {
@@ -71,8 +71,8 @@ export async function withIndConnection<T>(env:KiteEnvironment,owner:string,oper
   };
   let refreshed=false;
   if(credentials.expires_at<=now()+60000){await refresh();refreshed=true;}
-  try{return await operation(credentials.access_token);}catch(failure){
-   if(!refreshed && failure instanceof APIError && failure.code==='INDMONEY_RECONNECT_REQUIRED'){await refresh();return await operation(credentials.access_token);}
+  try{return await operation(credentials.access_token,{generation:row.generation,lease});}catch(failure){
+   if(!refreshed && failure instanceof APIError && failure.code==='INDMONEY_RECONNECT_REQUIRED'){await refresh();return await operation(credentials.access_token,{generation:row.generation,lease});}
    throw failure;
   }
  }catch(failure){
