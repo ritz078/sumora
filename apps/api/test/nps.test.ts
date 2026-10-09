@@ -8,7 +8,7 @@ import {zerodhaSnapshot} from '../src/zerodha-portfolio';
 import {digest,encrypt,decrypt} from '../src/zerodha';
 const raw=readFileSync(new URL('./fixtures/nps-statement.txt',import.meta.url),'utf8');
 const at=new Date('2026-10-10T00:00:00Z'),key=Buffer.alloc(32,1).toString('base64');
-const headers=[{name:'From',value:'KCRA@kfintech.com'},{name:'Subject',value:'Monthly Transaction Statement for your NPS account with KFintech-CRA'},{name:'Authentication-Results',value:'mx.google.com; dmarc=pass header.from=kfintech.com'},{name:'X-Apiheader',value:'SCH_SOT_CRA_123456789012_12345'}];
+const headers=[{name:'X-Apiheader',value:'SCH_SOT_CRA_123456789012_12345'},{name:'From',value:'KCRA@kfintech.com'},{name:'Subject',value:'Monthly Transaction Statement for your NPS account with KFintech-CRA'},{name:'Authentication-Results',value:'mx.google.com; dmarc=pass header.from=kfintech.com'},{name:'X-Apiheader',value:'SCH_SOT_CRA_123456789012_12345'}];
 test('NPS reads only scheme closing balances and reconciles totals and NAV with the valuation date',()=>{
  const value=parseNPSStatement(raw,at);
  assert.equal(value.tier,'I');assert.equal(value.statementDate,'2026-10-04');assert.equal(value.valuationDate,'2026-09-30');assert.equal(value.total,'2000');

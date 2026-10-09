@@ -94,7 +94,7 @@ export async function syncNPS(env:GmailEnvironment,owner:string,fetcher:typeof f
    const duplicate=await env.DB.prepare('SELECT status FROM nps_imports WHERE owner_id=? AND content_hash=?').bind(owner,hash).first<{status:string}>();
    if(duplicate && duplicate.status!=='needs_review')continue;
    try {
-    const candidates=(detail.payload.headers??[]).filter((h:{name:string;value:string})=>h.name.toLowerCase()==='x-apiheader').map((h:{value:string})=>/^SCH_SOT_CRA_(\d{12})_\d+$/.exec(h.value.trim())?.[1]).filter(Boolean);
+    const candidates=[...new Set<string>((detail.payload.headers??[]).filter((h:{name:string;value:string})=>h.name.toLowerCase()==='x-apiheader').map((h:{value:string})=>/^SCH_SOT_CRA_(\d{12})_\d+$/.exec(h.value.trim())?.[1]).filter((v:unknown):v is string=>typeof v==='string'))];
     const password=settings.encrypted_password?await decrypt(settings.encrypted_password,env.KITE_ENCRYPTION_KEY):candidates.length===1?candidates[0]:null;
     if(!password)throw new Error('NPS password required.');
     const parsed=parseNPSStatement(await extractNPSPDF(bytes,password),at);
