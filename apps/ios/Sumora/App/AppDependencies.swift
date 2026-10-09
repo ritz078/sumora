@@ -9,6 +9,7 @@ final class AppDependencies {
     let gmail = GmailConnection()
     let gold = GoldConnection()
     let hdfc = HDFCConnection()
+    let nps = NPSConnection()
     let indmoney = INDmoneyConnection()
     private(set) var isLivePortfolio = false
     private(set) var scenario: DemoScenario = .complete

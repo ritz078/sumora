@@ -1,0 +1,4 @@
+CREATE TABLE nps_settings(owner_id TEXT PRIMARY KEY,encrypted_password TEXT,scan_cursor TEXT,updated_at INTEGER NOT NULL,last_sync_at INTEGER,error TEXT,lease_until INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE nps_snapshots(owner_id TEXT NOT NULL,tier TEXT NOT NULL CHECK(tier IN ('I','II')),account_hash TEXT NOT NULL,statement_date TEXT NOT NULL,valuation_date TEXT NOT NULL,total TEXT NOT NULL,schemes TEXT NOT NULL,message_id TEXT NOT NULL,content_hash TEXT NOT NULL,imported_at INTEGER NOT NULL,PRIMARY KEY(owner_id,tier));
+CREATE TABLE nps_imports(owner_id TEXT NOT NULL,content_hash TEXT NOT NULL,message_id TEXT NOT NULL,status TEXT NOT NULL CHECK(status IN ('imported','ignored','needs_review')),error TEXT,imported_at INTEGER NOT NULL,PRIMARY KEY(owner_id,content_hash));
+CREATE INDEX nps_import_message ON nps_imports(owner_id,message_id);

@@ -1,7 +1,7 @@
 import Foundation
 
 enum AssetClass: String, Codable, CaseIterable, Identifiable, Sendable {
-    case indianEquity, usEquity, mutualFund, gold, bond, fixedDeposit
+    case indianEquity, usEquity, mutualFund, gold, bond, fixedDeposit, nps
     var id: Self { self }
     var title: String {
         switch self {
@@ -11,6 +11,7 @@ enum AssetClass: String, Codable, CaseIterable, Identifiable, Sendable {
         case .gold: "Gold"
         case .bond: "Bonds"
         case .fixedDeposit: "Fixed deposits"
+        case .nps: "NPS"
         }
     }
     var symbol: String {
@@ -18,7 +19,7 @@ enum AssetClass: String, Codable, CaseIterable, Identifiable, Sendable {
         case .indianEquity, .usEquity: "chart.line.uptrend.xyaxis"
         case .mutualFund: "square.stack.3d.up.fill"
         case .gold: "sparkles"
-        case .bond, .fixedDeposit: "building.columns.fill"
+        case .bond, .fixedDeposit, .nps: "building.columns.fill"
         }
     }
 }

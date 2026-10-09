@@ -1,0 +1,34 @@
+CENTRAL RECORDKEEPING AGENCY
+NATIONAL PENSION SYSTEM
+Transaction Statement - Tier I
+Subscriber Details
+PRAN 123456789012
+Statement Date Oct 04, 2026
+PRAN Generated Date Sep 04,2020
+Investment Option Auto Choice
+Transaction Statement for the Period of Apr 01, 2026 to Sep 30, 2026
+Example Person
+No of Contributions Total Contribution (₹) Total Withdrawal (₹) Deductions due to Charges (₹) Current Valuation (₹) Notional Gain/Loss (₹)
+4 1500.00 0.00 5.00 2000.00 500.00
+Investment Details as on 30-09-2026
+Scheme Name Total Units Latest NAV Value at NAV XIRR
+NPS TRUST- A/C HDFC PENSION FUND
+MANAGEMENT LIMITED SCHEME E - TIER I
+POP
+100.0000 10.0000 1000.00 6.51%
+NPS TRUST- A/C HDFC PENSION FUND
+MANAGEMENT LIMITED SCHEME G - TIER I
+POP
+50.0000 20.0000 1000.00
+Total 2000.00
+Changes made during selected period
+Page 1 of 2
+KFintech
+Contribution / Redemption Details
+DATE Total Contribution
+01-Apr-2026 Opening balance 1490.00
+Transaction Details
+NPS TRUST- A/C HDFC PENSION FUND MANAGEMENT LIMITED SCHEME E - TIER I POP 5.00 10.00 50.00
+Note:
+The Transaction statement is dynamic.
+Page 2 of 2

@@ -31,6 +31,7 @@ struct SettingsView: View {
             }
             GoldConnectionSection()
             HDFCConnectionSection()
+                NPSConnectionSection()
             INDmoneyConnectionSection()
             Section {
                 LabeledContent("Current source", value: dependencies.isLivePortfolio ? "Zerodha" : dependencies.usesRemoteAPI ? "Sample API" : "Offline samples")

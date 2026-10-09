@@ -42,7 +42,7 @@ export function portfolioTotals(snapshot: Portfolio): Portfolio {
   return { ...snapshot, capturedAt, id: `portfolio-${capturedAt}`, value: available ? value.toFixed() : null, invested:invested.toFixed(), coveredInvested: covered.toFixed(), gain: available && costKnown ? gain.toFixed() : null,
     gainPercent: available && costKnown && covered.gt(0) ? gain.div(covered).times(100).toFixed() : null,
     coverage: valued.length === holdings.length ? 'complete' : valued.length ? 'partial' : 'unavailable',
-    allocation: ['indianEquity','usEquity','mutualFund','gold','fixedDeposit'].flatMap(assetClass => {
+    allocation: ['indianEquity','usEquity','mutualFund','gold','fixedDeposit','nps'].flatMap(assetClass => {
       const total = valued.filter(h => h.assetClass === assetClass).reduce((s,h) => s.plus(h.value!), new Money(0));
       return total.gt(0) ? [{ assetClass, value: total.toFixed(), percent: total.div(value).times(100).toFixed() }] : [];
     }) };

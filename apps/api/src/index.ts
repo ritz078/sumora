@@ -1,3 +1,4 @@
+import {npsRoutes} from './nps';
 import { refreshGoldPrice } from './gold-prices';
 import { gullakRoutes } from './gullak';
 import {hdfcRoutes} from './hdfc';
@@ -26,6 +27,7 @@ app.route('/v1/zerodha', zerodhaRoutes());
 app.route('/v1/gmail', gmailRoutes());
 app.route('/v1/gold', gullakRoutes());
 app.route('/v1/hdfc', hdfcRoutes());
+app.route('/v1/nps', npsRoutes());
 app.route('/v1/indmoney', indmoneyRoutes());
 app.get('/v1/demo/portfolio', (c) => {
   const scenario = c.req.query('scenario') ?? 'complete';

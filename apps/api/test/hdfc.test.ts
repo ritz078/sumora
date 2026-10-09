@@ -118,16 +118,17 @@ import {scheduledStatements} from '../src/statement-jobs';
 test('scheduled statements rotate between configured sources and skip revoked Gmail connections',async()=>{
  const {db,env:base}=setupGold();const key=Buffer.alloc(32,1).toString('base64');
  const env={...base,KITE_ENCRYPTION_KEY:key,GMAIL_CLIENT_ID:'client',GMAIL_CLIENT_SECRET:'secret'} as any;
- for(const table of ['hdfc_settings','gullak_settings'])db.prepare(`INSERT INTO ${table}(owner_id,encrypted_password,updated_at) VALUES(?,?,?)`).run('owner',await encrypt('12345678',key),0);
+ for(const table of ['hdfc_settings','gullak_settings','nps_settings'])db.prepare(`INSERT INTO ${table}(owner_id,encrypted_password,updated_at) VALUES(?,?,?)`).run('owner',await encrypt('12345678',key),0);
  db.prepare('INSERT INTO gmail_connections(owner_id,email,encrypted_refresh_token,connected_at) VALUES(?,?,?,?)').run('owner','example@example.com',await encrypt('refresh',key),0);
  const sources:string[]=[];
  const fetcher:typeof fetch=async url=>{
   if(String(url).includes('oauth2'))return Response.json({access_token:'access'});
-  sources.push(String(url).includes('gullak')?'gullak':'hdfc');return Response.json({messages:[]});
+  sources.push(String(url).includes('KCRA')?'nps':String(url).includes('gullak')?'gullak':'hdfc');return Response.json({messages:[]});
  };
  await scheduledStatements(env,fetcher,at);
  await scheduledStatements(env,fetcher,new Date(at.getTime()+1000));
- assert.deepEqual(new Set(sources),new Set(['gullak','hdfc']));
+ await scheduledStatements(env,fetcher,new Date(at.getTime()+2000));
+ assert.deepEqual(new Set(sources),new Set(['gullak','hdfc','nps']));
  db.prepare("UPDATE gmail_connections SET status='reconnect'").run();
- await scheduledStatements(env,fetcher,new Date(at.getTime()+2000));assert.equal(sources.length,2);
+ await scheduledStatements(env,fetcher,new Date(at.getTime()+2000));assert.equal(sources.length,3);
 });
