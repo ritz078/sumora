@@ -29,9 +29,10 @@ struct SettingsView: View {
             Section("Accounts") {
                 NavigationLink { ConnectionsView() } label: { Label("Connections", systemImage: "link") }
             }
+            GmailDocumentsSection()
             GoldConnectionSection()
             HDFCConnectionSection()
-                NPSConnectionSection()
+            NPSConnectionSection()
             INDmoneyConnectionSection()
             Section {
                 LabeledContent("Current source", value: dependencies.isLivePortfolio ? "Zerodha" : dependencies.usesRemoteAPI ? "Sample API" : "Offline samples")

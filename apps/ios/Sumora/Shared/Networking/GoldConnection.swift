@@ -49,7 +49,7 @@ final class GoldConnection {
    let value: GoldStatus = try await send("status", method: "GET")
    guard generation == current else { return false }
    status = value
-   errorMessage = nil; message = "Decryption password saved securely. Tap Sync Gullak."
+   errorMessage = nil; message = "Decryption password saved securely. Tap Sync Gmail documents."
    return true
   } catch { if generation == current { errorMessage = error.localizedDescription }; return false }
  }

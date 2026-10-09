@@ -45,7 +45,7 @@ final class NPSConnection {
    guard generation == current else { return }
    let value: NPSStatus = try await send("status", method: "GET")
    guard generation == current else { return }
-   status = value; errorMessage = nil; message = "NPS imports enabled. Tap Sync NPS."
+   status = value; errorMessage = nil; message = "NPS imports enabled. Tap Sync Gmail documents."
   } catch { if generation == current { errorMessage = error.localizedDescription } }
  }
  @discardableResult func save(password: String) async -> Bool {
@@ -58,7 +58,7 @@ final class NPSConnection {
    let value: NPSStatus = try await send("status", method: "GET")
    guard generation == current else { return false }
    status = value
-   errorMessage = nil; message = "Decryption password saved securely. Tap Sync NPS."
+   errorMessage = nil; message = "Decryption password saved securely. Tap Sync Gmail documents."
    return true
   } catch { if generation == current { errorMessage = error.localizedDescription }; return false }
  }

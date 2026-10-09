@@ -6,7 +6,7 @@ import type { GmailEnvironment } from './gmail';
 import { refreshGoldPrice } from './gold-prices';
 import { parseGullakStatement } from './gullak-statement';
 type Checkpoint = ReturnType<typeof parseGullakStatement>;
-type Settings = {encrypted_password:string;last_sync_at:number|null;error:string|null};
+type Settings = {encrypted_password:string;last_sync_at:number|null;error:string|null;scan_cursor:string|null};
 type Part = {filename?:string;mimeType?:string;body?:{attachmentId?:string;data?:string;size?:number};parts?:Part[];headers?:{name:string;value:string}[]};
 const errorText='Gullak statement needs review. Check the PDF password and statement balance. Your previous gold balance is retained.';
 export function trustedGullakMessage(payload:Part) {
@@ -40,7 +40,7 @@ export async function saveCheckpoint(env:Pick<KiteEnvironment,'DB'>,owner:string
 }
 export async function syncGullak(env:GmailEnvironment,owner:string,fetcher:typeof fetch=fetch,at=new Date()) {
  const lease=at.getTime()+120000;
- const settings=await env.DB.prepare('UPDATE gullak_settings SET lease_until=? WHERE owner_id=? AND lease_until<=? RETURNING encrypted_password,last_sync_at,error').bind(lease,owner,at.getTime()).first<Settings>();
+ const settings=await env.DB.prepare('UPDATE gullak_settings SET lease_until=? WHERE owner_id=? AND lease_until<=? RETURNING encrypted_password,last_sync_at,error,scan_cursor').bind(lease,owner,at.getTime()).first<Settings>();
  if(!settings)return {imported:0,skipped:true};
  let error:string|null=null;
  try {
@@ -51,7 +51,13 @@ export async function syncGullak(env:GmailEnvironment,owner:string,fetcher:typeo
   if(typeof tokens.access_token!=='string' || !tokens.access_token)throw new Error('Missing Gmail token.');
   const headers={Authorization:'Bearer '+tokens.access_token};
   const query=new URLSearchParams({q:'from:no-reply@gullak.money subject:"Gullak : Monthly Statement" has:attachment filename:pdf newer_than:120d',maxResults:'10'});
-  const list=await gmailJSON(fetcher,'https://gmail.googleapis.com/gmail/v1/users/me/messages?'+query,{headers});
+  if(settings.scan_cursor)query.set('pageToken',settings.scan_cursor);
+  let list;
+  try { list=await gmailJSON(fetcher,'https://gmail.googleapis.com/gmail/v1/users/me/messages?'+query,{headers}); }
+  catch(failure) {
+   if(settings.scan_cursor)await env.DB.prepare('UPDATE gullak_settings SET scan_cursor=NULL WHERE owner_id=? AND lease_until=?').bind(owner,lease).run();
+   throw failure;
+  }
   if(!Array.isArray(list.messages) && list.messages!==undefined)throw new Error('Invalid mailbox response.');
   const existing=await env.DB.prepare('SELECT period_end FROM gullak_checkpoints WHERE owner_id=?').bind(owner).first();
   const messages=(list.messages??[]).slice(0,10);
@@ -61,7 +67,7 @@ export async function syncGullak(env:GmailEnvironment,owner:string,fetcher:typeo
    const seen=await env.DB.prepare("SELECT status FROM gullak_imports WHERE owner_id=? AND message_id=? AND status IN ('imported','ignored') AND parser_version>=2").bind(owner,message.id).first();
    if(seen)continue;
    const detail=await gmailJSON(fetcher,`https://gmail.googleapis.com/gmail/v1/users/me/messages/${message.id}?format=full`,{headers});
-   if(!trustedGullakMessage(detail.payload??{}))throw new Error('Statement sender could not be verified.');
+   if(!trustedGullakMessage(detail.payload??{}))continue;
    const attachments=pdfs(detail.payload);
    if(attachments.length!==1)throw new Error('Expected one monthly statement PDF.');
    const part=attachments[0];
@@ -86,7 +92,9 @@ export async function syncGullak(env:GmailEnvironment,owner:string,fetcher:typeo
     throw new APIError(409,'GULLAK_REVIEW_REQUIRED',errorText);
    }
   }
-  return {imported:0,status:'up_to_date'};
+  const next=typeof list.nextPageToken==='string' && list.nextPageToken.length<=1024?list.nextPageToken:null;
+  await env.DB.prepare('UPDATE gullak_settings SET scan_cursor=? WHERE owner_id=? AND lease_until=?').bind(next,owner,lease).run();
+  return {imported:0,status:next?'scan_pending':'up_to_date'};
  }catch(failure){
   error=failure instanceof APIError ? failure.message : 'Gullak sync failed. Your previous gold balance is retained.';
   if(failure instanceof APIError && failure.code==='GMAIL_RECONNECT_REQUIRED')await env.DB.prepare("UPDATE gmail_connections SET status='reconnect',error=? WHERE owner_id=?").bind(error,owner).run();
@@ -112,7 +120,7 @@ export function gullakRoutes(fetcher:typeof fetch=fetch,now=Date.now) {
   let mobile:unknown;try{mobile=JSON.parse(raw).mobile;}catch{}
   if(typeof mobile!=='string' || !/^[6-9][0-9]{9}$/.test(mobile))throw new APIError(400,'INVALID_MOBILE','Enter your 10-digit Gullak mobile number.');
   const password=await encrypt(mobile.slice(1,-1),c.env.KITE_ENCRYPTION_KEY);
-  await c.env.DB.prepare('INSERT INTO gullak_settings(owner_id,encrypted_password,updated_at) VALUES(?,?,?) ON CONFLICT(owner_id) DO UPDATE SET encrypted_password=excluded.encrypted_password,updated_at=excluded.updated_at,error=NULL').bind(auth.owner_id,password,now()).run();
+  await c.env.DB.prepare('INSERT INTO gullak_settings(owner_id,encrypted_password,updated_at) VALUES(?,?,?) ON CONFLICT(owner_id) DO UPDATE SET encrypted_password=excluded.encrypted_password,updated_at=excluded.updated_at,error=NULL,scan_cursor=NULL').bind(auth.owner_id,password,now()).run();
   // Permit retry of documents that failed with the previous password.
   await c.env.DB.prepare("DELETE FROM gullak_imports WHERE owner_id=? AND status='needs_review'").bind(auth.owner_id).run();
   return c.json({saved:true});

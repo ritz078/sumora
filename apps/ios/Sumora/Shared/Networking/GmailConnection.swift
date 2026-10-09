@@ -11,6 +11,19 @@ struct GmailStatus: Decodable {
  let lastSyncAt: Double?
  let error: String?
 }
+enum GmailDocumentSource: String, Decodable, Identifiable {
+ case gold, hdfc, nps
+ var id: String { rawValue }
+ var title: String { switch self { case .gold: "Gullak gold & silver"; case .hdfc: "HDFC fixed deposits"; case .nps: "NPS" } }
+}
+struct GmailDocumentSyncResult: Decodable, Identifiable {
+ let source: GmailDocumentSource
+ let imported: Int
+ let status: String
+ let pending: Bool
+ let error: String?
+ var id: GmailDocumentSource { source }
+}
 enum GmailCallback {
  static func code(from url: URL, expectedState: String) throws -> String {
   guard url.scheme == "sumora", url.host == "gmail", url.path.isEmpty,
@@ -31,7 +44,12 @@ enum GmailCallback {
 final class GmailConnection: NSObject, ASWebAuthenticationPresentationContextProviding {
  private(set) var status: GmailStatus?
  private(set) var isBusy = false
+ private(set) var syncResults: [GmailDocumentSyncResult] = []
+ private(set) var syncProgress: String?
+ private(set) var message: String?
  var errorMessage: String?
+ @ObservationIgnored private let session: URLSession
+ init(session: URLSession = .shared) { self.session = session; super.init() }
  @ObservationIgnored private var address = ""
  @ObservationIgnored private var token: String?
  @ObservationIgnored private var generation = UUID()
@@ -40,7 +58,7 @@ final class GmailConnection: NSObject, ASWebAuthenticationPresentationContextPro
  func configure(address: String, token: String?) {
   guard self.address != address || self.token != token else { return }
   generation = UUID(); authentication?.cancel(); authentication = nil
-  self.address = address; self.token = token; status = nil; errorMessage = nil; isBusy = false
+  self.address = address; self.token = token; status = nil; errorMessage = nil; isBusy = false; syncResults = []; syncProgress = nil; message = nil
  }
  func refresh() async {
   guard token != nil, !isBusy else { return }
@@ -52,6 +70,53 @@ final class GmailConnection: NSObject, ASWebAuthenticationPresentationContextPro
    status = value; errorMessage = nil
   } catch { if generation == current { errorMessage = error.localizedDescription } }
  }
+ func syncDocuments() async {
+  guard token != nil, !isBusy else { return }
+  isBusy = true; errorMessage = nil; message = nil; syncResults = []; syncProgress = "Checking document sources…"
+  let current = generation
+  defer { if generation == current { isBusy = false; syncProgress = nil } }
+  do {
+   let plan: DocumentPlan = try await send("sync")
+   guard generation == current else { return }
+   for source in plan.sources {
+    var imported = 0
+    var final: GmailDocumentSyncResult?
+    // Each request parses at most one PDF. Keep the foreground operation finite,
+    // and report remaining work explicitly instead of claiming a full sync.
+    for _ in 0..<50 {
+     guard generation == current else { return }
+     syncProgress = "Syncing \(source.title)… \(imported) imported"
+     do {
+      try Task.checkCancellation()
+      let result: GmailDocumentSyncResult = try await send("sync", body: ["source": source.rawValue])
+      guard generation == current else { return }
+      guard result.source == source else { throw PortfolioAPIError.invalidSnapshot }
+      imported += result.imported
+      final = GmailDocumentSyncResult(source: source, imported: imported, status: result.status, pending: result.pending, error: result.error)
+      if !result.pending { break }
+     } catch is CancellationError { throw CancellationError() }
+     catch {
+      guard generation == current else { return }
+      final = GmailDocumentSyncResult(source: source, imported: imported, status: "failed", pending: false, error: error.localizedDescription)
+      break
+     }
+    }
+    if let final { syncResults.append(final) }
+   }
+   guard generation == current else { return }
+   let issues = syncResults.compactMap { result -> String? in
+    if let error = result.error { return "\(result.source.title): \(error)" }
+    if result.pending { return "\(result.source.title): More documents remain. Sync again to continue." }
+    if result.status == "busy" { return "\(result.source.title): Another sync is running. Try again shortly." }
+    return nil
+   }
+   errorMessage = issues.isEmpty ? nil : issues.joined(separator: "\n")
+   let count = syncResults.reduce(0) { $0 + $1.imported }
+   message = plan.sources.isEmpty ? "Configure a Gmail document source below first." : issues.isEmpty ? "All enabled Gmail sources synced. \(count) documents imported." : "Gmail sync finished with issues. \(count) documents imported."
+   if let value: GmailStatus = try? await send("connection", method: "GET"), generation == current { status = value }
+  } catch { if generation == current { errorMessage = error.localizedDescription } }
+ }
+ private struct DocumentPlan: Decodable { let sources: [GmailDocumentSource] }
  func connect() async {
   guard token != nil, !isBusy else { return }
   isBusy = true; errorMessage = nil; let current = generation
@@ -98,11 +163,11 @@ final class GmailConnection: NSObject, ASWebAuthenticationPresentationContextPro
  private func send<T: Decodable>(_ path: String, method: String = "POST", body: [String: String]? = nil) async throws -> T {
   guard let token, let base = APIConfiguration.baseURL(address) else { throw ZerodhaError.message("Connect Zerodha first to link Gmail.") }
   var request = URLRequest(url: base.appendingPathComponent("v1/gmail/\(path)"))
-  request.httpMethod = method; request.timeoutInterval = 30
+  request.httpMethod = method; request.timeoutInterval = 90
   request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
   request.setValue("application/json", forHTTPHeaderField: "Content-Type")
   if let body { request.httpBody = try JSONEncoder().encode(body) }
-  let (data, response) = try await URLSession.shared.data(for: request)
+  let (data, response) = try await session.data(for: request)
   guard let http = response as? HTTPURLResponse else { throw PortfolioAPIError.invalidSnapshot }
   guard (200..<300).contains(http.statusCode) else {
    throw ZerodhaError.message((try? JSONDecoder().decode(APIErrorResponse.self, from: data).error.message) ?? "Gmail request failed.")

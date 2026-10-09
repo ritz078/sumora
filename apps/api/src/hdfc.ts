@@ -7,7 +7,7 @@ import {parseHDFCStatement} from './hdfc-statement';
 import {digest} from './zerodha';
 import {portfolioTotals,type Portfolio} from './portfolio-valuation';
 type Checkpoint = ReturnType<typeof parseHDFCStatement>;
-type Settings = {encrypted_password:string;last_sync_at:number|null;error:string|null};
+type Settings = {encrypted_password:string;last_sync_at:number|null;error:string|null;scan_cursor:string|null};
 type Part = {filename?:string;mimeType?:string;body?:{attachmentId?:string;data?:string;size?:number};parts?:Part[];headers?:{name:string;value:string}[]};
 const errorText='HDFC statement needs review. Check the PDF password and statement balance. Your previous FD balance is retained.';
 export function trustedHDFCMessage(payload:Part) {
@@ -50,7 +50,7 @@ export async function hdfcPortfolio(env:Pick<KiteEnvironment,'DB'>,snapshot:Port
 }
 export async function syncHDFC(env:GmailEnvironment,owner:string,fetcher:typeof fetch=fetch,at=new Date()) {
  const lease=at.getTime()+120000;
- const settings=await env.DB.prepare('UPDATE hdfc_settings SET lease_until=? WHERE owner_id=? AND lease_until<=? RETURNING encrypted_password,last_sync_at,error').bind(lease,owner,at.getTime()).first<Settings>();
+ const settings=await env.DB.prepare('UPDATE hdfc_settings SET lease_until=? WHERE owner_id=? AND lease_until<=? RETURNING encrypted_password,last_sync_at,error,scan_cursor').bind(lease,owner,at.getTime()).first<Settings>();
  if(!settings)return {imported:0,skipped:true};
  let error:string|null=null;
  try {
@@ -61,7 +61,13 @@ export async function syncHDFC(env:GmailEnvironment,owner:string,fetcher:typeof 
   if(typeof tokens.access_token!=='string' || !tokens.access_token)throw new Error('Missing Gmail token.');
   const headers={Authorization:'Bearer '+tokens.access_token};
   const query=new URLSearchParams({q:'from:hdfcbanksmartstatement@hdfcbank.bank.in subject:"HDFC Bank Combined Email Statement" has:attachment filename:pdf newer_than:120d',maxResults:'10'});
-  const list=await gmailJSON(fetcher,'https://gmail.googleapis.com/gmail/v1/users/me/messages?'+query,{headers});
+  if(settings.scan_cursor)query.set('pageToken',settings.scan_cursor);
+  let list;
+  try { list=await gmailJSON(fetcher,'https://gmail.googleapis.com/gmail/v1/users/me/messages?'+query,{headers}); }
+  catch(failure) {
+   if(settings.scan_cursor)await env.DB.prepare('UPDATE hdfc_settings SET scan_cursor=NULL WHERE owner_id=? AND lease_until=?').bind(owner,lease).run();
+   throw failure;
+  }
   if(!Array.isArray(list.messages) && list.messages!==undefined)throw new Error('Invalid mailbox response.');
   const messages=(list.messages??[]).slice(0,10);
   for(const message of messages) {
@@ -69,7 +75,7 @@ export async function syncHDFC(env:GmailEnvironment,owner:string,fetcher:typeof 
    const seen=await env.DB.prepare("SELECT status FROM hdfc_imports WHERE owner_id=? AND message_id=? AND status IN ('imported','ignored')").bind(owner,message.id).first();
    if(seen)continue;
    const detail=await gmailJSON(fetcher,`https://gmail.googleapis.com/gmail/v1/users/me/messages/${message.id}?format=full`,{headers});
-   if(!trustedHDFCMessage(detail.payload??{}))throw new Error('Statement sender could not be verified.');
+   if(!trustedHDFCMessage(detail.payload??{}))continue;
    const attachments=pdfs(detail.payload);
    if(attachments.length!==1)throw new Error('Expected one monthly statement PDF.');
    const part=attachments[0];
@@ -94,7 +100,9 @@ export async function syncHDFC(env:GmailEnvironment,owner:string,fetcher:typeof 
     throw new APIError(409,'HDFC_REVIEW_REQUIRED',errorText);
    }
   }
-  return {imported:0,status:'up_to_date'};
+  const next=typeof list.nextPageToken==='string' && list.nextPageToken.length<=1024?list.nextPageToken:null;
+  await env.DB.prepare('UPDATE hdfc_settings SET scan_cursor=? WHERE owner_id=? AND lease_until=?').bind(next,owner,lease).run();
+  return {imported:0,status:next?'scan_pending':'up_to_date'};
  }catch(failure){
   error=failure instanceof APIError ? failure.message : 'HDFC sync failed. Your previous FD balance is retained.';
   if(failure instanceof APIError && failure.code==='GMAIL_RECONNECT_REQUIRED')await env.DB.prepare("UPDATE gmail_connections SET status='reconnect',error=? WHERE owner_id=?").bind(error,owner).run();
@@ -119,7 +127,7 @@ export function hdfcRoutes(fetcher:typeof fetch=fetch,now=Date.now) {
   const raw=await c.req.text();if(raw.length>512)throw new APIError(400,'INVALID_PASSWORD','Enter your HDFC Customer ID.');
   let password:unknown;try{password=JSON.parse(raw).password;}catch{}
   if(typeof password!=='string' || !/^[0-9]{6,20}$/.test(password))throw new APIError(400,'INVALID_PASSWORD','Enter your HDFC Customer ID.');
-  await c.env.DB.prepare('INSERT INTO hdfc_settings(owner_id,encrypted_password,updated_at) VALUES(?,?,?) ON CONFLICT(owner_id) DO UPDATE SET encrypted_password=excluded.encrypted_password,updated_at=excluded.updated_at,error=NULL').bind(auth.owner_id,await encrypt(password,c.env.KITE_ENCRYPTION_KEY),now()).run();
+  await c.env.DB.prepare('INSERT INTO hdfc_settings(owner_id,encrypted_password,updated_at) VALUES(?,?,?) ON CONFLICT(owner_id) DO UPDATE SET encrypted_password=excluded.encrypted_password,updated_at=excluded.updated_at,error=NULL,scan_cursor=NULL').bind(auth.owner_id,await encrypt(password,c.env.KITE_ENCRYPTION_KEY),now()).run();
   await c.env.DB.prepare("DELETE FROM hdfc_imports WHERE owner_id=? AND status='needs_review'").bind(auth.owner_id).run();
   return c.json({saved:true});
  });

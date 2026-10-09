@@ -19,7 +19,7 @@ test('Gmail linking remains mounted while contract-note operations are retired',
  const c=await setup();
  assert.equal((await app.request('/v1/gmail/connection',{headers:{Authorization:'Bearer '+c.token}},c.env)).status,200);
  assert.equal((await c.request('/connection','GET',undefined,false)).status,401);
- assert.equal((await c.request('/sync','POST')).status,404);
+ assert.equal((await c.request('/sync','POST')).status,409);
  assert.equal((await c.request('/decryption','PUT',{pan:'ABCDE1234F'})).status,404);
 });
 test('read-only Gmail OAuth retains encrypted credentials and verifier-bound single-use claims',async()=>{

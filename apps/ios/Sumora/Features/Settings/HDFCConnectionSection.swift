@@ -24,8 +24,6 @@ struct HDFCConnectionSection: View {
     Button(hdfc.status?.configured == true ? "Update decryption password" : "Save decryption password") {
      Task { if await hdfc.save(password:password) { password = "" } }
     }.disabled(password.count < 6 || password.count > 20).accessibilityIdentifier("save-hdfc-password")
-    Button("Sync HDFC") { Task { await hdfc.sync(); if dependencies.isLivePortfolio { await store.refresh() } } }
-     .disabled(hdfc.status?.configured != true || hdfc.status?.gmailConnected != true).accessibilityIdentifier("sync-hdfc")
     Button("Refresh HDFC status") { Task { await hdfc.refresh() } }
     if hdfc.status?.configured == true { Button("Remove decryption password",role:.destructive) { confirmRemove = true } }
     if let ms = hdfc.status?.lastSyncAt {
@@ -38,7 +36,7 @@ struct HDFCConnectionSection: View {
   } header: { Text("HDFC fixed deposits") } footer: {
    Text("Your Customer ID decrypts the monthly combined statement and is stored encrypted. Net worth includes the bank’s stated FD maturity amounts, including future interest. These are future payouts, not amounts available to withdraw today. Daily interest is not estimated. New statements replace the recorded FD list; failed imports retain the last balance.")
   }
-  .disabled(hdfc.isBusy)
+  .disabled(hdfc.isBusy || dependencies.gmail.isBusy)
   .task(id:scope) {
    password = ""
    hdfc.configure(address:dependencies.zerodha.address,token:dependencies.zerodha.sessionToken)

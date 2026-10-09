@@ -1,3 +1,6 @@
+import {syncGullak} from './gullak';
+import {syncHDFC} from './hdfc';
+import {syncNPS} from './nps';
 import { Hono } from 'hono';
 import { APIError, appSession, digest, encrypt, decrypt, randomToken, type KiteEnvironment } from './zerodha';
 export interface GmailEnvironment extends KiteEnvironment {
@@ -69,7 +72,7 @@ async function googleJSON<T>(fetcher: typeof fetch, url: string, init: RequestIn
         if (response.status === 400 && url.includes('/messages?'))
             throw new APIError(502, 'GMAIL_PAGE_EXPIRED', 'Gmail search will restart on the next sync.');
         if (response.status === 401 || payload.error === 'invalid_grant')
-            throw new APIError(409, 'GMAIL_RECONNECT_REQUIRED', 'Reconnect Gmail to continue collecting contract notes.');
+            throw new APIError(409, 'GMAIL_RECONNECT_REQUIRED', 'Reconnect Gmail to import statements.');
         throw new APIError(502, 'GMAIL_UNAVAILABLE', 'Gmail could not be refreshed. Try again later.');
     }
     return response.json() as Promise<T>;
@@ -86,6 +89,37 @@ export function gmailRoutes(fetcher: typeof fetch = fetch, now = Date.now) {
     app.onError((error, c) => {
         const failure = error instanceof APIError ? error : new APIError(502, 'GMAIL_UNAVAILABLE', 'Gmail is temporarily unavailable. Try again later.');
         return c.json({ error: { code: failure.code, message: failure.message } }, failure.status);
+    });
+    // One source batch per request avoids combining three PDF parsers and their
+    // D1 queries in one Worker invocation. The app drives all batches from one tap.
+    app.post('/sync', async c => {
+        const auth = await appSession(c.env, c.req.header('Authorization'), now);
+        const gmail = await c.env.DB.prepare("SELECT owner_id FROM gmail_connections WHERE owner_id=? AND status='connected'").bind(auth.owner_id).first();
+        if (!gmail) throw new APIError(409, 'GMAIL_REQUIRED', 'Connect Gmail before syncing documents.');
+        const text = await c.req.text();
+        let source: unknown;
+        if (text) {
+            if (text.length > 512) throw new APIError(400, 'INVALID_REQUEST', 'Invalid document source.');
+            try { const value=JSON.parse(text); if(!value || typeof value!=='object' || Array.isArray(value))throw Error(); source=value.source; }
+            catch { throw new APIError(400, 'INVALID_REQUEST', 'Expected a JSON object.'); }
+        }
+        const enabled = await c.env.DB.prepare(`SELECT json_group_array(source) AS sources FROM (
+          SELECT 'gold' AS source FROM gullak_settings WHERE owner_id=?
+          UNION ALL SELECT 'hdfc' FROM hdfc_settings WHERE owner_id=?
+          UNION ALL SELECT 'nps' FROM nps_settings WHERE owner_id=?)`).bind(auth.owner_id,auth.owner_id,auth.owner_id).first<{sources:string}>();
+        const sources: string[] = JSON.parse(enabled?.sources ?? '[]');
+        if (source === undefined) return c.json({sources});
+        if (typeof source!=='string' || !['gold','hdfc','nps'].includes(source)) throw new APIError(400,'INVALID_SOURCE','Invalid document source.');
+        if (!sources.includes(source)) throw new APIError(409,'SOURCE_NOT_CONFIGURED','Configure this document source in Settings first.');
+        try {
+            const result = await ({gold:syncGullak,hdfc:syncHDFC,nps:syncNPS}[source as 'gold'|'hdfc'|'nps'])(c.env,auth.owner_id,fetcher,new Date(now()));
+            const status = result.skipped ? 'busy' : result.status ?? 'up_to_date';
+            await c.env.DB.prepare('UPDATE gmail_connections SET last_sync_at=? WHERE owner_id=?').bind(now(),auth.owner_id).run();
+            return c.json({source,imported:result.imported,status,pending:!result.skipped && status!=='up_to_date',error:null});
+        } catch (failure) {
+            const error=failure instanceof APIError ? failure.message : 'Document sync failed. Previous balances are retained.';
+            return c.json({source,imported:0,status:'failed',pending:false,error});
+        }
     });
     app.post('/start', async (c) => {
         const auth = await appSession(c.env, c.req.header('Authorization'), now);

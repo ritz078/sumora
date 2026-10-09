@@ -37,9 +37,6 @@ struct GoldConnectionSection: View {
     Button(gold.status?.configured == true ? "Update decryption password" : "Save decryption password") {
      Task { if await gold.save(mobile: mobile) { mobile = "" } }
     }.disabled(mobile.count != 10).accessibilityIdentifier("save-gullak-password")
-    Button("Sync Gullak") { Task { await gold.sync(); if dependencies.isLivePortfolio { await store.refresh() } } }
-     .disabled(gold.status?.configured != true || gold.status?.gmailConnected != true)
-     .accessibilityIdentifier("sync-gullak")
     Button("Refresh gold status") { Task { await gold.refresh() } }
     if gold.status?.configured == true {
      Button("Remove decryption password",role:.destructive) { confirmRemove = true }
@@ -56,7 +53,7 @@ struct GoldConnectionSection: View {
   } header: { Text("Gullak gold & silver") } footer: {
    Text("Your mobile number derives the statement password; only the encrypted password is stored. Gold value uses the daily Snapdata / IBJA Indian benchmark, which may be provisional. It is an estimate, not Gullak’s sell quote. Monthly statements update recorded gold and silver grams. Silver is recorded without a market valuation; daily gold prices do not update either balance.")
   }
-  .disabled(gold.isBusy)
+  .disabled(gold.isBusy || dependencies.gmail.isBusy)
   .task(id:scope) {
    mobile = ""
    gold.configure(address:dependencies.zerodha.address,token:dependencies.zerodha.sessionToken)

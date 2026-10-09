@@ -97,7 +97,7 @@ Cloudflare does not repeat the tests or typecheck. Its Git integration deploys i
 
 ### HDFC fixed deposits
 
-Connect Gmail, then open Settings → HDFC fixed deposits and save the Customer ID used to decrypt HDFC monthly combined statements. Tap Sync HDFC to import the latest statement. The password is encrypted with the existing server encryption key and is never returned by the API. Removing it stops imports while retaining the last recorded FD balances.
+Connect Gmail, then open Settings → HDFC fixed deposits and save the Customer ID used to decrypt HDFC monthly combined statements. Sync Gmail documents to import the latest statement. The password is encrypted with the existing server encryption key and is never returned by the API. Removing it stops imports while retaining the last recorded FD balances.
 
 FDs contribute the statement’s **maturity amounts** to net worth, including future interest. The app labels these as maturity amounts rather than current withdrawal values. Original principal, interest rate and dates remain available in holding details. The importer separately validates withdrawable amounts against the bank’s term-deposit summary. Existing imported deposits are revalued without a new statement import. Daily interest and investment returns are not inferred. FD identifiers are owner-scoped hashes with only the final four digits displayed.
 
@@ -105,8 +105,16 @@ Automatic jobs rotate between configured Gullak, HDFC and NPS mailbox sources, p
 
 ### NPS
 
-Settings → NPS schemes → Enable NPS imports → Sync NPS uses the existing Gmail connection. Supported KFintech Tier I / Tier II statements supply scheme units, NAVs and closing values. The value contributes to net worth under NPS, clearly dated to the statement valuation date; live NAVs and daily NPS returns are not estimated.
+Settings → NPS schemes → Enable NPS imports → Sync Gmail documents uses the existing Gmail connection. Supported KFintech Tier I / Tier II statements supply scheme units, NAVs and closing values. The value contributes to net worth under NPS, clearly dated to the statement valuation date; live NAVs and daily NPS returns are not estimated.
 
 The verified KFintech email can supply the PRAN used to decrypt its attachment. It is checked against the decrypted statement and encrypted with the existing server key; a SecureField override is available when automatic discovery is unavailable. PRANs, PDFs and extracted text are never returned by these endpoints or retained as plaintext. D1 stores normalized schemes, an owner-scoped account hash, source IDs and content hashes. Stopping imports removes the encrypted password and keeps the recorded balances.
 
 Imports verify the authenticated sender, reconcile scheme units × NAV and both statement totals, reject conflicting dates/accounts, deduplicate attachments and preserve the last verified snapshot on failure. Search is limited to the last 120 days, paginated ten messages per run with at most one PDF parsed; untrusted search matches are skipped; the existing bounded statement schedule rotates across enabled sources. Deployment applies migration `0014_nps.sql`. Tests use a synthetic encrypted PDF, not a personal statement.
+
+### Sync all Gmail documents
+
+Settings → Gmail documents → **Sync Gmail documents** (also available under Connections → Gmail) updates every enabled Gullak gold/silver, HDFC FD and NPS source with one tap. Decryption settings remain in each source section. Each source runs independently; failures are shown alongside successful imports and retain the last verified financial data. The portfolio and all source statuses refresh when the operation finishes.
+
+The app first requests the authenticated owner’s enabled-source list from `POST /v1/gmail/sync`, then submits `{ "source": "gold" | "hdfc" | "nps" }` to that endpoint for bounded batches until each source is up to date. A batch handles at most one PDF, preserving Worker query limits. Remaining pages for all three sources are followed automatically. Duplicate/older imports also continue scanning. Source errors and overlapping jobs are reported rather than presented as full success. The foreground operation stops after 50 batches per source and explicitly reports remaining work. Reopening or tapping sync safely resumes via existing import hashes and saved mailbox cursors. Stock trade collection remains disabled.
+
+Migration `0015_statement_pagination.sql` adds resumable Gullak and HDFC mailbox cursors; the existing deploy command applies it automatically.

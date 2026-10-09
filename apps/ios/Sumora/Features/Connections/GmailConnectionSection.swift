@@ -16,16 +16,17 @@ struct GmailConnectionSection: View {
     Text(status.status == "reconnect" ? "Reconnect Gmail to restore access." : "Connected")
      .font(.footnote).foregroundStyle(.secondary)
     if status.status == "reconnect" { Button("Reconnect Gmail") { Task { await gmail.connect() } } }
+    GmailDocumentSyncControls()
     Button("Refresh connection status") { Task { await gmail.refresh() } }
     Button("Disconnect Gmail", role: .destructive) { confirmDisconnect = true }
    } else {
     Button("Connect Gmail") { Task { await gmail.connect() } }.accessibilityIdentifier("connect-gmail")
     Button("Refresh connection status") { Task { await gmail.refresh() } }
    }
-   if gmail.isBusy { ProgressView("Updating Gmail…") }
+   if gmail.isBusy && gmail.syncProgress == nil { ProgressView("Updating Gmail…") }
    if let error = gmail.errorMessage { Text(error).font(.footnote).foregroundStyle(.orange) }
   } header: { Text("Gmail") } footer: {
-   Text("Read-only Gmail access for Gullak monthly statements. Configure gold decryption and sync in Settings. Stock contract-note collection is disabled.")
+   Text("Read-only Gmail access for enabled Gullak, HDFC and NPS statements. Configure decryption in Settings, then sync all sources with one action.")
   }
   .disabled(gmail.isBusy)
   .task(id: scope) {

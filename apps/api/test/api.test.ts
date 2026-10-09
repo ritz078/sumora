@@ -44,7 +44,7 @@ test('unknown route is a JSON 404', async () => {
 });
 
 test('retired contract-note and trade endpoints are no longer exposed', async () => {
- for(const [path,method] of [['/v1/gmail/sync','POST'],['/v1/gmail/decryption','PUT'],['/v1/trades','GET'],['/v1/trades/imports','POST']]) {
+ for(const [path,method] of [['/v1/gmail/decryption','PUT'],['/v1/trades','GET'],['/v1/trades/imports','POST']]) {
   const response=await app.request(path,{method});
   assert.equal(response.status,404,path);
   assert.equal((await response.json()).error.code,'NOT_FOUND');

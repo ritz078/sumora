@@ -46,6 +46,19 @@ final class AppDependencies {
         }
     }
 
+    func syncGmailDocuments() async {
+        gmail.configure(address: zerodha.address, token: zerodha.sessionToken)
+        guard !gmail.isBusy else { return }
+        await gmail.syncDocuments()
+        gold.configure(address: zerodha.address, token: zerodha.sessionToken)
+        hdfc.configure(address: zerodha.address, token: zerodha.sessionToken)
+        nps.configure(address: zerodha.address, token: zerodha.sessionToken)
+        await gold.refresh()
+        await hdfc.refresh()
+        await nps.refresh()
+        if isLivePortfolio { await portfolio.refresh() }
+    }
+
     func selectScenario(_ scenario: DemoScenario) async {
         let wasLive = isLivePortfolio
         isLivePortfolio = false
