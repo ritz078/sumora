@@ -81,3 +81,16 @@ Normal simulator signing is required for Keychain access; do not disable signing
 ## Next milestone
 
 Multi-user Sign in with Apple, additional brokers, instrument classification, historical snapshots and live quote subscriptions remain future milestones. The current Zerodha integration binds each connection to the account authenticated through Kite and uses the prices reported by Kite holdings APIs.
+
+## Backend CI and automatic deployment
+
+GitHub Actions runs API tests and TypeScript checks on pushes to `main` and pull requests affecting the backend, shared portfolio fixtures, or the workflow. It uses Node 24, installs from the lockfile with `npm ci`, then runs `npm test` and `npm run typecheck`. No Cloudflare credentials are required for CI.
+
+Connect the existing `sumora-api` Worker to `ritz078/sumora` in Cloudflare Settings → Builds:
+
+- Production branch: `main`
+- Root directory: `apps/api`
+- Build command: `npm ci`
+- Deploy command: `npx wrangler d1 migrations apply sumora-private --remote && npx wrangler deploy`
+
+Cloudflare does not repeat the tests or typecheck. Its Git integration deploys independently of GitHub Actions; this workflow alone does not make deployment wait for CI. To protect `main`, require the `API tests and typecheck` status check before merging pull requests. Production rollout settings remain managed in Cloudflare.

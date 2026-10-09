@@ -21,3 +21,7 @@ After rollout approval, from `apps/api`:
 5. Confirm the next midnight/morning run succeeds, including Worker CPU usage. Source outages retain old quotes; no promise of a guaranteed publication time or live intraday prices.
 
 Local checks: 39 backend tests, typecheck, Worker dry-run, 26 iOS simulator tests, and a workerd scheduled-handler/portfolio smoke test using real downloaded feeds and synthetic holdings. Public NSE and AMFI feeds dated 8 October 2026 were downloaded and parsed successfully during implementation.
+
+## GitHub CI
+
+`.github/workflows/api-ci.yml` runs `npm ci`, `npm test`, and `npm run typecheck` with Node 24. It covers backend and shared fixture changes on `main` pushes and pull requests. Cloudflare Builds should use `apps/api` as its root, `npm ci` as its build command, and apply D1 migrations before `wrangler deploy`. GitHub CI and Cloudflare's Git-triggered deployment run independently; CI does not gate deployment without additional merge/deployment controls.
