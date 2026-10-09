@@ -47,6 +47,7 @@ struct HoldingRow: View {
         VStack(alignment: .trailing, spacing: 2) {
             MoneyText(amount: holding.value, currency: currency).font(.inter(.subheadline, weight: .bold, size: 14))
             if holding.value == nil { Text("Price unavailable").font(.inter(.caption2)).foregroundStyle(DashboardStyle.secondary) }
+            else if holding.assetClass == .fixedDeposit { Text("Maturity amount").font(.inter(.caption2)).foregroundStyle(DashboardStyle.secondary) }
             else if let percent = holding.gainPercent {
                 Text(preferences.hideBalances ? "••••" : "\(percent.value >= 0 ? "+" : "")\(DisplayFormat.decimal(percent.value, digits: 1))%")
                     .font(.inter(.caption2, weight: .semibold))
@@ -91,6 +92,8 @@ struct HoldingRow: View {
             MoneyText(amount: holding.value, currency: currency).font(.inter(.subheadline, weight: .semibold))
             if holding.value == nil {
                 Text("Price unavailable").font(.inter(.caption)).foregroundStyle(.orange)
+            } else if holding.assetClass == .fixedDeposit {
+                Text("Maturity amount").font(.inter(.caption)).foregroundStyle(DashboardStyle.secondary)
             } else {
                 GainLossLabel(gain: holding.gain, percent: nil, currency: currency).font(.inter(.caption))
             }

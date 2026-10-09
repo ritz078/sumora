@@ -44,8 +44,8 @@ test('HDFC snapshots are account-isolated, idempotent, replace closed FDs and re
  await assert.rejects(()=>saveHDFCSnapshot(env,'owner',parsed,'m4','conflict',at));
  const snapshot=zerodhaSnapshot('{"status":"success","data":[]}','{"status":"success","data":[]}',at);
  const result=await valuedSnapshot(env,snapshot,at,'owner');
- assert.equal(result.value,'3000');assert.equal(result.holdings.length,2);assert.equal(result.allocation[0].assetClass,'fixedDeposit');
- assert.equal(result.holdings[0].gain,null);assert.equal(result.holdings[0].value,'1000');
+ assert.equal(result.value,'3500');assert.equal(result.holdings.length,2);assert.equal(result.allocation[0].assetClass,'fixedDeposit');
+ assert.equal(result.holdings[0].gain,null);assert.equal(result.holdings[0].value,'1200');assert.equal(result.holdings[0].quote,'1200');assert.match(result.holdings[0].priceBasis,/maturity/i);
  assert.ok(!JSON.stringify(result).includes('12345678901234'));
  assert.equal((await valuedSnapshot(env,snapshot,at,'other')).holdings.length,0);
  await saveHDFCSnapshot(env,'owner',{date:'2026-10-31',total:'0',deposits:[]},'closed','closed',at);
@@ -73,7 +73,8 @@ test('HDFC setup is authenticated, password encrypted and never returned; remova
  assert.ok(!(await (await req('/status')).text()).includes('12345678'));
  assert.equal((await req('/sync','POST')).status,409);
  await saveHDFCSnapshot(env,'owner',parseHDFCStatement(statement,at),'m','h',at);
- assert.equal((await (await req('/status')).json()).balance.count,2);
+ const status=await (await req('/status')).json();
+ assert.equal(status.balance.count,2);assert.equal(status.balance.total,'3500');assert.equal(status.balance.valuationBasis,'maturity');
  await req('/password','DELETE');assert.equal(db.prepare('SELECT count(*) AS n FROM hdfc_settings').get()?.n,0);
  assert.equal(db.prepare('SELECT total FROM hdfc_snapshots').get()?.total,'3000');
 });

@@ -24,11 +24,15 @@ struct HoldingDetailView: View {
                             }
                         }
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("CURRENT VALUE").font(.caption.weight(.semibold)).tracking(1).foregroundStyle(.secondary)
+                            Text(holding.assetClass == .fixedDeposit ? "MATURITY AMOUNT" : "CURRENT VALUE").font(.caption.weight(.semibold)).tracking(1).foregroundStyle(.secondary)
                             MoneyText(amount: holding.value, currency: snapshot.reportingCurrency)
                                 .font(.largeTitle.bold()).minimumScaleFactor(0.7).lineLimit(1)
-                            GainLossLabel(gain: holding.gain, percent: holding.gainPercent, currency: snapshot.reportingCurrency)
-                            Text("Unrealized return").font(.caption).foregroundStyle(.secondary)
+                            if holding.assetClass == .fixedDeposit {
+                                Text("Includes future interest · counted toward net worth").font(.caption).foregroundStyle(.secondary)
+                            } else {
+                                GainLossLabel(gain: holding.gain, percent: holding.gainPercent, currency: snapshot.reportingCurrency)
+                                Text("Unrealized return").font(.caption).foregroundStyle(.secondary)
+                            }
                         }.frame(maxWidth: .infinity, alignment: .leading).portfolioCard()
                         if holding.value == nil {
                             Label("This holding has no current price and is excluded from the portfolio valuation.", systemImage: "exclamationmark.circle")
@@ -44,8 +48,10 @@ struct HoldingDetailView: View {
                                 if holding.costBasisKnown == false { Text("Unavailable") }
                                 else { MoneyText(amount: holding.invested, currency: snapshot.reportingCurrency) }
                             }
-                            Divider()
-                            detailRow(holding.assetClass == .fixedDeposit ? "Withdrawable amount" : "Unit price") { MoneyText(amount: holding.quote, currency: holding.quoteCurrency, fractionDigits: 2) }
+                            if holding.assetClass != .fixedDeposit {
+                                Divider()
+                                detailRow("Unit price") { MoneyText(amount: holding.quote, currency: holding.quoteCurrency, fractionDigits: 2) }
+                            }
                             if holding.quoteCurrency != snapshot.reportingCurrency {
                                 Text("Price quoted in \(holding.quoteCurrency); portfolio value reported in \(snapshot.reportingCurrency).")
                                     .font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading)
@@ -54,8 +60,6 @@ struct HoldingDetailView: View {
                         if let terms = holding.depositTerms {
                             VStack(spacing: 18) {
                                 detailRow("Original principal") { MoneyText(amount: terms.originalPrincipal) }
-                                detailRow("Current FD amount") { MoneyText(amount: terms.currentAmount) }
-                                detailRow("Maturity amount") { MoneyText(amount: terms.maturityAmount) }
                                 detailRow("Interest rate") { Text("\(DisplayFormat.decimal(terms.rate.value))% p.a.") }
                                 detailRow("Opened / renewed") { Text(terms.openedOn) }
                                 detailRow("Matures") { Text(terms.maturesOn) }

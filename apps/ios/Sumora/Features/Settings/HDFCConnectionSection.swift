@@ -13,7 +13,7 @@ struct HDFCConnectionSection: View {
     Text("Sign in to Sumora and connect Gmail to import HDFC statements.").font(.footnote).foregroundStyle(.secondary)
    } else {
     if let balance = hdfc.status?.balance {
-     LabeledContent("Withdrawable FD value") { MoneyText(amount:balance.total,currency:"INR",fractionDigits:2) }
+     LabeledContent("FD maturity value") { MoneyText(amount:balance.total,currency:"INR",fractionDigits:2) }
      Text("\(balance.count) fixed deposits · statement dated \(balance.statement_date)").font(.caption).foregroundStyle(.secondary)
     }
     if hdfc.status?.gmailConnected == false {
@@ -36,7 +36,7 @@ struct HDFCConnectionSection: View {
    if let message = hdfc.message { Text(message).font(.footnote).foregroundStyle(.secondary) }
    if let error = hdfc.errorMessage ?? hdfc.status?.error { Text(error).font(.footnote).foregroundStyle(.orange) }
   } header: { Text("HDFC fixed deposits") } footer: {
-   Text("Your Customer ID decrypts the monthly combined statement and is stored encrypted. Net worth uses the bank’s available withdrawable FD amounts, dated to the statement. Daily interest is not estimated. New statements replace the recorded FD list; failed imports retain the last balance.")
+   Text("Your Customer ID decrypts the monthly combined statement and is stored encrypted. Net worth includes the bank’s stated FD maturity amounts, including future interest. These are future payouts, not amounts available to withdraw today. Daily interest is not estimated. New statements replace the recorded FD list; failed imports retain the last balance.")
   }
   .disabled(hdfc.isBusy)
   .task(id:scope) {

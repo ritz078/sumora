@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import {Decimal} from 'decimal.js';
 import {extractStatementPDF, gmailJSON} from './statement-mailbox';
 import { APIError, appSession, encrypt, decrypt, type KiteEnvironment } from './zerodha';
 import type { GmailEnvironment } from './gmail';
@@ -44,8 +45,8 @@ export async function hdfcPortfolio(env:Pick<KiteEnvironment,'DB'>,snapshot:Port
  const row=await env.DB.prepare('SELECT statement_date,deposits FROM hdfc_snapshots WHERE owner_id=?').bind(owner).first<{statement_date:string;deposits:string}>();
  if(!row)return snapshot;
  const deposits=JSON.parse(row.deposits) as (Omit<Checkpoint['deposits'][number],'number'> & {id:string;last4:string})[];
- const holdings:Portfolio['holdings']=deposits.map(d=>({id:'hdfc:fd:'+d.id,name:'HDFC FD ••'+d.last4,symbol:'FD ••'+d.last4,assetClass:'fixedDeposit',accountID:'hdfc',quantity:'1',unit:'deposit',invested:'0',costBasisKnown:false,depositTerms:{originalPrincipal:d.originalPrincipal,currentAmount:d.currentAmount,maturityAmount:d.maturityAmount,rate:d.rate,openedOn:d.openedOn,maturesOn:d.maturesOn,lien:d.lien},value:d.withdrawable,gain:null,gainPercent:null,quote:d.withdrawable,quoteAt:row.statement_date+'T00:00:00Z',quoteCurrency:'INR',fxRate:'1',fxAt:null,history:[],source:'HDFC monthly combined statement',priceBasis:`Withdrawable value dated ${row.statement_date}. Rate ${d.rate}% p.a.; opened ${d.openedOn}; matures ${d.maturesOn}. Updated monthly; no estimated daily interest.`}));
- return portfolioTotals({...snapshot,holdings:[...snapshot.holdings.filter(h=>!h.id.startsWith('hdfc:fd:')), ...holdings],connections:[...snapshot.connections.filter(c=>c.id!=='hdfc'),{id:'hdfc',name:'HDFC Bank',symbol:'H',status:'connected',lastSyncAt:row.statement_date+'T00:00:00Z',description:'FD withdrawable balances from monthly statement dated '+row.statement_date}]});
+ const holdings:Portfolio['holdings']=deposits.map(d=>({id:'hdfc:fd:'+d.id,name:'HDFC FD ••'+d.last4,symbol:'FD ••'+d.last4,assetClass:'fixedDeposit',accountID:'hdfc',quantity:'1',unit:'deposit',invested:'0',costBasisKnown:false,depositTerms:{originalPrincipal:d.originalPrincipal,currentAmount:d.currentAmount,maturityAmount:d.maturityAmount,rate:d.rate,openedOn:d.openedOn,maturesOn:d.maturesOn,lien:d.lien},value:d.maturityAmount,gain:null,gainPercent:null,quote:d.maturityAmount,quoteAt:row.statement_date+'T00:00:00Z',quoteCurrency:'INR',fxRate:'1',fxAt:null,history:[],source:'HDFC monthly combined statement',priceBasis:`Maturity amount from statement dated ${row.statement_date}; includes future interest, not a current withdrawal value. Rate ${d.rate}% p.a.; opened ${d.openedOn}; matures ${d.maturesOn}. Updated monthly; no estimated daily interest.`}));
+ return portfolioTotals({...snapshot,holdings:[...snapshot.holdings.filter(h=>!h.id.startsWith('hdfc:fd:')), ...holdings],connections:[...snapshot.connections.filter(c=>c.id!=='hdfc'),{id:'hdfc',name:'HDFC Bank',symbol:'H',status:'connected',lastSyncAt:row.statement_date+'T00:00:00Z',description:'FD maturity amounts from monthly statement dated '+row.statement_date}]});
 }
 export async function syncHDFC(env:GmailEnvironment,owner:string,fetcher:typeof fetch=fetch,at=new Date()) {
  const lease=at.getTime()+120000;
@@ -108,7 +109,9 @@ export function hdfcRoutes(fetcher:typeof fetch=fetch,now=Date.now) {
   const auth=await appSession(c.env,c.req.header('Authorization'),now);
   const settings=await c.env.DB.prepare('SELECT last_sync_at,error FROM hdfc_settings WHERE owner_id=?').bind(auth.owner_id).first<{last_sync_at:number|null;error:string|null}>();
   const gmail=await c.env.DB.prepare("SELECT owner_id FROM gmail_connections WHERE owner_id=? AND status='connected'").bind(auth.owner_id).first();
-  const balance=await c.env.DB.prepare('SELECT statement_date,total,json_array_length(deposits) AS count FROM hdfc_snapshots WHERE owner_id=?').bind(auth.owner_id).first();
+  const recorded=await c.env.DB.prepare('SELECT statement_date,deposits FROM hdfc_snapshots WHERE owner_id=?').bind(auth.owner_id).first<{statement_date:string;deposits:string}>();
+  const deposits:Checkpoint['deposits']=recorded?JSON.parse(recorded.deposits):[];
+  const balance=recorded?{statement_date:recorded.statement_date,count:deposits.length,total:deposits.reduce((sum,d)=>sum.plus(d.maturityAmount),new Decimal(0)).toFixed(),valuationBasis:'maturity'}:null;
   return c.json({configured:!!settings,gmailConnected:!!gmail,lastSyncAt:settings?.last_sync_at??null,error:settings?.error??null,balance:balance??null});
  });
  app.put('/password',async c=>{
