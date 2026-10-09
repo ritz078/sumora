@@ -8,6 +8,7 @@ final class AppDependencies {
     let zerodha: ZerodhaConnection
     let gmail = GmailConnection()
     let gold = GoldConnection()
+    let hdfc = HDFCConnection()
     private(set) var isLivePortfolio = false
     private(set) var scenario: DemoScenario = .complete
     private(set) var usesRemoteAPI = true

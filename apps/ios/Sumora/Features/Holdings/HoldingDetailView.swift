@@ -45,13 +45,26 @@ struct HoldingDetailView: View {
                                 else { MoneyText(amount: holding.invested, currency: snapshot.reportingCurrency) }
                             }
                             Divider()
-                            detailRow("Unit price") { MoneyText(amount: holding.quote, currency: holding.quoteCurrency, fractionDigits: 2) }
+                            detailRow(holding.assetClass == .fixedDeposit ? "Withdrawable amount" : "Unit price") { MoneyText(amount: holding.quote, currency: holding.quoteCurrency, fractionDigits: 2) }
                             if holding.quoteCurrency != snapshot.reportingCurrency {
                                 Text("Price quoted in \(holding.quoteCurrency); portfolio value reported in \(snapshot.reportingCurrency).")
                                     .font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading)
                             }
                         }.portfolioCard()
+                        if let terms = holding.depositTerms {
+                            VStack(spacing: 18) {
+                                detailRow("Original principal") { MoneyText(amount: terms.originalPrincipal) }
+                                detailRow("Current FD amount") { MoneyText(amount: terms.currentAmount) }
+                                detailRow("Maturity amount") { MoneyText(amount: terms.maturityAmount) }
+                                detailRow("Interest rate") { Text("\(DisplayFormat.decimal(terms.rate.value))% p.a.") }
+                                detailRow("Opened / renewed") { Text(terms.openedOn) }
+                                detailRow("Matures") { Text(terms.maturesOn) }
+                                detailRow("Lien") { MoneyText(amount: terms.lien) }
+                            }.portfolioCard()
+                        }
+                        if holding.assetClass != .fixedDeposit {
                         PortfolioHistoryChart(history: holding.history, referenceDate: snapshot.capturedAt, currency: snapshot.reportingCurrency, title: "Holding history").portfolioCard()
+                        }
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Valuation details").font(.title3.bold())
                             sourceRow("Price source", value: holding.source)

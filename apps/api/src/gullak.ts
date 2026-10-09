@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
 import { Decimal } from 'decimal.js';
-import { extractText, getDocumentProxy } from 'unpdf';
+import {extractStatementPDF, gmailJSON} from './statement-mailbox';
 import { APIError, appSession, encrypt, decrypt, type KiteEnvironment } from './zerodha';
 import type { GmailEnvironment } from './gmail';
-import { boundedJSON, refreshGoldPrice } from './gold-prices';
+import { refreshGoldPrice } from './gold-prices';
 import { parseGullakStatement } from './gullak-statement';
 type Checkpoint = ReturnType<typeof parseGullakStatement>;
 type Settings = {encrypted_password:string;last_sync_at:number|null;error:string|null};
@@ -21,11 +21,7 @@ export function trustedGullakMessage(payload:Part) {
 function pdfs(part:Part):Part[] {
  return [...(part.filename?.toLowerCase().endsWith('.pdf') && part.mimeType==='application/pdf' ? [part] : []),...(part.parts??[]).flatMap(pdfs)];
 }
-export async function extractGullakPDF(bytes:Uint8Array,password:string) {
- if(bytes.length>2*1024*1024 || new TextDecoder().decode(bytes.subarray(0,5))!=='%PDF-')throw new Error('Invalid PDF.');
- const pdf=await getDocumentProxy(bytes,{password,verbosity:0,useSystemFonts:false,disableFontFace:true});
- try {if(pdf.numPages>10)throw new Error('Statement too long.');const {text}=await extractText(pdf,{mergePages:true});if(text.length>150000)throw new Error('Statement too long.');return text;}finally{await pdf.loadingTask.destroy();}
-}
+export async function extractGullakPDF(bytes:Uint8Array,password:string) {return extractStatementPDF(bytes,password,10,150000);}
 export async function saveCheckpoint(env:Pick<KiteEnvironment,'DB'>,owner:string,parsed:Checkpoint,message:string,hash:string,at:Date) {
  const seen=await env.DB.prepare('SELECT status,parser_version FROM gullak_imports WHERE owner_id=? AND content_hash=?').bind(owner,hash).first<{status:string;parser_version:number}>();
  if(seen && seen.parser_version>=2 && seen.status!=='needs_review')return 'duplicate';
@@ -41,11 +37,6 @@ export async function saveCheckpoint(env:Pick<KiteEnvironment,'DB'>,owner:string
   WHERE excluded.period_end>gullak_checkpoints.period_end OR (excluded.content_hash=gullak_checkpoints.content_hash AND gullak_checkpoints.silver_grams IS NULL)`).bind(owner,parsed.grams,parsed.openingGrams,parsed.periodStart,parsed.periodEnd,parsed.balanceDate,message,hash,at.getTime(),parsed.silverGrams,parsed.openingSilverGrams).run();
  await env.DB.prepare('INSERT INTO gullak_imports(owner_id,content_hash,message_id,status,imported_at,parser_version) VALUES(?,?,?,?,?,2) ON CONFLICT(owner_id,content_hash) DO UPDATE SET status=excluded.status,error=NULL,imported_at=excluded.imported_at,parser_version=excluded.parser_version').bind(owner,hash,message,status,at.getTime()).run();
  return status;
-}
-async function gmailJSON(fetcher:typeof fetch,url:string,init:RequestInit={}) {
- const response=await fetcher(url,{...init,signal:AbortSignal.timeout(15000),redirect:'manual'});
- if(response.status===401 || response.status===400 && url.includes('oauth2'))throw new APIError(409,'GMAIL_RECONNECT_REQUIRED','Reconnect Gmail to import Gullak statements.');
- return boundedJSON(response,4*1024*1024);
 }
 export async function syncGullak(env:GmailEnvironment,owner:string,fetcher:typeof fetch=fetch,at=new Date()) {
  const lease=at.getTime()+120000;
@@ -140,10 +131,4 @@ export function gullakRoutes(fetcher:typeof fetch=fetch,now=Date.now) {
   return c.json(result);
  });
  return app;
-}
-export async function scheduledGullak(env:GmailEnvironment,fetcher:typeof fetch=fetch,at=new Date()) {
- const rows=await env.DB.prepare("SELECT json_group_array(owner_id) AS owners FROM (SELECT s.owner_id FROM gullak_settings s JOIN gmail_connections g ON s.owner_id=g.owner_id WHERE g.status='connected' ORDER BY COALESCE(s.last_sync_at,0) LIMIT 1)").first<{owners:string}>();
- for(const owner of JSON.parse(rows?.owners??'[]').slice(0,3)) {
-  try{await syncGullak(env,owner,fetcher,at);}catch{/* Per-account error is persisted; other accounts can proceed. */}
- }
 }

@@ -1,18 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
 import { parseGoldPrice, refreshGoldPrice } from '../src/gold-prices';
 import { parseGullakStatement } from '../src/gullak-statement';
 
 const at = new Date('2026-10-09T16:00:00Z');
 const feed = (date = '2026-10-09', value: unknown = 14956) => ({schema_version:'1.0', dataset:'gold',scope:'in',resolution:'daily',generated_at:date+'T00:30:00Z',unit:{quantity:'gram',currency:'INR'},sources:[{id:'ibja'}],observations:[{date,instrument_id:'XAU.24K.INR.G',value,status:'provisional',source:'ibja'}]});
-export function setupGold() {
- const db = new DatabaseSync(':memory:');
- for (const name of ['0001_zerodha','0002_gmail','0007_daily_prices','0008_daily_baselines','0009_gold','0010_gullak_silver']) db.exec(readFileSync(new URL('../migrations/'+name+'.sql',import.meta.url),'utf8'));
- const env = {DB:{prepare(sql:string){let args:any[]=[]; return {bind(...values:any[]){args=values;return this;},async first<T>(){return db.prepare(sql).get(...args) as T ?? null;},async run(){return db.prepare(sql).run(...args);}};}}};
- return {db,env};
-}
+import {setupGold} from './helpers/database';
 test('gold feed accepts only a dated INR/gram 24K observation and preserves its provisional label',()=>{
  const quote=parseGoldPrice(feed(),at);
  assert.equal(quote.price,'14956'); assert.equal(quote.date,'2026-10-09'); assert.equal(quote.kind,'gold'); assert.match(quote.source,/provisional/);

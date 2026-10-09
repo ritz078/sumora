@@ -94,3 +94,11 @@ Connect the existing `sumora-api` Worker to `ritz078/sumora` in Cloudflare Setti
 - Deploy command: `npx wrangler d1 migrations apply sumora-private --remote && npx wrangler deploy`
 
 Cloudflare does not repeat the tests or typecheck. Its Git integration deploys independently of GitHub Actions; this workflow alone does not make deployment wait for CI. To protect `main`, require the `API tests and typecheck` status check before merging pull requests. Production rollout settings remain managed in Cloudflare.
+
+### HDFC fixed deposits
+
+Connect Gmail, then open Settings → HDFC fixed deposits and save the Customer ID used to decrypt HDFC monthly combined statements. Tap Sync HDFC to import the latest statement. The password is encrypted with the existing server encryption key and is never returned by the API. Removing it stops imports while retaining the last recorded FD balances.
+
+FDs contribute the statement’s **available withdrawable amounts** to net worth; this total must reconcile with the bank’s term-deposit summary. Current amount, original principal, maturity amount, interest rate and dates remain available in holding details. Values are dated to the monthly statement; daily interest and investment returns are not inferred. FD identifiers are owner-scoped hashes with only the final four digits displayed.
+
+Automatic jobs alternate between configured Gullak and HDFC mailbox sources, processing at most one unseen PDF per invocation. Duplicate attachments are skipped; older statements cannot regress balances, and conflicting or invalid statements retain the previous snapshot. PDFs are processed in memory and are not retained. No AI extraction service is used. Migration `0011_hdfc.sql` is applied by the existing Cloudflare deployment command.

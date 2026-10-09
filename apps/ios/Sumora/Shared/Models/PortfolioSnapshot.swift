@@ -1,7 +1,7 @@
 import Foundation
 
 enum AssetClass: String, Codable, CaseIterable, Identifiable, Sendable {
-    case indianEquity, usEquity, mutualFund, gold, bond
+    case indianEquity, usEquity, mutualFund, gold, bond, fixedDeposit
     var id: Self { self }
     var title: String {
         switch self {
@@ -10,6 +10,7 @@ enum AssetClass: String, Codable, CaseIterable, Identifiable, Sendable {
         case .mutualFund: "Mutual funds"
         case .gold: "Gold"
         case .bond: "Bonds"
+        case .fixedDeposit: "Fixed deposits"
         }
     }
     var symbol: String {
@@ -17,7 +18,7 @@ enum AssetClass: String, Codable, CaseIterable, Identifiable, Sendable {
         case .indianEquity, .usEquity: "chart.line.uptrend.xyaxis"
         case .mutualFund: "square.stack.3d.up.fill"
         case .gold: "sparkles"
-        case .bond: "building.columns.fill"
+        case .bond, .fixedDeposit: "building.columns.fill"
         }
     }
 }
@@ -30,6 +31,16 @@ struct HistoryPoint: Codable, Identifiable, Sendable {
     var id: Date { date }
 }
 
+struct DepositTerms: Codable, Sendable {
+ let originalPrincipal: DecimalValue
+ let currentAmount: DecimalValue
+ let maturityAmount: DecimalValue
+ let rate: DecimalValue
+ let openedOn: String
+ let maturesOn: String
+ let lien: DecimalValue
+}
+
 struct Holding: Codable, Identifiable, Sendable {
     let id: String
     let name: String
@@ -40,6 +51,7 @@ struct Holding: Codable, Identifiable, Sendable {
     let unit: String
     let invested: DecimalValue
     var costBasisKnown: Bool? = nil
+    var depositTerms: DepositTerms? = nil
     let value: DecimalValue?
     let gain: DecimalValue?
     let gainPercent: DecimalValue?

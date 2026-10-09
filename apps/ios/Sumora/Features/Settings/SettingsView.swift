@@ -30,6 +30,7 @@ struct SettingsView: View {
                 NavigationLink { ConnectionsView() } label: { Label("Connections", systemImage: "link") }
             }
             GoldConnectionSection()
+            HDFCConnectionSection()
             Section {
                 LabeledContent("Current source", value: dependencies.isLivePortfolio ? "Zerodha" : dependencies.usesRemoteAPI ? "Sample API" : "Offline samples")
                     .accessibilityElement(children: .ignore)
