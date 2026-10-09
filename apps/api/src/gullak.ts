@@ -27,19 +27,19 @@ export async function extractGullakPDF(bytes:Uint8Array,password:string) {
  try {if(pdf.numPages>10)throw new Error('Statement too long.');const {text}=await extractText(pdf,{mergePages:true});if(text.length>150000)throw new Error('Statement too long.');return text;}finally{await pdf.loadingTask.destroy();}
 }
 export async function saveCheckpoint(env:Pick<KiteEnvironment,'DB'>,owner:string,parsed:Checkpoint,message:string,hash:string,at:Date) {
- const seen=await env.DB.prepare('SELECT status FROM gullak_imports WHERE owner_id=? AND content_hash=?').bind(owner,hash).first<{status:string}>();
- if(seen && seen.status!=='needs_review')return 'duplicate';
- const previous=await env.DB.prepare('SELECT * FROM gullak_checkpoints WHERE owner_id=?').bind(owner).first<{grams:string;period_end:string;balance_date:string;content_hash:string}>();
+ const seen=await env.DB.prepare('SELECT status,parser_version FROM gullak_imports WHERE owner_id=? AND content_hash=?').bind(owner,hash).first<{status:string;parser_version:number}>();
+ if(seen && seen.parser_version>=2 && seen.status!=='needs_review')return 'duplicate';
+ const previous=await env.DB.prepare('SELECT * FROM gullak_checkpoints WHERE owner_id=?').bind(owner).first<{grams:string;period_end:string;balance_date:string;content_hash:string;silver_grams:string|null}>();
  let status='imported';
  if(previous && parsed.periodEnd<previous.period_end)status='ignored';
  else if(previous && previous.content_hash!==hash) {
   const nextDay=new Date(previous.period_end+'T00:00:00Z');nextDay.setUTCDate(nextDay.getUTCDate()+1);
-  if(parsed.periodStart!==nextDay.toISOString().slice(0,10) || !new Decimal(parsed.openingGrams).eq(previous.grams) || parsed.balanceDate<previous.balance_date)throw new Error('Statement continuity needs review.');
+  if(parsed.periodStart!==nextDay.toISOString().slice(0,10) || !new Decimal(parsed.openingGrams).eq(previous.grams) || parsed.balanceDate<previous.balance_date || previous.silver_grams!==null && !new Decimal(parsed.openingSilverGrams).eq(previous.silver_grams))throw new Error('Statement continuity needs review.');
  }
- if(status==='imported')await env.DB.prepare(`INSERT INTO gullak_checkpoints(owner_id,grams,opening_grams,period_start,period_end,balance_date,message_id,content_hash,imported_at) VALUES(?,?,?,?,?,?,?,?,?)
-  ON CONFLICT(owner_id) DO UPDATE SET grams=excluded.grams,opening_grams=excluded.opening_grams,period_start=excluded.period_start,period_end=excluded.period_end,balance_date=excluded.balance_date,message_id=excluded.message_id,content_hash=excluded.content_hash,imported_at=excluded.imported_at
-  WHERE excluded.period_end>gullak_checkpoints.period_end`).bind(owner,parsed.grams,parsed.openingGrams,parsed.periodStart,parsed.periodEnd,parsed.balanceDate,message,hash,at.getTime()).run();
- await env.DB.prepare('INSERT INTO gullak_imports(owner_id,content_hash,message_id,status,imported_at) VALUES(?,?,?,?,?) ON CONFLICT(owner_id,content_hash) DO UPDATE SET status=excluded.status,error=NULL,imported_at=excluded.imported_at').bind(owner,hash,message,status,at.getTime()).run();
+ if(status==='imported')await env.DB.prepare(`INSERT INTO gullak_checkpoints(owner_id,grams,opening_grams,period_start,period_end,balance_date,message_id,content_hash,imported_at,silver_grams,opening_silver_grams) VALUES(?,?,?,?,?,?,?,?,?,?,?)
+  ON CONFLICT(owner_id) DO UPDATE SET grams=excluded.grams,opening_grams=excluded.opening_grams,period_start=excluded.period_start,period_end=excluded.period_end,balance_date=excluded.balance_date,message_id=excluded.message_id,content_hash=excluded.content_hash,imported_at=excluded.imported_at,silver_grams=excluded.silver_grams,opening_silver_grams=excluded.opening_silver_grams
+  WHERE excluded.period_end>gullak_checkpoints.period_end OR (excluded.content_hash=gullak_checkpoints.content_hash AND gullak_checkpoints.silver_grams IS NULL)`).bind(owner,parsed.grams,parsed.openingGrams,parsed.periodStart,parsed.periodEnd,parsed.balanceDate,message,hash,at.getTime(),parsed.silverGrams,parsed.openingSilverGrams).run();
+ await env.DB.prepare('INSERT INTO gullak_imports(owner_id,content_hash,message_id,status,imported_at,parser_version) VALUES(?,?,?,?,?,2) ON CONFLICT(owner_id,content_hash) DO UPDATE SET status=excluded.status,error=NULL,imported_at=excluded.imported_at,parser_version=excluded.parser_version').bind(owner,hash,message,status,at.getTime()).run();
  return status;
 }
 async function gmailJSON(fetcher:typeof fetch,url:string,init:RequestInit={}) {
@@ -67,7 +67,7 @@ export async function syncGullak(env:GmailEnvironment,owner:string,fetcher:typeo
   if(existing)messages.reverse(); // Fill consecutive months in order after the first checkpoint.
   for(const message of messages) {
    if(typeof message.id!=='string' || !/^[a-zA-Z0-9_-]+$/.test(message.id))continue;
-   const seen=await env.DB.prepare("SELECT status FROM gullak_imports WHERE owner_id=? AND message_id=? AND status IN ('imported','ignored')").bind(owner,message.id).first();
+   const seen=await env.DB.prepare("SELECT status FROM gullak_imports WHERE owner_id=? AND message_id=? AND status IN ('imported','ignored') AND parser_version>=2").bind(owner,message.id).first();
    if(seen)continue;
    const detail=await gmailJSON(fetcher,`https://gmail.googleapis.com/gmail/v1/users/me/messages/${message.id}?format=full`,{headers});
    if(!trustedGullakMessage(detail.payload??{}))throw new Error('Statement sender could not be verified.');
@@ -83,8 +83,8 @@ export async function syncGullak(env:GmailEnvironment,owner:string,fetcher:typeo
    if(typeof data!=='string' || data.length>2800000 || !/^[A-Za-z0-9_=-]+$/.test(data))throw new Error('Invalid attachment bytes.');
    const binary=atob(data.replaceAll('-','+').replaceAll('_','/'));const bytes=Uint8Array.from(binary,c=>c.charCodeAt(0));
    const hashBytes=await crypto.subtle.digest('SHA-256',bytes);const hash=Array.from(new Uint8Array(hashBytes),b=>b.toString(16).padStart(2,'0')).join('');
-   const duplicate=await env.DB.prepare('SELECT status FROM gullak_imports WHERE owner_id=? AND content_hash=?').bind(owner,hash).first<{status:string}>();
-   if(duplicate && duplicate.status!=='needs_review')continue;
+   const duplicate=await env.DB.prepare('SELECT status,parser_version FROM gullak_imports WHERE owner_id=? AND content_hash=?').bind(owner,hash).first<{status:string;parser_version:number}>();
+   if(duplicate && duplicate.parser_version>=2 && duplicate.status!=='needs_review')continue;
    try {
     const password=await decrypt(settings.encrypted_password,env.KITE_ENCRYPTION_KEY);
     const parsed=parseGullakStatement(await extractGullakPDF(bytes,password),at);
@@ -110,7 +110,7 @@ export function gullakRoutes(fetcher:typeof fetch=fetch,now=Date.now) {
   const auth=await appSession(c.env,c.req.header('Authorization'),now);
   const settings=await c.env.DB.prepare('SELECT last_sync_at,error FROM gullak_settings WHERE owner_id=?').bind(auth.owner_id).first<{last_sync_at:number|null;error:string|null}>();
   const gmail=await c.env.DB.prepare('SELECT owner_id FROM gmail_connections WHERE owner_id=?').bind(auth.owner_id).first();
-  const balance=await c.env.DB.prepare('SELECT grams,balance_date,period_end FROM gullak_checkpoints WHERE owner_id=?').bind(auth.owner_id).first();
+  const balance=await c.env.DB.prepare('SELECT grams,silver_grams,opening_silver_grams,balance_date,period_end FROM gullak_checkpoints WHERE owner_id=?').bind(auth.owner_id).first();
   const quote=await c.env.DB.prepare("SELECT price,date,source FROM market_prices WHERE kind='gold'").first();
   const job=await c.env.DB.prepare('SELECT error FROM gold_price_job WHERE id=1').first<{error:string|null}>();
   return c.json({configured:!!settings,gmailConnected:!!gmail,lastSyncAt:settings?.last_sync_at??null,error:settings?.error??null,balance:balance??null,quote:quote??null,priceError:job?.error??null});

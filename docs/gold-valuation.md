@@ -29,3 +29,9 @@ Estimated gold value = recorded grams × latest INR/gram price. Daily movement =
 Backend tests cover validation, date regression, persisted baselines, failures, account isolation, encrypted setup, sender authentication, content deduplication, continuity, encrypted PDF import and combined portfolio totals. The encrypted PDF fixture is synthetic and contains no personal data. Actual August and September statements were checked privately without adding them to this repo.
 
 Use npm test and npm run typecheck in apps/api. Build the Worker with npx wrangler deploy --dry-run. Run SumoraTests on an iOS simulator with normal simulator signing enabled (the Keychain test requires signed entitlements). The importer and live Snapdata persistence were also exercised inside local workerd with isolated D1 storage.
+
+## Silver balances
+
+The same statement also supplies opening silver, bought grams, sold grams, and closing silver. Reconcile opening + buys − sells = closing independently from gold, then persist both metals in the same checkpoint. Mixed-metal rewards still require review. Nonzero silver continuity gaps reject the whole checkpoint and retain previous balances.
+
+Settings displays dated silver grams, including an explicit zero when verified. Existing gold-only checkpoints keep silver unknown until their original PDF is reprocessed with parser version 2; duplicate detection then resumes. No silver INR valuation is inferred from the gold rate, and silver is not included in net worth until a separate price source is implemented.

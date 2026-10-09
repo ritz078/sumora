@@ -9,7 +9,7 @@ const at = new Date('2026-10-09T16:00:00Z');
 const feed = (date = '2026-10-09', value: unknown = 14956) => ({schema_version:'1.0', dataset:'gold',scope:'in',resolution:'daily',generated_at:date+'T00:30:00Z',unit:{quantity:'gram',currency:'INR'},sources:[{id:'ibja'}],observations:[{date,instrument_id:'XAU.24K.INR.G',value,status:'provisional',source:'ibja'}]});
 export function setupGold() {
  const db = new DatabaseSync(':memory:');
- for (const name of ['0001_zerodha','0002_gmail','0007_daily_prices','0008_daily_baselines','0009_gold']) db.exec(readFileSync(new URL('../migrations/'+name+'.sql',import.meta.url),'utf8'));
+ for (const name of ['0001_zerodha','0002_gmail','0007_daily_prices','0008_daily_baselines','0009_gold','0010_gullak_silver']) db.exec(readFileSync(new URL('../migrations/'+name+'.sql',import.meta.url),'utf8'));
  const env = {DB:{prepare(sql:string){let args:any[]=[]; return {bind(...values:any[]){args=values;return this;},async first<T>(){return db.prepare(sql).get(...args) as T ?? null;},async run(){return db.prepare(sql).run(...args);}};}}};
  return {db,env};
 }
@@ -59,7 +59,7 @@ import { zerodhaSnapshot } from '../src/zerodha-portfolio';
 test('gold composes once into cached portfolio, allocations and daily movement with unknown cost',async()=>{
  const {db,env}=setupGold();
  const snapshot=zerodhaSnapshot('{"status":"success","data":[]}','{"status":"success","data":[]}',at);
- db.prepare('INSERT INTO gullak_checkpoints VALUES(?,?,?,?,?,?,?,?,?)').run('owner','56.3252','54.9001','2026-09-01','2026-09-30','2026-10-06','message','hash',at.getTime());
+ db.prepare('INSERT INTO gullak_checkpoints(owner_id,grams,opening_grams,period_start,period_end,balance_date,message_id,content_hash,imported_at) VALUES(?,?,?,?,?,?,?,?,?)').run('owner','56.3252','54.9001','2026-09-01','2026-09-30','2026-10-06','message','hash',at.getTime());
  await refreshGoldPrice(env,async()=>Response.json(feed('2026-10-08',14764.6)),new Date('2026-10-08T16:00:00Z'));
  await refreshGoldPrice(env,async()=>Response.json(feed()),at);
  const result=await valuedSnapshot(env,snapshot,at,'owner');
@@ -75,7 +75,7 @@ test('gold composes once into cached portfolio, allocations and daily movement w
 });
 test('missing gold price keeps the balance visible with partial coverage rather than zero value',async()=>{
  const {db,env}=setupGold();const snapshot=zerodhaSnapshot('{"status":"success","data":[]}','{"status":"success","data":[]}',at);
- db.prepare('INSERT INTO gullak_checkpoints VALUES(?,?,?,?,?,?,?,?,?)').run('owner','1','1','2026-09-01','2026-09-30','2026-10-06','m','h',0);
+ db.prepare('INSERT INTO gullak_checkpoints(owner_id,grams,opening_grams,period_start,period_end,balance_date,message_id,content_hash,imported_at) VALUES(?,?,?,?,?,?,?,?,?)').run('owner','1','1','2026-09-01','2026-09-30','2026-10-06','m','h',0);
  const result=await valuedSnapshot(env,snapshot,at,'owner');
  assert.equal(result.value,null);assert.equal(result.coverage,'unavailable');assert.equal(result.holdings[0].quote,null);assert.equal(result.dailyGain,null);
 });
@@ -130,6 +130,12 @@ test('Gmail sync decrypts an encrypted PDF, imports once and keeps the balance a
   return Response.json({messages:[{id:'forwarded'},{id:'message'}]});
  };
  assert.equal((await syncGullak(env,'owner',fetcher,at)).imported,1);
+ assert.equal(db.prepare('SELECT silver_grams FROM gullak_checkpoints').get()?.silver_grams,'0');
+ // Simulate a checkpoint imported before silver support, then upgrade the same PDF.
+ db.prepare('UPDATE gullak_checkpoints SET silver_grams=NULL,opening_silver_grams=NULL').run();
+ db.prepare('UPDATE gullak_imports SET parser_version=1').run();
+ assert.equal((await syncGullak(env,'owner',fetcher,at)).imported,1);
+ assert.equal(db.prepare('SELECT silver_grams FROM gullak_checkpoints').get()?.silver_grams,'0');
  assert.equal((await syncGullak(env,'owner',fetcher,at)).imported,0);
  assert.equal(db.prepare('SELECT grams FROM gullak_checkpoints').get()?.grams,'56.3252');
  await assert.rejects(()=>syncGullak(env,'owner',async()=>new Response('',{status:503}),at));
@@ -157,4 +163,27 @@ test('a retry recovers if checkpoint saved but import bookkeeping was interrupte
  await saveCheckpoint(env,'owner',parsed,'message','hash',at);
  assert.equal(db.prepare('SELECT grams FROM gullak_checkpoints').get()?.grams,'56.3252');
  assert.equal(db.prepare('SELECT count(*) AS n FROM gullak_imports').get()?.n,1);
+});
+
+
+test('silver summary reconciles bought and sold grams independently from gold',()=>{
+ const silver=statement.replace('56.3252 gm 0 gm','56.3252 gm 12.25 gm').replace('Total Buy - Silver ₹0 0 gm','Total Buy - Silver ₹500 3.5 gm').replace('Total Sell - Silver ₹0 0 gm','Total Sell - Silver ₹100 1.25 gm').replace('Silver: 0 gm','Silver: 10 gm');
+ const result=parseGullakStatement(silver,at);
+ assert.equal(result.silverGrams,'12.25');assert.equal(result.openingSilverGrams,'10');
+ assert.throws(()=>parseGullakStatement(silver.replace('12.25 gm','13 gm'),at),/silver.*reconcil/i);
+ assert.throws(()=>parseGullakStatement(silver.replace('Total Buy - Silver ₹500 3.5 gm',''),at),/silver/i);
+ assert.throws(()=>parseGullakStatement(silver.replace('Silver: 10 gm','Silver: -1 gm'),at),/silver/i);
+ assert.equal(parseGullakStatement(statement,at).silverGrams,'0');
+});
+
+
+test('checkpoints retain silver and reject a later silver continuity gap',async()=>{
+ const {env,db}=setupGold();const parsed={...parseGullakStatement(statement,at),silverGrams:'12.25',openingSilverGrams:'10'};
+ await saveCheckpoint(env,'owner',parsed,'message','hash',at);
+ assert.equal(db.prepare('SELECT * FROM gullak_checkpoints').get()?.silver_grams,'12.25');
+ const token='c'.repeat(64);db.prepare('INSERT INTO zerodha_sessions VALUES(?,?,?,?,?)').run(await digest(token),'unused','owner',at.getTime()+86400000,0);
+ const response=await gullakRoutes(fetch,()=>at.getTime()).request('/status',{headers:{Authorization:'Bearer '+token}},env as any);
+ assert.equal((await response.json()).balance.silver_grams,'12.25');
+ await assert.rejects(()=>saveCheckpoint(env,'owner',{...parsed,periodStart:'2026-10-01',periodEnd:'2026-10-31',balanceDate:'2026-11-01',openingGrams:parsed.grams,openingSilverGrams:'13'},'next','next',at),/continuity/i);
+ assert.equal(db.prepare('SELECT * FROM gullak_checkpoints').get()?.silver_grams,'12.25');
 });

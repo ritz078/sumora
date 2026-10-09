@@ -20,6 +20,11 @@ struct GoldConnectionSection: View {
     }
     if let balance = gold.status?.balance {
      LabeledContent("Recorded gold") { Text(preferences.hideBalances ? "••••" : "\(DisplayFormat.decimal(balance.grams.value,digits:4)) g") }
+     if let silver = balance.silver_grams {
+      LabeledContent("Recorded silver") { Text(preferences.hideBalances ? "••••" : "\(DisplayFormat.decimal(silver.value,digits:4)) g") }
+     } else {
+      Text("Silver balance has not been imported. Sync Gullak to update it.").font(.caption).foregroundStyle(.secondary)
+     }
      Text("Balance dated \(balance.balance_date) · statement ending \(balance.period_end)")
       .font(.caption).foregroundStyle(.secondary)
     }
@@ -48,8 +53,8 @@ struct GoldConnectionSection: View {
    if let message = gold.message { Text(message).font(.footnote).foregroundStyle(.secondary) }
    if let error = gold.errorMessage ?? gold.status?.error { Text(error).font(.footnote).foregroundStyle(.orange) }
    if let error = gold.status?.priceError { Text(error).font(.footnote).foregroundStyle(.orange) }
-  } header: { Text("Gullak gold") } footer: {
-   Text("Your mobile number derives the statement password; only the encrypted password is stored. Gold value uses the daily Snapdata / IBJA Indian benchmark, which may be provisional. It is an estimate, not Gullak’s sell quote. Monthly statements update recorded grams; daily prices do not update the balance.")
+  } header: { Text("Gullak gold & silver") } footer: {
+   Text("Your mobile number derives the statement password; only the encrypted password is stored. Gold value uses the daily Snapdata / IBJA Indian benchmark, which may be provisional. It is an estimate, not Gullak’s sell quote. Monthly statements update recorded gold and silver grams. Silver is recorded without a market valuation; daily gold prices do not update either balance.")
   }
   .disabled(gold.isBusy)
   .task(id:scope) {

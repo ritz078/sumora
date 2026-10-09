@@ -2,7 +2,7 @@ import Foundation
 import Observation
 
 struct GoldStatus: Decodable {
- struct Balance: Decodable { let grams: DecimalValue; let balance_date: String; let period_end: String }
+ struct Balance: Decodable { let grams: DecimalValue; let silver_grams: DecimalValue?; let balance_date: String; let period_end: String }
  struct Quote: Decodable { let price: DecimalValue; let date: String; let source: String }
  let configured: Bool
  let gmailConnected: Bool
@@ -63,7 +63,7 @@ final class GoldConnection {
    let value: GoldStatus = try await send("status", method: "GET")
    guard generation == current else { return }
    status = value; errorMessage = nil
-   message = result.skipped == true ? "A Gullak sync is already running." : result.imported > 0 ? "Gold balance updated." : "No new Gullak monthly statement found."
+   message = result.skipped == true ? "A Gullak sync is already running." : result.imported > 0 ? "Gold and silver balances updated." : "No new Gullak monthly statement found."
   } catch {
    if generation == current {
     errorMessage = error.localizedDescription
