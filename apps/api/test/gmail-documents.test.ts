@@ -52,3 +52,10 @@ test('gold and HDFC document batches continue beyond ten already-imported messag
   assert.equal((await (await call()).json()).pending,false);
  }
 });
+
+test('the unified sync discovers and executes configured bond imports',async()=>{
+ const {request,db}=await setup();
+ db.prepare("INSERT INTO bonds_settings(owner_id,encrypted_password,updated_at) VALUES('owner','unused',0)").run();
+ assert.deepEqual((await (await request()).json()).sources,['gold','hdfc','nps','bonds']);
+ assert.deepEqual(await (await request({source:'bonds'})).json(),{source:'bonds',imported:0,status:'up_to_date',pending:false,error:null});
+});

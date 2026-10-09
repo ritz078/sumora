@@ -12,8 +12,8 @@ struct GmailDocumentSyncTests {
   gmail.configure(address:"https://example.com",token:String(repeating:"a",count:64))
   await gmail.syncDocuments()
   #expect(gmail.isBusy == false)
-  #expect(gmail.syncResults.map(\.source.rawValue) == ["gold","hdfc","nps"])
-  #expect(gmail.syncResults.map(\.imported) == [2,0,1])
+  #expect(gmail.syncResults.map(\.source.rawValue) == ["gold","hdfc","nps","bonds"])
+  #expect(gmail.syncResults.map(\.imported) == [2,0,1,1])
   #expect(gmail.syncResults[1].error != nil)
   #expect(gmail.syncResults[2].error == nil)
   #expect(gmail.errorMessage?.contains("HDFC") == true)
@@ -30,10 +30,10 @@ private final class DocumentURLProtocol:URLProtocol,@unchecked Sendable {
   } ?? Data()
   let input=(try? JSONSerialization.jsonObject(with:body)) as? [String:String]
   let source=input?["source"]
-  var object:[String:Any]=["sources":["gold","hdfc","nps"]]
+  var object:[String:Any]=["sources":["gold","hdfc","nps","bonds"]]
   if let source {
    let n=(Self.counts[source] ?? 0)+1;Self.counts[source]=n
-   let pending=source=="gold" ? n<=2 : source=="nps" ? n<=1 : false
+   let pending=source=="gold" ? n<=2 : (source=="nps" || source=="bonds") ? n<=1 : false
    object=["source":source,"imported":pending ? 1:0,"status":source=="hdfc" ? "failed":pending ? "imported":"up_to_date","pending":pending,"error":source=="hdfc" ? "HDFC statement needs review.":NSNull()]
   }
   let response=HTTPURLResponse(url:request.url!,statusCode:200,httpVersion:nil,headerFields:["Content-Type":"application/json"])!

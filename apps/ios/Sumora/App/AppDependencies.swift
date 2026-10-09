@@ -10,6 +10,7 @@ final class AppDependencies {
     let gold = GoldConnection()
     let hdfc = HDFCConnection()
     let nps = NPSConnection()
+    let bonds = BondsConnection()
     let indmoney = INDmoneyConnection()
     private(set) var isLivePortfolio = false
     private(set) var scenario: DemoScenario = .complete
@@ -53,9 +54,11 @@ final class AppDependencies {
         gold.configure(address: zerodha.address, token: zerodha.sessionToken)
         hdfc.configure(address: zerodha.address, token: zerodha.sessionToken)
         nps.configure(address: zerodha.address, token: zerodha.sessionToken)
+        bonds.configure(address: zerodha.address, token: zerodha.sessionToken)
         await gold.refresh()
         await hdfc.refresh()
         await nps.refresh()
+        await bonds.refresh()
         if isLivePortfolio { await portfolio.refresh() }
     }
 

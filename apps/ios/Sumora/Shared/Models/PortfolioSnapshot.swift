@@ -42,6 +42,12 @@ struct DepositTerms: Codable, Sendable {
  let lien: DecimalValue
 }
 
+struct BondTerms: Codable, Sendable {
+ let coupon: DecimalValue?
+ let maturesOn: String?
+ let redemptionCheck: Bool
+}
+
 struct Holding: Codable, Identifiable, Sendable {
     let id: String
     let name: String
@@ -53,6 +59,7 @@ struct Holding: Codable, Identifiable, Sendable {
     let invested: DecimalValue
     var costBasisKnown: Bool? = nil
     var depositTerms: DepositTerms? = nil
+    var bondTerms: BondTerms? = nil
     let value: DecimalValue?
     let gain: DecimalValue?
     let gainPercent: DecimalValue?

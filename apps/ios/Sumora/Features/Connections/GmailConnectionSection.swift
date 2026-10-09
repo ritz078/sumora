@@ -26,7 +26,7 @@ struct GmailConnectionSection: View {
    if gmail.isBusy && gmail.syncProgress == nil { ProgressView("Updating Gmail…") }
    if let error = gmail.errorMessage { Text(error).font(.footnote).foregroundStyle(.orange) }
   } header: { Text("Gmail") } footer: {
-   Text("Read-only Gmail access for enabled Gullak, HDFC and NPS statements. Configure decryption in Settings, then sync all sources with one action.")
+   Text("Read-only Gmail access for enabled Gullak, HDFC, NPS and CDSL bond statements. Configure decryption in Settings, then sync all sources with one action.")
   }
   .disabled(gmail.isBusy)
   .task(id: scope) {

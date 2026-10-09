@@ -26,7 +26,7 @@ struct GmailDocumentsSection: View {
    }
    if let error = dependencies.gmail.errorMessage { Text(error).font(.footnote).foregroundStyle(.orange) }
   } header: { Text("Gmail documents") } footer: {
-   Text("One sync updates all enabled Gullak, HDFC and NPS sources. Failed imports retain your previous balances.")
+   Text("One sync updates all enabled Gullak, HDFC, NPS and CDSL bond sources. Failed imports retain your previous balances.")
   }
   .task(id:scope) {
    dependencies.gmail.configure(address:dependencies.zerodha.address,token:dependencies.zerodha.sessionToken)

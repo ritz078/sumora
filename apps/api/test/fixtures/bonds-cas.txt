@@ -1,0 +1,283 @@
+CONSOLIDATED ACCOUNT STATEMENT (CAS) FOR SECURITIES HELD IN DEMAT FORM AND INVESTMENTS IN MUTUAL FUNDS
+Account Type Account Details No. of ISINs/ Schemes Value in `
+NSDL Demat Account EXAMPLE BROKER DP Id: IN300000 Client Id :12345678 9 4,48,845.00
+Asset Class Value Percentage Debts 4,48,845.00 100.00
+DEMAT ACCOUNTS HELD WITH NSDLNSDL म� DEMAT खाते
+DPID : IN30000012345678DPID: IN30000012345678DP Name : FOURDEGREEWATER SERVICES PRIVATE LIMITEDDP का नाम: FOURDEGREEWATER SERVICES PRIVATE LIMITED
+STATEMENT OF TRANSACTIONS FOR THE PERIOD FROM 01-08-2026 TO 31-08-202601-08-2026 से 31-08-2026 तक क� अव�ध के �लए लेनदेन� का �ववरण
+ISIN Security Transaction
+Particulars Date Op. Bal Credit Debit Cl. Bal Stamp
+Duty
+(`)
+INE14H407116
+FINNABLE CREDIT PVT
+LTD#11% SEC NGRT
+SNR TAX NCUM RTD
+RED PN PT NCD PP-RD
+26-08-2028
+By CM NSE CLEARING
+LIMITED, CORPORATE
+BOND /
+2608003:81000001512971
+03-08-2026 0 5 -- 5
+ISIN ��तभू�त लेनदेन के �ववरण तार�ख शु�आती शेष Cr. Dr. Cl. शेष �टा�प
+शु�क (₹)
+HOLDING STATEMENT AS ON 31-08-202631-08-2026 तक के अनुसार होि�डं�स �ववरण
+ISIN Security
+a)
+Current
+Bal
+a) Frozen
+Bal a) Locked
+in Bal a) Remat
+Bal
+a) Remat
+Locked in
+Bal
+Free bal
+Market
+Price /
+Face
+Value
+Value(`)
+b) Pledge
+Transit
+Bal
+b) Pledge
+Confirmed
+Bal
+b)
+Pledged
+locked in
+Transit
+Bal
+b) Pledge
+Locked in
+Confirmed
+Bal
+b)
+Pending
+Demat
+Bal
+INE109C07139
+ARMAN FINANCIAL
+SERVICES
+LTD#11.35% SEC
+NGRT SNR TAX
+NCUM RTD RED PRN
+PRT NCD PP-RD
+29-07-2028
+5
+-- --
+-- --
+-- --
+-- --
+-- 5 10100 50,500.00
+INE0LN107089
+CREDIT WISE
+CAPITAL PRIVATE
+LIMITED 11.15 NCD
+19JU28 FVRS10000
+5
+-- --
+-- --
+-- --
+-- --
+-- 5 10000 50,000.00
+INE14H407116
+FINNABLE CREDIT
+PVT LTD#11% SEC
+NGRT SNR TAX
+NCUM RTD RED PN
+PT NCD PP-RD
+26-08-2028
+5
+-- --
+-- --
+-- --
+-- --
+-- 5 10000 50,000.00
+INE939X07259
+MANBA FINANCE
+LTD#10.65% SEC
+GRT SNR TAX NCUM
+RTD RED PRN PRT
+NCD PP-RD
+26-03-2028
+5
+-- --
+-- --
+-- --
+-- --
+-- 5 10000 50,000.00
+ISIN ��तभू�त
+a) वत�मान
+शेष
+a) �ोजेन
+शेष
+a) लॉ�ड इन
+शेष
+a) �रमैट
+शेष
+a) �रमैट
+लॉ�ड इन
+शेष
+मु�त शेष बाज़ार मू�य/
+अं�कत मू�य मू�य (₹)
+�लेज �ांिजट �लेज
+क�फ�ड�
+�ांिजट बैल�स
+म� लॉ�ड
+�लेज
+क�फ�ड� म�
+लॉ�ड �लेज
+b) बकाया
+DEMAT
+शेषPage 12 of 15
+Central Depository Services (India) Limited
+A Wing, 25th Floor, Marathon Futurex, Mafatlal Mills Compounds, N M Joshi Marg,
+Lower Parel (E), Mumbai - 400013.| (CIN : L67120MH1997PLC112443)
+CONSOLIDATED ACCOUNT STATEMENT (CAS) FOR SECURITIES HELD IN DEMAT
+FORM AND INVESTMENTS IN MUTUAL FUNDS
+स��ल �डपॉिजटर� स�व�सेज (इं�डया) �ल�मटेड
+A �वंग, 25 वां तल, मैराथन �यूचुरे�स, मफतलाल �म�स कंपाउं�स, एन एम जोशी माग�,
+लोअर परेल (पूव�), मुंबई- 400013 | ( CIN : L67120MH1997PLC112443)
+डीमैट फॉम� म� रखी गई ��तभू�तय� और �युचुअल फंड म� �नवेश और NPS म� �नवेश के �लए
+समे�कत खाता �ववरण (CAS)
+Summary of
+Investments
+�नवेश� का �ववरण Account DetailsAccount Details CDSL Demat
+Account Details
+CDSL DEMAT
+खाता �ववरण
+NSDL Demat
+Account Details
+NSDL DEMAT
+खाता �ववरण Notes�ट�प�णयां About CDSLCDSL के बारे म�
+EXAMPLE HOLDER
+ISIN Security
+a)
+Current
+Bal
+a) Frozen
+Bal a) Locked
+in Bal a) Remat
+Bal
+a) Remat
+Locked in
+Bal
+Free bal
+Market
+Price /
+Face
+Value
+Value(`)
+b) Pledge
+Transit
+Bal
+b) Pledge
+Confirmed
+Bal
+b)
+Pledged
+locked in
+Transit
+Bal
+b) Pledge
+Locked in
+Confirmed
+Bal
+b)
+Pending
+Demat
+Bal
+INE884Q07830
+MIDLAND
+MICROFIN
+LTD#ZERO COUP
+SEC NGRT SNR TAX
+CUM RTD RED PRN
+PRT NCD PP-RD
+28-04-2027
+5
+-- --
+-- --
+-- --
+-- --
+-- 5 10000 50,000.00
+INE101Q07BK8
+MUTHOOT MCRED
+LIMITED#9% SEC NG
+SNR TAX NCUM RTD
+RED PRN PRT NCD
+SR I PI-RD
+28-02-2027
+50
+-- --
+-- --
+-- --
+-- --
+-- 50 992 49,600.00
+INE101Q07CA7
+MUTHOOT MCRED
+LIMITED#9.30% SEC
+GRT SNR TAX NCUM
+RTD RED NCD PP-
+RD 20-11-2028
+5
+-- --
+-- --
+-- --
+-- --
+-- 5 9750 48,750.00
+INE229U07186
+NAMRA FINANCE
+LTD#10.90% SEC
+NGRT SNR TAX
+NCUM RTD RED PRN
+PRT NCD PP-RD
+24-04-2028
+5
+-- --
+-- --
+-- --
+-- --
+-- 5 9999 49,995.00
+INE0MYJ07112
+PROGFIN PRIVATE
+LIMITED#11% SEC
+NGRT SNR TAX CUM
+RTD RED PRN PRT
+NCD PP-RD
+04-10-2026
+5
+-- --
+-- --
+-- --
+-- --
+-- 5 10000 50,000.00
+Portfolio Value ` 4,48,845.00 as on 31-08-2026
+ISIN ��तभू�त
+a) वत�मान
+शेष
+a) �ोजेन
+शेष
+a) लॉ�ड इन
+शेष
+a) �रमैट
+शेष
+a) �रमैट
+लॉ�ड इन
+शेष
+मु�त शेष बाज़ार मू�य/
+अं�कत मू�य मू�य (₹)
+�लेज �ांिजट �लेज
+क�फ�ड�
+�ांिजट बैल�स
+म� लॉ�ड
+�लेज
+क�फ�ड� म�
+लॉ�ड �लेज
+b) बकाया
+DEMAT
+शेष

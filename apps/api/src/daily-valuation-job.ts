@@ -1,3 +1,4 @@
+import {bondsPortfolio} from './bonds';
 import {npsPortfolio} from './nps';
 import {indmoneyPortfolio} from './indmoney-portfolio';
 import {hdfcPortfolio} from './hdfc';
@@ -54,7 +55,7 @@ async function captureBaselines(env: Environment, at: Date) {
     WHERE excluded.price_date > daily_price_baselines.price_date`).bind(day, day).run();
 }
 export async function valuedSnapshot(env: Environment, snapshot: Portfolio, at = new Date(), owner?: string) {
-  if (owner) { snapshot = await npsPortfolio(env, snapshot, owner); snapshot = await goldPortfolio(env, snapshot, owner); snapshot = await hdfcPortfolio(env, snapshot, owner); snapshot = await indmoneyPortfolio(env, snapshot, owner, at); }
+  if (owner) { snapshot = await bondsPortfolio(env,snapshot,owner,at); snapshot = await npsPortfolio(env, snapshot, owner); snapshot = await goldPortfolio(env, snapshot, owner); snapshot = await hdfcPortfolio(env, snapshot, owner); snapshot = await indmoneyPortfolio(env, snapshot, owner, at); }
   await captureBaselines(env, at);
   const row = await env.DB.prepare("SELECT json_group_array(json_object('isin', isin, 'kind', kind, 'price', price, 'date', price_date, 'source', source)) AS prices FROM daily_price_baselines WHERE day = ?").bind(istDate(at)).first<{ prices: string }>();
   return dailyPerformance(revalue(snapshot, await savedPrices(env)), JSON.parse(row?.prices ?? '[]'), istDate(at));

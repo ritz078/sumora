@@ -12,9 +12,9 @@ struct GmailStatus: Decodable {
  let error: String?
 }
 enum GmailDocumentSource: String, Decodable, Identifiable {
- case gold, hdfc, nps
+ case gold, hdfc, nps, bonds
  var id: String { rawValue }
- var title: String { switch self { case .gold: "Gullak gold & silver"; case .hdfc: "HDFC fixed deposits"; case .nps: "NPS" } }
+ var title: String { switch self { case .gold: "Gullak gold & silver"; case .hdfc: "HDFC fixed deposits"; case .nps: "NPS"; case .bonds: "CDSL bonds" } }
 }
 struct GmailDocumentSyncResult: Decodable, Identifiable {
  let source: GmailDocumentSource

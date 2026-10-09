@@ -24,11 +24,13 @@ struct HoldingDetailView: View {
                             }
                         }
                         VStack(alignment: .leading, spacing: 12) {
-                            Text(holding.assetClass == .fixedDeposit ? "MATURITY AMOUNT" : "CURRENT VALUE").font(.caption.weight(.semibold)).tracking(1).foregroundStyle(.secondary)
+                            Text(holding.assetClass == .fixedDeposit ? "MATURITY AMOUNT" : holding.assetClass == .bond ? "STATEMENT VALUE" : "CURRENT VALUE").font(.caption.weight(.semibold)).tracking(1).foregroundStyle(.secondary)
                             MoneyText(amount: holding.value, currency: snapshot.reportingCurrency)
                                 .font(.largeTitle.bold()).minimumScaleFactor(0.7).lineLimit(1)
                             if holding.assetClass == .fixedDeposit {
                                 Text("Includes future interest · counted toward net worth").font(.caption).foregroundStyle(.secondary)
+                            } else if holding.assetClass == .bond {
+                                Text("As of the latest CAS · return unavailable").font(.caption).foregroundStyle(.secondary)
                             } else {
                                 GainLossLabel(gain: holding.gain, percent: holding.gainPercent, currency: snapshot.reportingCurrency)
                                 Text("Unrealized return").font(.caption).foregroundStyle(.secondary)
@@ -66,7 +68,17 @@ struct HoldingDetailView: View {
                                 detailRow("Lien") { MoneyText(amount: terms.lien) }
                             }.portfolioCard()
                         }
-                        if holding.assetClass != .fixedDeposit {
+                        if let terms = holding.bondTerms {
+                            VStack(alignment: .leading, spacing: 18) {
+                                if let coupon = terms.coupon { detailRow("Stated coupon") { Text("\(DisplayFormat.decimal(coupon.value))%") } }
+                                if let maturity = terms.maturesOn { detailRow("Stated maturity") { Text(maturity) } }
+                                if terms.redemptionCheck {
+                                    Label("Maturity passed. Verify redemption; this value is from the last CAS.",systemImage:"exclamationmark.circle").font(.footnote).foregroundStyle(.orange)
+                                }
+                                Text("Coupon payments and accrued interest are not included.").font(.caption).foregroundStyle(.secondary)
+                            }.portfolioCard()
+                        }
+                        if holding.assetClass != .fixedDeposit && holding.assetClass != .bond {
                         PortfolioHistoryChart(history: holding.history, referenceDate: snapshot.capturedAt, currency: snapshot.reportingCurrency, title: "Holding history").portfolioCard()
                         }
                         VStack(alignment: .leading, spacing: 16) {

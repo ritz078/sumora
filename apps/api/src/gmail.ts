@@ -1,3 +1,4 @@
+import {syncBonds} from './bonds';
 import {syncGullak} from './gullak';
 import {syncHDFC} from './hdfc';
 import {syncNPS} from './nps';
@@ -106,13 +107,14 @@ export function gmailRoutes(fetcher: typeof fetch = fetch, now = Date.now) {
         const enabled = await c.env.DB.prepare(`SELECT json_group_array(source) AS sources FROM (
           SELECT 'gold' AS source FROM gullak_settings WHERE owner_id=?
           UNION ALL SELECT 'hdfc' FROM hdfc_settings WHERE owner_id=?
-          UNION ALL SELECT 'nps' FROM nps_settings WHERE owner_id=?)`).bind(auth.owner_id,auth.owner_id,auth.owner_id).first<{sources:string}>();
+          UNION ALL SELECT 'nps' FROM nps_settings WHERE owner_id=?
+          UNION ALL SELECT 'bonds' FROM bonds_settings WHERE owner_id=?)`).bind(auth.owner_id,auth.owner_id,auth.owner_id,auth.owner_id).first<{sources:string}>();
         const sources: string[] = JSON.parse(enabled?.sources ?? '[]');
         if (source === undefined) return c.json({sources});
-        if (typeof source!=='string' || !['gold','hdfc','nps'].includes(source)) throw new APIError(400,'INVALID_SOURCE','Invalid document source.');
+        if (typeof source!=='string' || !['gold','hdfc','nps','bonds'].includes(source)) throw new APIError(400,'INVALID_SOURCE','Invalid document source.');
         if (!sources.includes(source)) throw new APIError(409,'SOURCE_NOT_CONFIGURED','Configure this document source in Settings first.');
         try {
-            const result = await ({gold:syncGullak,hdfc:syncHDFC,nps:syncNPS}[source as 'gold'|'hdfc'|'nps'])(c.env,auth.owner_id,fetcher,new Date(now()));
+            const result = await ({gold:syncGullak,hdfc:syncHDFC,nps:syncNPS,bonds:syncBonds}[source as 'gold'|'hdfc'|'nps'|'bonds'])(c.env,auth.owner_id,fetcher,new Date(now()));
             const status = result.skipped ? 'busy' : result.status ?? 'up_to_date';
             await c.env.DB.prepare('UPDATE gmail_connections SET last_sync_at=? WHERE owner_id=?').bind(now(),auth.owner_id).run();
             return c.json({source,imported:result.imported,status,pending:!result.skipped && status!=='up_to_date',error:null});
