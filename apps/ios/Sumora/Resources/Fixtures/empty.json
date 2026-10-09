@@ -1,0 +1,16 @@
+{
+  "id": "demo-empty",
+  "reportingCurrency": "INR",
+  "capturedAt": "2026-10-06T06:00:00Z",
+  "holdingsSyncAt": "2026-10-06T05:00:00Z",
+  "coverage": "complete",
+  "value": "0",
+  "invested": "0",
+  "coveredInvested": "0",
+  "gain": "0",
+  "gainPercent": "0",
+  "holdings": [],
+  "allocation": [],
+  "history": [],
+  "connections": []
+}
