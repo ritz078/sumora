@@ -64,8 +64,9 @@ export async function indmoneyPortfolio(env:Pick<KiteEnvironment,'DB'>,snapshot:
  return portfolioTotals({...snapshot,holdings:[...holdings,...JSON.parse(row.snapshot??'[]')],connections:[...connections,{id:'indmoney',name:'INDmoney',symbol:'I',status:attention?'attention':'connected',lastSyncAt:row.last_sync_at===null?null:new Date(row.last_sync_at).toISOString(),description:row.error??(row.snapshot===null?'US holdings have not synced yet.':'US stocks held in INDmoney; reported INR valuation. Latest successful snapshot is retained if sync fails.')}]});
 }
 
+// Allow a minute of cron execution jitter while suppressing immediate retries.
 export async function scheduledINDmoney(env:KiteEnvironment,fetcher:typeof fetch=fetch,at=new Date()) {
- const row=await env.DB.prepare("SELECT owner_id FROM indmoney_connections WHERE status='connected' AND lease_until<=? AND COALESCE(last_attempt_at,0)<=? ORDER BY COALESCE(last_attempt_at,0) LIMIT 1").bind(at.getTime(),at.getTime()-15*60000).first<{owner_id:string}>();
+ const row=await env.DB.prepare("SELECT owner_id FROM indmoney_connections WHERE status='connected' AND lease_until<=? AND COALESCE(last_attempt_at,0)<=? ORDER BY COALESCE(last_attempt_at,0) LIMIT 1").bind(at.getTime(),at.getTime()-14*60000).first<{owner_id:string}>();
  if(!row)return;
  try {await syncINDmoney(env,row.owner_id,fetcher,at);}catch { /* Error is persisted; previous holdings remain available. */ }
 }

@@ -62,6 +62,8 @@ test('background sync imports connected US holdings and skips revoked accounts',
  const {db,env}=await context();
  await scheduledINDmoney(env,upstream(sample),at);
  assert.equal(db.prepare('SELECT count(*) AS n FROM indmoney_snapshots').get()?.n,1);
+ await scheduledINDmoney(env,upstream(sample),new Date(at.getTime()+15*60000-1));
+ assert.equal(db.prepare('SELECT last_sync_at FROM indmoney_connections').get()?.last_sync_at,at.getTime()+15*60000-1);
  db.prepare("UPDATE indmoney_connections SET status='reconnect'").run();
  await scheduledINDmoney(env,async()=>{throw Error('must not fetch');},new Date(at.getTime()+60000));
  assert.equal(db.prepare('SELECT error FROM indmoney_connections').get()?.error,null);
