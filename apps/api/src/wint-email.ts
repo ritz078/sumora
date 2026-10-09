@@ -1,7 +1,7 @@
 import {Decimal} from 'decimal.js';
 import {validDay} from './gold-prices';
 import {istDate} from './daily-prices';
-export type WintPurchase={kind:'purchase';key:string;isin:string;name:string;accountID:string;confirmed:boolean;date:string;orderDate:string;quantity:string;faceValue:string;cleanCost:string;invested:string;accrued:string;coupon:string;frequency:string;repayment:string;maturesOn:string};
+export type WintPurchase={kind:'purchase';key:string;isin:string;name:string;accountID:string;confirmed:boolean;date:string;orderDate:string;quantity:string;faceValue:string;cleanCost:string;invested:string;accrued:string;coupon:string;ytm?:string|null;frequency:string;repayment:string;maturesOn:string};
 export type WintPayout={kind:'interest'|'principal'|'redemption';key:string;isin:string;date:string;gross:string;tds:string;net:string;principal:string;nextPayout:string|null;reconciliationDifference:string};
 export type WintEvent=WintPurchase|WintPayout;
 export type MailPart={headers?:{name:string;value:string}[];mimeType?:string;body?:{data?:string};parts?:MailPart[]};
@@ -49,11 +49,13 @@ export function parseWintEmail(subject:string,raw:string,at=new Date()):WintEven
   const invested=money('TOTAL INVESTMENT AMOUNT \\(INCLUSIVE OF STAMP DUTY(?: AND BROKERAGE)?\\)'),principal=money('TOTAL PRINCIPAL AMOUNT'),consideration=money('TOTAL CONSIDERATION'),stamp=money('STAMP DUTY \\(TO BE PAID BY BUYER\\)');
   const brokerage=text.includes('BROKERAGE (INCLUSIVE OF GST)')?money('BROKERAGE \\(INCLUSIVE OF GST\\)'):new Decimal(0);
   const coupon=num(single(text,/COUPON RATE (\d+(?:\.\d+)?)%/)[1]);
+  const ytm=text.includes('YTM RATE')?num(single(text,/YTM RATE \(YTM AFTER BROKERAGE\) (\d+(?:\.\d+)?)%/)[1]):null;
+  if(ytm && (ytm.lt(0) || ytm.gt(100)))throw Error('Invalid Wint yield.');
   if(quantity.lte(0) || face.lte(0) || clean.lte(0) || invested.lte(0) || stamp.lt(0) || brokerage.lt(0) || coupon.lt(0) || coupon.gt(50)
    || !quantity.times(face).eq(principal) || quantity.times(clean).plus(accrued).minus(consideration).abs().gt('.03') || consideration.plus(stamp).plus(brokerage).minus(invested).abs().gt('.03'))throw Error('Purchase totals do not reconcile.');
   const frequency=single(text,/INTEREST PAYMENT DATE (.+?) MATURITY DATE/)[1],repayment=single(text,/PRINCIPAL REPAYMENT (.+?) INTEREST PAYMENT DATE/)[1],maturesOn=day(single(text,/MATURITY DATE (\d{2}-[A-Z][a-z]{2}-\d{4}) NUMBER OF UNITS/)[1]);
   if(maturesOn<date)throw Error('Purchase after maturity.');
-  return {kind:'purchase',key:'purchase:'+order,isin,name,accountID:account[1]+account[2],confirmed,date,orderDate,quantity:quantity.toFixed(),faceValue:face.toFixed(),cleanCost:quantity.times(clean).toFixed(),invested:invested.toFixed(),accrued:accrued.toFixed(),coupon:coupon.toFixed(),frequency,repayment,maturesOn};
+  return {kind:'purchase',key:'purchase:'+order,isin,name,accountID:account[1]+account[2],confirmed,date,orderDate,quantity:quantity.toFixed(),faceValue:face.toFixed(),cleanCost:quantity.times(clean).toFixed(),invested:invested.toFixed(),accrued:accrued.toFixed(),coupon:coupon.toFixed(),ytm:ytm?.toFixed()??null,frequency,repayment,maturesOn};
  }
  if(!/^(?:💸\s*)?(?:Just Credited:|Asset Matured:)/.test(subject))throw Error('Unsupported Wint email.');
  const date=day(single(text,/Date of payout (\d{2}-[A-Z][a-z]{2}-\d{4})\b/)[1]);if(date>istDate(at))throw Error('Future payout.');

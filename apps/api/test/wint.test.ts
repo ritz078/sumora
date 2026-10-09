@@ -151,3 +151,37 @@ test('five-message Wint batches stay within the free Worker database query budge
  const result=await syncBonds(env,'owner',upstream,at);
  assert.equal(result.imported,5);assert.equal(db.prepare('SELECT count(*) AS n FROM wint_events').get()?.n,5);assert.ok(queries<=50,`used ${queries} queries`);
 });
+
+// Wrong rate, duration, or receipt backfill must not silently alter the projection.
+test('YTM is extracted separately from coupon and invalid or ambiguous yields require review',()=>{
+ const p=parseWintEmail('Investment Successful for Example Finance',purchase,at);if(p.kind!=='purchase')throw Error();
+ assert.equal(p.ytm,'11.75');assert.equal(p.coupon,'11');
+ for(const raw of [purchase.replace('11.75%','-1%'),purchase.replace('11.75%','NaN%'),purchase.replace('11.75%','101%'),purchase+' YTM RATE (YTM AFTER BROKERAGE) 12%'])assert.throws(()=>parseWintEmail('Investment Successful for Example Finance',raw,at));
+ const legacy=parseWintEmail('Investment Successful for Example Finance',purchase.replace('YTM RATE (YTM AFTER BROKERAGE) 11.75% ',''),at);assert.equal(legacy.kind==='purchase' && legacy.ytm,null);
+});
+test('projection compounds matched settled lots separately without changing CAS value or counting coupons twice',async()=>{
+ const hash=await digest('owner:bonds:'+cas.accountID);
+ const p=parseWintEmail('Investment Successful for Example Finance',purchase,at);if(p.kind!=='purchase')throw Error();
+ const lot={...p,quantity:'5',invested:'10000',date:'2026-08-03',maturesOn:'2028-08-02',ytm:'10'};
+ const result=reconcileBonds(cas,hash,[{accountHash:hash,event:lot}],at);
+ const h=result.holdings.find(h=>h.symbol===p.isin)!;
+ assert.equal(h.bondTerms?.projectedMaturityValue,'12100');assert.equal(h.bondTerms?.ytm,'10');assert.equal(h.value,'50000');assert.equal(h.gain,null);
+ const lots=[{...lot,quantity:'2',invested:'10000'},{...lot,key:'other',quantity:'3',invested:'20000',ytm:'20'}];
+ const combined=reconcileBonds(cas,hash,lots.map(event=>({accountHash:hash,event})),at).holdings.find(h=>h.symbol===p.isin)!;
+ assert.equal(combined.bondTerms?.projectedMaturityValue,'40900');assert.equal(combined.bondTerms?.ytm,null);
+ for(const event of [{...lot,ytm:null},{...lot,confirmed:false}])assert.equal(reconcileBonds(cas,hash,[{accountHash:hash,event}],at).holdings.find(h=>h.symbol===p.isin)?.bondTerms?.projectedMaturityValue,null);
+});
+test('YTM backfill upgrades legacy events atomically without regressing confirmed settlement or accepting conflicting yields',async()=>{
+ const {env,db}=setupGold();const p=parseWintEmail('Investment Successful for Example Finance',purchase,at);if(p.kind!=='purchase')throw Error();
+ const {ytm,...legacy}=p;
+ await saveWintEvent(env,'owner',legacy,'old',at);
+ assert.equal(await saveWintEvent(env,'owner',{...p,confirmed:false,date:p.orderDate},'receipt',at),'imported');
+ const saved=(await readWintEvents(env,'owner'))[0].event;if(saved.kind!=='purchase')throw Error();
+ assert.equal(saved.ytm,'11.75');assert.equal(saved.confirmed,true);assert.equal(saved.date,'2026-08-03');
+ await assert.rejects(()=>saveWintEvent(env,'owner',{...p,ytm:'12'},'conflict-ytm',at));
+ const {env:other,db:otherDB}=setupGold();await saveWintEvent(other,'owner',legacy,'legacy',at);
+ otherDB.exec("CREATE TRIGGER fail_ytm BEFORE INSERT ON wint_imports BEGIN SELECT RAISE(ABORT,'ledger failed'); END;");
+ await assert.rejects(()=>saveWintEvent(other,'owner',p,'upgrade',at));
+ assert.equal((await readWintEvents(other,'owner'))[0].event.kind,'purchase');
+ assert.equal(JSON.parse(String(otherDB.prepare('SELECT data FROM wint_events').get()?.data)).ytm,undefined);
+});

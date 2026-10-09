@@ -79,6 +79,11 @@ struct HoldingDetailView: View {
                                 if let quoted = terms.quotedCoupon, quoted.value != terms.coupon?.value {
                                     detailRow("Wint quoted rate") { Text("\(DisplayFormat.decimal(quoted.value))%") }
                                 }
+                                if let ytm = terms.ytm { detailRow("YTM after brokerage") { Text("\(DisplayFormat.decimal(ytm.value))% p.a.") } }
+                                if let projected = terms.projectedMaturityValue {
+                                    detailRow("Projected value at maturity") { MoneyText(amount:projected,fractionDigits:2) }
+                                    Text("Estimated from invested cash and purchase YTM, from settlement to maturity. Assumes all payouts are reinvested at the same rate, with annual compounding and actual days / 365, before tax. This is separate from today’s net worth and the final bond payment.").font(.caption).foregroundStyle(.secondary)
+                                }
                                 if let frequency = terms.frequency { detailRow("Interest frequency") { Text(frequency) } }
                                 if let repayment = terms.repayment { detailRow("Principal repayment") { Text(repayment) } }
                                 if let accrued = terms.accruedAtPurchase { detailRow("Interest paid at purchase") { MoneyText(amount:accrued,fractionDigits:2) } }
@@ -91,7 +96,7 @@ struct HoldingDetailView: View {
                                     Text("Some reported payouts differ slightly from gross interest less TDS. The email amounts are preserved.").font(.caption).foregroundStyle(.orange)
                                 }
                                 if let note = terms.reconciliationNote { Text(note).font(.caption).foregroundStyle(.orange) }
-                                Text("Cash flows come from matched Wint emails. Imported totals may be incomplete. They are shown separately from the CAS value; accrued interest and returns are not estimated.").font(.caption).foregroundStyle(.secondary)
+                                Text("Cash flows come from matched Wint emails. Imported totals may be incomplete. They are shown separately from the CAS value; accrued interest is not estimated.").font(.caption).foregroundStyle(.secondary)
                             }.portfolioCard()
                         }
                         if holding.assetClass != .fixedDeposit && holding.assetClass != .bond {
