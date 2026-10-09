@@ -1,3 +1,4 @@
+import { goldPortfolio } from './gold-portfolio';
 import { dailyPerformance } from './daily-performance';
 import { unzipSync, strFromU8 } from 'fflate';
 import { istDate, parseAMFI, parseNSE, type MarketPrice } from './daily-prices';
@@ -49,7 +50,8 @@ async function captureBaselines(env: Environment, at: Date) {
     ON CONFLICT(day, kind, isin) DO UPDATE SET price = excluded.price, price_date = excluded.price_date, source = excluded.source
     WHERE excluded.price_date > daily_price_baselines.price_date`).bind(day, day).run();
 }
-export async function valuedSnapshot(env: Environment, snapshot: Portfolio, at = new Date()) {
+export async function valuedSnapshot(env: Environment, snapshot: Portfolio, at = new Date(), owner?: string) {
+  if (owner) snapshot = await goldPortfolio(env, snapshot, owner);
   await captureBaselines(env, at);
   const row = await env.DB.prepare("SELECT json_group_array(json_object('isin', isin, 'kind', kind, 'price', price, 'date', price_date, 'source', source)) AS prices FROM daily_price_baselines WHERE day = ?").bind(istDate(at)).first<{ prices: string }>();
   return dailyPerformance(revalue(snapshot, await savedPrices(env)), JSON.parse(row?.prices ?? '[]'), istDate(at));
@@ -64,7 +66,7 @@ export async function refreshDailyPrices(env: Environment, fetcher: typeof fetch
     const portfolios = JSON.parse(rows?.snapshots ?? '[]') as Portfolio[];
     const wanted = new Set(portfolios.flatMap(p => p.holdings.flatMap(h => { const isin = holdingISIN(h); return isin ? [`${h.assetClass}:${isin}`] : []; })));
     // Keep latest prices bounded to currently held instruments.
-    await env.DB.prepare("DELETE FROM market_prices WHERE kind || ':' || isin NOT IN (SELECT value FROM json_each(?))").bind(JSON.stringify([...wanted])).run();
+    await env.DB.prepare("DELETE FROM market_prices WHERE kind != 'gold' AND kind || ':' || isin NOT IN (SELECT value FROM json_each(?))").bind(JSON.stringify([...wanted])).run();
     // Both midnight and morning runs target the previous completed Indian calendar day.
     const maxDate = istDate(new Date(at.getTime() - 86400000));
     for (const kind of ['indianEquity', 'mutualFund'] as const) {

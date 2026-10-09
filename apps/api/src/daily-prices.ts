@@ -1,8 +1,8 @@
 import { Decimal } from 'decimal.js';
 
-export type MarketPrice = { isin: string; kind: 'indianEquity' | 'mutualFund'; price: string; date: string; source: string };
+export type MarketPrice = { isin: string; kind: 'indianEquity' | 'mutualFund' | 'gold'; price: string; date: string; source: string };
 export const istDate = (at: Date) => new Date(at.getTime() + 330 * 60000).toISOString().slice(0, 10);
-export const priceTime = (p: MarketPrice) => `${p.date}T${p.kind === 'indianEquity' ? '15:30' : '23:59'}:00+05:30`;
+export const priceTime = (p: MarketPrice) => `${p.date}T${p.kind === 'indianEquity' ? '15:30' : p.kind === 'gold' ? '00:00' : '23:59'}:00+05:30`;
 
 // CSV supports quoted commas, escaped quotes and CRLF; feeds are bounded before parsing.
 function records(text: string, separator: string, wanted?: ReadonlySet<string>): string[][] {

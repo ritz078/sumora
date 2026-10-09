@@ -9,6 +9,7 @@ function setup(owner = 'AB1234') {
   db.exec(readFileSync(new URL('../migrations/0001_zerodha.sql', import.meta.url), 'utf8'));
   db.exec(readFileSync(new URL('../migrations/0007_daily_prices.sql', import.meta.url), 'utf8'));
   db.exec(readFileSync(new URL('../migrations/0008_daily_baselines.sql', import.meta.url), 'utf8'));
+  db.exec(readFileSync(new URL('../migrations/0009_gold.sql', import.meta.url), 'utf8'));
   const env: KiteEnvironment = {
     DB: { prepare(sql): Statement {
       let values: any[] = [];

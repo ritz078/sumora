@@ -1,3 +1,5 @@
+import { refreshGoldPrice } from './gold-prices';
+import { gullakRoutes, scheduledGullak } from './gullak';
 import { Hono } from 'hono';
 import { refreshDailyPrices } from './daily-valuation-job';
 import { gmailRoutes, type GmailEnvironment } from './gmail';
@@ -18,6 +20,7 @@ app.use('*', async (c, next) => {
 app.get('/health', (c) => c.json({ status: 'ok', service: 'sumora-api' }));
 app.route('/v1/zerodha', zerodhaRoutes());
 app.route('/v1/gmail', gmailRoutes());
+app.route('/v1/gold', gullakRoutes());
 app.get('/v1/demo/portfolio', (c) => {
   const scenario = c.req.query('scenario') ?? 'complete';
   if (scenario === 'failure') {
@@ -33,6 +36,9 @@ app.onError((_error, c) => c.json({ error: { code: 'INTERNAL_ERROR', message: 'U
 export default {
   fetch: app.fetch,
   async scheduled(_event: unknown, env: GmailEnvironment) {
+    const gold = await refreshGoldPrice(env);
+    console.log(JSON.stringify({ event: 'gold-prices', ...gold }));
+    await scheduledGullak(env);
     const result = await refreshDailyPrices(env);
     console.log(JSON.stringify({ event: 'daily-prices', ...result }));
   },

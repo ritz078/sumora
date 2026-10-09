@@ -5,7 +5,7 @@
   "compatibility_date": "2026-10-06",
   "workers_dev": true,
   "vars": { "GMAIL_REDIRECT_URI": "https://sumora-api.rkritesh078.workers.dev/v1/gmail/callback" },
-  "triggers": { "crons": ["30 18 * * *", "30 0 * * *"] },
+  "triggers": { "crons": ["30 18 * * *", "30 0 * * *", "30 14 * * *"] },
   "d1_databases": [{
     "binding": "DB", "database_name": "sumora-private",
     "database_id": "88b33a09-2553-43cd-b118-282a5753455d",

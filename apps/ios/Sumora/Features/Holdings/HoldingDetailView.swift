@@ -40,7 +40,10 @@ struct HoldingDetailView: View {
                                     .accessibilityLabel(preferences.hideBalances ? "Hidden quantity" : "\(DisplayFormat.decimal(holding.quantity.value, digits: 6)) \(holding.unit)")
                             }
                             Divider()
-                            detailRow("Invested") { MoneyText(amount: holding.invested, currency: snapshot.reportingCurrency) }
+                            detailRow("Invested") {
+                                if holding.costBasisKnown == false { Text("Unavailable") }
+                                else { MoneyText(amount: holding.invested, currency: snapshot.reportingCurrency) }
+                            }
                             Divider()
                             detailRow("Unit price") { MoneyText(amount: holding.quote, currency: holding.quoteCurrency, fractionDigits: 2) }
                             if holding.quoteCurrency != snapshot.reportingCurrency {

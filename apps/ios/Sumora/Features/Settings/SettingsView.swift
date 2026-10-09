@@ -29,6 +29,7 @@ struct SettingsView: View {
             Section("Accounts") {
                 NavigationLink { ConnectionsView() } label: { Label("Connections", systemImage: "link") }
             }
+            GoldConnectionSection()
             Section {
                 LabeledContent("Current source", value: dependencies.isLivePortfolio ? "Zerodha" : dependencies.usesRemoteAPI ? "Sample API" : "Offline samples")
                     .accessibilityElement(children: .ignore)

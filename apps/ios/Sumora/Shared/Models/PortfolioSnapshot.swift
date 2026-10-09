@@ -39,6 +39,7 @@ struct Holding: Codable, Identifiable, Sendable {
     let quantity: DecimalValue
     let unit: String
     let invested: DecimalValue
+    var costBasisKnown: Bool? = nil
     let value: DecimalValue?
     let gain: DecimalValue?
     let gainPercent: DecimalValue?

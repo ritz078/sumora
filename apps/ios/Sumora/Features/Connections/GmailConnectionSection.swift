@@ -25,7 +25,7 @@ struct GmailConnectionSection: View {
    if gmail.isBusy { ProgressView("Updating Gmail…") }
    if let error = gmail.errorMessage { Text(error).font(.footnote).foregroundStyle(.orange) }
   } header: { Text("Gmail") } footer: {
-   Text("Read-only Gmail connection retained for future gold imports. Contract-note collection is disabled.")
+   Text("Read-only Gmail access for Gullak monthly statements. Configure gold decryption and sync in Settings. Stock contract-note collection is disabled.")
   }
   .disabled(gmail.isBusy)
   .task(id: scope) {
