@@ -46,6 +46,19 @@ struct BondTerms: Codable, Sendable {
  let coupon: DecimalValue?
  let maturesOn: String?
  let redemptionCheck: Bool
+ let investedAmount: DecimalValue?
+ let accruedAtPurchase: DecimalValue?
+ let interestGross: DecimalValue?
+ let interestNet: DecimalValue?
+ let tds: DecimalValue?
+ let principalReceived: DecimalValue?
+ let nextPayout: String?
+ let frequency: String?
+ let repayment: String?
+ let quotedCoupon: DecimalValue?
+ let valuationBasis: String?
+ let reconciliationNote: String?
+ let payoutDifference: DecimalValue?
 }
 
 struct Holding: Codable, Identifiable, Sendable {

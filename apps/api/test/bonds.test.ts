@@ -66,6 +66,7 @@ test('Gmail imports encrypted bin-type CAS PDFs, deduplicates and retains last g
   if(address.includes('oauth2'))return Response.json({access_token:'access'});
   if(address.includes('/attachments/'))return Response.json({data:bytes.toString('base64url')});
   if(address.includes('format=full'))return Response.json({payload:{headers,parts:[{filename:'cas.pdf',mimeType:'bin',body:{attachmentId:'attachment',size:bytes.length}}]}});
+  if(decodeURIComponent(address).includes('wintwealth.com'))return Response.json({messages:[]});
   assert.match(decodeURIComponent(address),/eCAS@cdslstatement.com/i);return Response.json({messages:[{id:'message'}]});
  };
  assert.equal((await syncBonds(env,'owner',upstream,at)).imported,1);

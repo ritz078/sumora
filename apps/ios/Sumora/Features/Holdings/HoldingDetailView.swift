@@ -47,7 +47,8 @@ struct HoldingDetailView: View {
                             }
                             Divider()
                             detailRow("Invested") {
-                                if holding.costBasisKnown == false { Text("Unavailable") }
+                                if let amount = holding.bondTerms?.investedAmount { MoneyText(amount:amount,currency:snapshot.reportingCurrency) }
+                                else if holding.costBasisKnown == false { Text("Unavailable") }
                                 else { MoneyText(amount: holding.invested, currency: snapshot.reportingCurrency) }
                             }
                             if holding.assetClass != .fixedDeposit {
@@ -75,7 +76,22 @@ struct HoldingDetailView: View {
                                 if terms.redemptionCheck {
                                     Label("Maturity passed. Verify redemption; this value is from the last CAS.",systemImage:"exclamationmark.circle").font(.footnote).foregroundStyle(.orange)
                                 }
-                                Text("Coupon payments and accrued interest are not included.").font(.caption).foregroundStyle(.secondary)
+                                if let quoted = terms.quotedCoupon, quoted.value != terms.coupon?.value {
+                                    detailRow("Wint quoted rate") { Text("\(DisplayFormat.decimal(quoted.value))%") }
+                                }
+                                if let frequency = terms.frequency { detailRow("Interest frequency") { Text(frequency) } }
+                                if let repayment = terms.repayment { detailRow("Principal repayment") { Text(repayment) } }
+                                if let accrued = terms.accruedAtPurchase { detailRow("Interest paid at purchase") { MoneyText(amount:accrued,fractionDigits:2) } }
+                                if let gross = terms.interestGross { detailRow("Imported gross interest") { MoneyText(amount:gross,fractionDigits:2) } }
+                                if let tds = terms.tds { detailRow("Imported TDS") { MoneyText(amount:tds,fractionDigits:2) } }
+                                if let net = terms.interestNet { detailRow("Imported net interest") { MoneyText(amount:net,fractionDigits:2) } }
+                                if let principal = terms.principalReceived, principal.value > 0 { detailRow("Principal received") { MoneyText(amount:principal,fractionDigits:2) } }
+                                if let next = terms.nextPayout { detailRow("Reported next payout") { Text(next) } }
+                                if let difference = terms.payoutDifference, difference.value > 0 {
+                                    Text("Some reported payouts differ slightly from gross interest less TDS. The email amounts are preserved.").font(.caption).foregroundStyle(.orange)
+                                }
+                                if let note = terms.reconciliationNote { Text(note).font(.caption).foregroundStyle(.orange) }
+                                Text("Cash flows come from matched Wint emails. Imported totals may be incomplete. They are shown separately from the CAS value; accrued interest and returns are not estimated.").font(.caption).foregroundStyle(.secondary)
                             }.portfolioCard()
                         }
                         if holding.assetClass != .fixedDeposit && holding.assetClass != .bond {

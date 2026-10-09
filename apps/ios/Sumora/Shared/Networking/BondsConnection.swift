@@ -2,7 +2,12 @@ import Foundation
 import Observation
 
 struct BondsStatus: Decodable {
- struct Balance: Decodable { let total: DecimalValue; let statement_date: String; let count: Int; let redemptionChecks: Int }
+ struct Balance: Decodable { let total: DecimalValue; let statement_date: String; let count: Int; let redemptionChecks: Int; let matchedPurchases: Int? }
+ struct Redeemed: Decodable, Identifiable {
+  let isin: String; let name: String; let date: String; let principal: DecimalValue; let interestNet: DecimalValue; let tds: DecimalValue
+  var id: String { isin }
+ }
+ let redeemed: [Redeemed]?
  let configured: Bool
  let gmailConnected: Bool
  let lastSyncAt: Double?
@@ -59,7 +64,7 @@ final class BondsConnection {
    guard generation == current else { return }
    let value: BondsStatus = try await send("status", method: "GET")
    guard generation == current else { return }
-   status = value; errorMessage = nil; message = "Automatic imports stopped. Your recorded bond balances is retained."
+   status = value; errorMessage = nil; message = "Automatic imports stopped. Your recorded bond balances are retained."
   } catch { if generation == current { errorMessage = error.localizedDescription } }
  }
  private func send<T: Decodable>(_ path: String, method: String, body: [String: String]? = nil) async throws -> T {

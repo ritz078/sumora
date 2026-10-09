@@ -19,4 +19,19 @@ struct BondsConnectionTests {
   #expect(holding.costBasisKnown == false && holding.gain == nil && holding.dailyGain == nil)
   #expect(HoldingsQuery(assetClass:.bond).apply(to:[holding]).count == 1)
  }
+ @Test func matchedPurchasesPayoutsAndRedemptionsDecodeWithoutTurningInterestIntoMarketGain() throws {
+  let status=try JSONDecoder().decode(BondsStatus.self,from:Data("""
+  {"configured":true,"gmailConnected":true,"lastSyncAt":null,"error":null,"balance":{"total":"398845","statement_date":"2026-08-31","count":8,"redemptionChecks":0,"matchedPurchases":8},"redeemed":[{"isin":"INE0MYJ07112","name":"Progfin","date":"2026-10-01","principal":"50000","interestNet":"3420.45","tds":"380"}]}
+  """.utf8))
+  #expect(status.balance?.matchedPurchases == 8)
+  #expect(status.redeemed?.first?.principal.value == Decimal(50000))
+  let terms=try JSONDecoder().decode(BondTerms.self,from:Data("""
+  {"coupon":"9.3","maturesOn":"2028-11-20","redemptionCheck":false,"investedAmount":"48616.58","accruedAtPurchase":"152.88","interestGross":"1000","interestNet":"900","tds":"100","principalReceived":"0","nextPayout":"2026-11-01","frequency":"Monthly","repayment":"At Maturity","quotedCoupon":"9.3","valuationBasis":"statement","reconciliationNote":null,"payoutDifference":"0.2"}
+  """.utf8))
+  #expect(terms.investedAmount?.value == Decimal(string:"48616.58"))
+  #expect(terms.interestNet?.value == Decimal(900))
+  #expect(terms.nextPayout == "2026-11-01")
+  #expect(terms.payoutDifference?.value == Decimal(string:"0.2"))
+ }
+
 }

@@ -1,3 +1,7 @@
+import {syncWintBatch} from './wint-sync';
+import {readWintEvents} from './wint-events';
+import {reconcileBonds} from './bond-reconciliation';
+import {Decimal} from 'decimal.js';
 import {Hono} from 'hono';
 import {extractStatementPDF,gmailJSON} from './statement-mailbox';
 import {APIError,appSession,encrypt,decrypt,digest,type KiteEnvironment} from './zerodha';
@@ -6,7 +10,7 @@ import {parseBondStatement} from './bond-statement';
 import {portfolioTotals,type Portfolio} from './portfolio-valuation';
 import {istDate} from './daily-prices';
 type Checkpoint=ReturnType<typeof parseBondStatement>;
-type Settings={encrypted_password:string;scan_cursor:string|null};
+type Settings={encrypted_password:string;scan_cursor:string|null;wint_cursor:string|null;scan_kind:string};
 type Part={filename?:string;mimeType?:string;body?:{attachmentId?:string;data?:string;size?:number};parts?:Part[];headers?:{name:string;value:string}[]};
 const errorText='Bond statement needs review. Check the PAN and CAS balances. Your previous bond balances are retained.';
 export function trustedBondMessage(payload:Part) {
@@ -39,17 +43,20 @@ export async function saveBondSnapshot(env:Pick<KiteEnvironment,'DB'>,owner:stri
  if(!recorded)throw new Error('Bond sync superseded.');
  return status;
 }
-export async function bondsPortfolio(env:Pick<KiteEnvironment,'DB'>,snapshot:Portfolio,owner:string,at=new Date()):Promise<Portfolio> {
- const row=await env.DB.prepare('SELECT statement_date,bonds FROM bonds_snapshots WHERE owner_id=?').bind(owner).first<{statement_date:string;bonds:string}>();
- if(!row)return snapshot;
- const bonds=JSON.parse(row.bonds) as Checkpoint['bonds'];
- const holdings:Portfolio['holdings']=bonds.map(b=>({id:'bonds:'+b.isin,name:b.name,symbol:b.isin,assetClass:'bond',accountID:'bonds',quantity:b.quantity,unit:'bonds',invested:'0',costBasisKnown:false,value:b.value,gain:null,gainPercent:null,quote:b.price,quoteAt:row.statement_date+'T00:00:00Z',quoteCurrency:'INR',fxRate:'1',fxAt:null,history:[],source:'CDSL CAS · NSDL',priceBasis:`CAS value as of ${row.statement_date}; stated market price or face value, not a live quote. No accrued interest or return estimate.`,bondTerms:{coupon:b.coupon,maturesOn:b.maturesOn,redemptionCheck:!!b.maturesOn && b.maturesOn<=istDate(at)}}));
- const attention=holdings.some(h=>h.bondTerms?.redemptionCheck);
- return portfolioTotals({...snapshot,holdings:[...snapshot.holdings.filter(h=>!h.id.startsWith('bonds:')),...holdings],connections:[...snapshot.connections.filter(c=>c.id!=='bonds'),{id:'bonds',name:'Bonds · CDSL CAS',symbol:'B',status:attention?'attention':'connected',lastSyncAt:row.statement_date+'T00:00:00Z',description:attention?'Statement balances as of '+row.statement_date+'. Maturity passed for a bond; verify redemption.':'Statement balances as of '+row.statement_date}]});
+export async function recordedBonds(env:Pick<KiteEnvironment,'DB'>,owner:string,at=new Date()) {
+ const row=await env.DB.prepare('SELECT statement_date,bonds,account_hash,total FROM bonds_snapshots WHERE owner_id=?').bind(owner).first<{statement_date:string;bonds:string;account_hash:string;total:string}>();
+ const result=reconcileBonds(row?{accountID:'',statementDate:row.statement_date,total:row.total,bonds:JSON.parse(row.bonds)}:null,row?.account_hash??null,await readWintEvents(env,owner),at);
+ return {...result,statementDate:row?.statement_date??null};
 }
-export async function syncBonds(env:GmailEnvironment,owner:string,fetcher:typeof fetch=fetch,at=new Date()) {
+export async function bondsPortfolio(env:Pick<KiteEnvironment,'DB'>,snapshot:Portfolio,owner:string,at=new Date()):Promise<Portfolio> {
+ const result=await recordedBonds(env,owner,at);
+ if(!result.statementDate)return snapshot;
+ const attention=result.holdings.some(h=>h.bondTerms?.redemptionCheck || h.bondTerms?.reconciliationNote);
+ return portfolioTotals({...snapshot,holdings:[...snapshot.holdings.filter(h=>!h.id.startsWith('bonds:')),...result.holdings],connections:[...snapshot.connections.filter(c=>c.id!=='bonds'),{id:'bonds',name:'Bonds · CDSL CAS',symbol:'B',status:attention?'attention':'connected',lastSyncAt:result.statementDate+'T00:00:00Z',description:attention?'CAS balances as of '+result.statementDate+'. Some bonds need reconciliation.':'CAS holdings as of '+result.statementDate+'; matched Wint purchases and payouts.'}]});
+}
+export async function syncBonds(env:GmailEnvironment,owner:string,fetcher:typeof fetch=fetch,at=new Date()):Promise<{imported:number;status?:string;skipped?:boolean}> {
  const lease=at.getTime()+120000;
- const settings=await env.DB.prepare('UPDATE bonds_settings SET lease_until=? WHERE owner_id=? AND lease_until<=? RETURNING encrypted_password,last_sync_at,error,scan_cursor').bind(lease,owner,at.getTime()).first<Settings>();
+ const settings=await env.DB.prepare('UPDATE bonds_settings SET lease_until=? WHERE owner_id=? AND lease_until<=? RETURNING encrypted_password,last_sync_at,error,scan_cursor,wint_cursor,scan_kind').bind(lease,owner,at.getTime()).first<Settings>();
  if(!settings)return {imported:0,skipped:true};
  let error:string|null=null;
  try {
@@ -59,6 +66,7 @@ export async function syncBonds(env:GmailEnvironment,owner:string,fetcher:typeof
   const tokens=await gmailJSON(fetcher,'https://oauth2.googleapis.com/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({client_id:env.GMAIL_CLIENT_ID,client_secret:env.GMAIL_CLIENT_SECRET,refresh_token:await decrypt(gmail.encrypted_refresh_token,env.KITE_ENCRYPTION_KEY),grant_type:'refresh_token'})});
   if(typeof tokens.access_token!=='string' || !tokens.access_token)throw new Error('Missing Gmail token.');
   const headers={Authorization:'Bearer '+tokens.access_token};
+  if(settings.scan_kind==='wint')return await syncWintBatch(env,owner,headers,settings.wint_cursor,lease,fetcher,at);
   const query=new URLSearchParams({q:'from:eCAS@cdslstatement.com subject:"CDSL Consolidated Account Statement" has:attachment filename:pdf newer_than:120d',maxResults:'10'});
   if(settings.scan_cursor)query.set('pageToken',settings.scan_cursor);
   let list;
@@ -101,9 +109,11 @@ export async function syncBonds(env:GmailEnvironment,owner:string,fetcher:typeof
   }
   const next=typeof list.nextPageToken==='string' && list.nextPageToken.length<=1024?list.nextPageToken:null;
   await env.DB.prepare('UPDATE bonds_settings SET scan_cursor=? WHERE owner_id=? AND lease_until=?').bind(next,owner,lease).run();
-  return {imported:0,status:next?'scan_pending':'up_to_date'};
+  if(next)return {imported:0,status:'scan_pending'};
+  await env.DB.prepare("UPDATE bonds_settings SET scan_kind='wint' WHERE owner_id=? AND lease_until=?").bind(owner,lease).run();
+  return await syncWintBatch(env,owner,headers,settings.wint_cursor,lease,fetcher,at);
  }catch(failure){
-  error=failure instanceof APIError ? failure.message : 'Bond sync failed. Your previous bond balances is retained.';
+  error=failure instanceof APIError ? failure.message : 'Bond sync failed. Your previous bond balances are retained.';
   if(failure instanceof APIError && failure.code==='GMAIL_RECONNECT_REQUIRED')await env.DB.prepare("UPDATE gmail_connections SET status='reconnect',error=? WHERE owner_id=?").bind(error,owner).run();
   throw failure instanceof APIError ? failure : new APIError(502,'BONDS_SYNC_FAILED',error);
  }finally{await env.DB.prepare('UPDATE bonds_settings SET lease_until=0,last_sync_at=?,error=? WHERE owner_id=? AND lease_until=?').bind(at.getTime(),error,owner,lease).run();}
@@ -117,9 +127,10 @@ export function bondsRoutes(fetcher:typeof fetch=fetch,now=Date.now) {
   const auth=await appSession(c.env,c.req.header('Authorization'),now);
   const settings=await c.env.DB.prepare('SELECT last_sync_at,error FROM bonds_settings WHERE owner_id=?').bind(auth.owner_id).first<{last_sync_at:number|null;error:string|null}>();
   const gmail=await c.env.DB.prepare("SELECT owner_id FROM gmail_connections WHERE owner_id=? AND status='connected'").bind(auth.owner_id).first();
-  const row=await c.env.DB.prepare('SELECT statement_date,total,bonds FROM bonds_snapshots WHERE owner_id=?').bind(auth.owner_id).first<{statement_date:string;total:string;bonds:string}>();
-  const bonds=row?JSON.parse(row.bonds) as Checkpoint['bonds']:[];
-  return c.json({configured:!!settings,gmailConnected:!!gmail,lastSyncAt:settings?.last_sync_at??null,error:settings?.error??null,balance:row?{statement_date:row.statement_date,total:row.total,count:bonds.length,redemptionChecks:bonds.filter(b=>b.maturesOn && b.maturesOn<=istDate(new Date(now()))).length}:null});
+  const result=await recordedBonds(c.env,auth.owner_id,new Date(now()));
+  const exactTotal=result.holdings.reduce((sum,h)=>sum.plus(h.value??0),new Decimal(0)).toFixed();
+  const matched=result.holdings.filter(h=>h.bondTerms?.investedAmount!==null).length;
+  return c.json({configured:!!settings,gmailConnected:!!gmail,lastSyncAt:settings?.last_sync_at??null,error:settings?.error??null,balance:result.statementDate?{statement_date:result.statementDate,total:exactTotal,count:result.holdings.length,redemptionChecks:result.holdings.filter(h=>h.bondTerms?.redemptionCheck).length,matchedPurchases:matched}:null,redeemed:result.redeemed});
  });
  app.put('/password',async c=>{
   const auth=await appSession(c.env,c.req.header('Authorization'),now);
