@@ -35,7 +35,7 @@ struct AllocationSummary: View {
                     }.clipShape(Capsule())
                 }.frame(height: 12).accessibilityHidden(true)
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: typeSize.isAccessibilitySize ? 1 : 2), spacing: 12) {
-                    ForEach(allocations.prefix(4)) { item in
+                    ForEach(allocations) { item in
                         HStack(spacing: 6) {
                             Circle().fill(item.assetClass.color).frame(width: 10, height: 10)
                             Text(item.assetClass.title).lineLimit(2)

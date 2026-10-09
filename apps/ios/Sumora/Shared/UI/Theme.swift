@@ -13,7 +13,8 @@ extension AssetClass {
         case .usEquity: Color(red: 0.055, green: 0.65, blue: 0.91)
         case .mutualFund: Color(red: 0.02, green: 0.59, blue: 0.41)
         case .gold: Color(red: 0.96, green: 0.62, blue: 0.04)
-        case .bond, .fixedDeposit, .nps: Color(red: 0.49, green: 0.23, blue: 0.93)
+        case .nps: Color(red: 0.86, green: 0.22, blue: 0.48)
+        case .bond, .fixedDeposit: Color(red: 0.49, green: 0.23, blue: 0.93)
         }
     }
 }
