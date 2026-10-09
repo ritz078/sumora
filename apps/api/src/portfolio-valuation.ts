@@ -14,7 +14,9 @@ export function revalue(original: Portfolio, prices: MarketPrice[]): Portfolio {
   const holdings = original.holdings.map(h => {
     const p = byISIN.get(`${h.assetClass}:${holdingISIN(h)}`);
     const previousAt = h.quoteAt ?? original.capturedAt;
-    if (!p || h.quote !== null && Date.parse(priceTime(p)) <= Date.parse(previousAt)) return h;
+    if (!p || h.quote !== null && Date.parse(priceTime(p)) <= Date.parse(previousAt)) {
+      return { ...h, quoteAt: h.quote !== null ? previousAt : h.quoteAt };
+    }
     const value = new Money(h.quantity).times(p.price), invested = new Money(h.invested), gain = value.minus(invested);
     changed = true;
     return { ...h, quote: p.price, quoteAt: new Date(priceTime(p)).toISOString().replace('.000Z', 'Z'), value: value.toFixed(), gain: gain.toFixed(),

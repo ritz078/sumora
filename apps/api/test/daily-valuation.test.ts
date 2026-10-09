@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { parseAMFI, parseNSE } from '../src/daily-prices';
+import { dailyPerformance } from '../src/daily-performance';
 import { revalue } from '../src/portfolio-valuation';
 import { zerodhaSnapshot } from '../src/zerodha-portfolio';
 
@@ -56,4 +57,11 @@ test('a fresh quantity sync with no broker price still uses the last available i
   const original = sample(); original.capturedAt = '2026-10-09T06:00:00Z';
   original.holdings[0].quote = original.holdings[0].value = null;
   assert.equal(revalue(original, parseNSE(nse, date)).holdings[0].value, '251');
+});
+
+test('a newer fund NAV cannot make an old stock quote look current for daily returns', () => {
+  const original = sample();
+  const valued = revalue(original, [{ isin: 'INF000A01010', kind: 'mutualFund', price: '20', date: '2026-10-09', source: 'AMFI daily NAV' }]);
+  const performance = dailyPerformance(valued, [{ isin: 'INE000A01010', kind: 'indianEquity', price: '100', date: '2026-10-06', source: 'NSE daily close' }], '2026-10-09');
+  assert.equal(performance.holdings[0].dailyGain, null);
 });

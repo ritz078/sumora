@@ -1,3 +1,4 @@
+import { dailyPerformance } from './daily-performance';
 import { unzipSync, strFromU8 } from 'fflate';
 import { istDate, parseAMFI, parseNSE, type MarketPrice } from './daily-prices';
 import { holdingISIN, revalue, type Portfolio } from './portfolio-valuation';
@@ -39,8 +40,19 @@ async function savedPrices(env: Environment): Promise<MarketPrice[]> {
   const row = await env.DB.prepare("SELECT json_group_array(json_object('isin', isin, 'kind', kind, 'price', price, 'date', date, 'source', source)) AS prices FROM market_prices").first<{ prices: string }>();
   return JSON.parse(row?.prices ?? '[]');
 }
-export async function valuedSnapshot(env: Environment, snapshot: Portfolio) {
-  return revalue(snapshot, await savedPrices(env));
+async function captureBaselines(env: Environment, at: Date) {
+  const day = istDate(at);
+  // Retry can fill a missing/delayed prior close, but same-date corrections and
+  // intraday quote updates cannot move the day's reference price.
+  await env.DB.prepare(`INSERT INTO daily_price_baselines (day, kind, isin, price, price_date, source)
+    SELECT ?, kind, isin, price, date, source FROM market_prices WHERE date < ?
+    ON CONFLICT(day, kind, isin) DO UPDATE SET price = excluded.price, price_date = excluded.price_date, source = excluded.source
+    WHERE excluded.price_date > daily_price_baselines.price_date`).bind(day, day).run();
+}
+export async function valuedSnapshot(env: Environment, snapshot: Portfolio, at = new Date()) {
+  await captureBaselines(env, at);
+  const row = await env.DB.prepare("SELECT json_group_array(json_object('isin', isin, 'kind', kind, 'price', price, 'date', price_date, 'source', source)) AS prices FROM daily_price_baselines WHERE day = ?").bind(istDate(at)).first<{ prices: string }>();
+  return dailyPerformance(revalue(snapshot, await savedPrices(env)), JSON.parse(row?.prices ?? '[]'), istDate(at));
 }
 export async function refreshDailyPrices(env: Environment, fetcher: typeof fetch = fetch, at = new Date()): Promise<Result> {
   const lease = at.getTime() + 300000;
@@ -51,7 +63,7 @@ export async function refreshDailyPrices(env: Environment, fetcher: typeof fetch
     const rows = await env.DB.prepare('SELECT json_group_array(json(snapshot)) AS snapshots FROM zerodha_snapshots').first<{ snapshots: string }>();
     const portfolios = JSON.parse(rows?.snapshots ?? '[]') as Portfolio[];
     const wanted = new Set(portfolios.flatMap(p => p.holdings.flatMap(h => { const isin = holdingISIN(h); return isin ? [`${h.assetClass}:${isin}`] : []; })));
-    // Keep storage bounded to currently held instruments; this contains no historical prices.
+    // Keep latest prices bounded to currently held instruments.
     await env.DB.prepare("DELETE FROM market_prices WHERE kind || ':' || isin NOT IN (SELECT value FROM json_each(?))").bind(JSON.stringify([...wanted])).run();
     // Both midnight and morning runs target the previous completed Indian calendar day.
     const maxDate = istDate(new Date(at.getTime() - 86400000));
@@ -83,6 +95,9 @@ export async function refreshDailyPrices(env: Environment, fetcher: typeof fetch
         result.updated += prices.length;
       } catch { result.failed.push(kind); }
     }
+    await captureBaselines(env, at);
+    // A short retention window supports diagnostics without an unbounded history.
+    await env.DB.prepare('DELETE FROM daily_price_baselines WHERE day < ?').bind(istDate(new Date(at.getTime() - 30 * 86400000))).run();
     return result;
   } finally {
     await env.DB.prepare('UPDATE daily_price_job SET running_until = 0, last_run_at = ?, result = ? WHERE id = 1 AND running_until = ?').bind(at.getTime(), JSON.stringify(result), lease).run();

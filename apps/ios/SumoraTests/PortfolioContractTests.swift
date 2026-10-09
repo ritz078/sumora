@@ -3,6 +3,21 @@ import Testing
 @testable import Sumora
 
 struct PortfolioContractTests {
+    @Test func dailyReturnsDecodeWithoutBreakingOlderCachedSnapshots() throws {
+        let original = try MockPortfolioAPI.load(.complete)
+        let encoder = JSONEncoder()
+        let data = try encoder.encode(original)
+        var object = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        object["dailyGain"] = "-1234.56"
+        object["dailyGainPercent"] = "-0.5"
+        object["dailyBaselineDate"] = "2026-10-09"
+        let decoder = JSONDecoder()
+        let updated = try decoder.decode(PortfolioSnapshot.self, from: JSONSerialization.data(withJSONObject: object))
+        #expect(updated.dailyGain?.value == Decimal(string: "-1234.56"))
+        #expect(updated.dailyGainPercent?.value == Decimal(string: "-0.5"))
+        #expect(original.dailyGain == nil)
+    }
+
     @Test(arguments: [DemoScenario.complete, .partial, .stale, .empty, .unavailable])
     func valuationTotalsMatchCoveredHoldings(_ scenario: DemoScenario) throws {
         let snapshot = try MockPortfolioAPI.load(scenario)

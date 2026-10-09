@@ -163,10 +163,10 @@ export function zerodhaRoutes(fetcher: typeof fetch = fetch, now = Date.now) {
       const snapshot = JSON.parse(cached.snapshot) as Snapshot;
       snapshot.connections[0].status = 'attention';
       snapshot.connections[0].description = 'Kite session expired. Reconnect to update quantities. Available independent closing prices are applied to recorded holdings.';
-      return c.json(await valuedSnapshot(c.env, snapshot));
+      return c.json(await valuedSnapshot(c.env, snapshot, new Date(now())));
     };
     if (auth.provider_expires_at <= now()) return stale();
-    if (cached && cached.synced_at > now() - 30000) return c.json(await valuedSnapshot(c.env, JSON.parse(cached.snapshot) as Snapshot));
+    if (cached && cached.synced_at > now() - 30000) return c.json(await valuedSnapshot(c.env, JSON.parse(cached.snapshot) as Snapshot, new Date(now())));
     try {
       const token = await decrypt(auth.encrypted_token, c.env.KITE_ENCRYPTION_KEY);
       const [equity, funds] = await Promise.all([kite(c.env, '/portfolio/holdings', token), kite(c.env, '/mf/holdings', token)]);
@@ -175,7 +175,7 @@ export function zerodhaRoutes(fetcher: typeof fetch = fetch, now = Date.now) {
       catch (error) { throw new APIError(502, 'HOLDINGS_IMPORT_FAILED', error instanceof Error ? error.message : 'Unable to import holdings.'); }
       await c.env.DB.prepare('INSERT INTO zerodha_snapshots (owner_id, snapshot, synced_at) VALUES (?, ?, ?) ON CONFLICT(owner_id) DO UPDATE SET snapshot = excluded.snapshot, synced_at = excluded.synced_at')
         .bind(auth.owner_id, JSON.stringify(snapshot), now()).run();
-      return c.json(await valuedSnapshot(c.env, snapshot));
+      return c.json(await valuedSnapshot(c.env, snapshot, new Date(now())));
     } catch (error) {
       if (error instanceof APIError && error.code === 'ZERODHA_RECONNECT_REQUIRED') {
         await c.env.DB.prepare('UPDATE zerodha_sessions SET provider_expires_at = 0 WHERE token_hash = ?').bind(auth.token_hash).run();

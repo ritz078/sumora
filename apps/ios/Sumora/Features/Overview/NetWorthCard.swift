@@ -17,7 +17,7 @@ struct NetWorthCard: View {
             Divider()
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text("Today:")
-                Text("Daily return unavailable")
+                GainLossLabel(gain: snapshot.dailyGain, percent: snapshot.dailyGainPercent, currency: snapshot.reportingCurrency)
             }.font(.inter(.caption)).foregroundStyle(DashboardStyle.secondary).padding(.top, 5)
         }.frame(maxWidth: .infinity, alignment: .leading).portfolioCard()
     }

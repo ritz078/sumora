@@ -8,7 +8,7 @@ import type { Statement } from '../src/zerodha';
 import { zerodhaSnapshot } from '../src/zerodha-portfolio';
 function setup() {
   const db = new DatabaseSync(':memory:');
-  for (const name of ['0001_zerodha.sql','0007_daily_prices.sql']) db.exec(readFileSync(new URL(`../migrations/${name}`, import.meta.url), 'utf8'));
+  for (const name of ['0001_zerodha.sql','0007_daily_prices.sql','0008_daily_baselines.sql']) db.exec(readFileSync(new URL(`../migrations/${name}`, import.meta.url), 'utf8'));
   const env = { DB: { prepare(sql: string): Statement { let values: any[] = []; return {
     bind(...args) { values = args; return this; }, async first<T>() { return db.prepare(sql).get(...values) as T ?? null; }, async run() { return db.prepare(sql).run(...values); }
   }; } } };
@@ -71,4 +71,55 @@ test('large portfolios do not exhaust the free Worker D1 query budget', async ()
   const result = await refreshDailyPrices(counted, async () => new Response(zip), at);
   assert.equal(result.updated, 80);
   assert.ok(queries < 10);
+});
+
+// These exercise persisted prices through the portfolio boundary, including restarts/retries.
+test('daily baseline survives repeated refreshes and measures price movement on current quantities', async () => {
+  const { db, env, snapshot } = setup();
+  await refreshDailyPrices(env, async () => new Response(archive), at);
+  const live = { ...snapshot, capturedAt: '2026-10-09T06:00:00Z', holdings: [{ ...snapshot.holdings[0], quantity: '3', quote: '130', value: '390' }] };
+  let result = await valuedSnapshot(env, live, new Date('2026-10-09T06:00:00Z'));
+  assert.equal(result.dailyGain, '13.5');
+  assert.equal(result.dailyBaselineDate, '2026-10-09');
+  assert.equal(result.holdings[0].dailyBaselinePrice, '125.5');
+  // Same-date publication corrections must not move an established reference.
+  db.prepare('UPDATE market_prices SET price = ?').run('126');
+  assert.equal((await valuedSnapshot(env, live, new Date('2026-10-09T06:00:00Z'))).dailyGain, '13.5');
+  // A retry carrying an older close must not reset the baseline.
+  const older = zipSync({ 'prices.csv': strToU8('TradDt,ISIN,ClsPric\n2026-10-07,INE000A01010,120') });
+  await refreshDailyPrices(env, async () => new Response(older), at);
+  result = await valuedSnapshot(env, live, new Date('2026-10-09T06:00:00Z'));
+  assert.equal(result.dailyGain, '13.5');
+  assert.equal(db.prepare('SELECT count(*) AS n FROM daily_price_baselines').get()?.n, 1);
+});
+test('IST midnight rolls the baseline forward and failed feeds retain the last trading close', async () => {
+  const { env, snapshot } = setup();
+  await refreshDailyPrices(env, async () => new Response(archive), at);
+  const next = zipSync({ 'prices.csv': strToU8('TradDt,ISIN,ClsPric\n2026-10-09,INE000A01010,130') });
+  const midnight = new Date('2026-10-09T18:30:00Z');
+  await refreshDailyPrices(env, async () => new Response(next), midnight);
+  assert.equal((await valuedSnapshot(env, snapshot, midnight)).dailyGain, '0');
+  const monday = new Date('2026-10-12T00:30:00Z');
+  await refreshDailyPrices(env, async () => new Response('', { status: 404 }), monday);
+  const result = await valuedSnapshot(env, snapshot, monday);
+  assert.equal(result.dailyGain, '0');
+  assert.equal(result.dailyBaselineDate, '2026-10-12');
+  assert.equal(result.holdings[0].dailyBaselinePriceDate, '2026-10-09');
+});
+test('missing baseline or stale broker price never fabricates a daily return', async () => {
+  const { env, snapshot } = setup();
+  assert.equal((await valuedSnapshot(env, snapshot, at)).dailyGain, null);
+  await refreshDailyPrices(env, async () => new Response(archive), at);
+  const unmatched = { ...snapshot, holdings: [{ ...snapshot.holdings[0], id: 'zerodha:eq:INE999A01010' }] };
+  assert.equal((await valuedSnapshot(env, unmatched, at)).dailyGain, null);
+});
+
+test('daily return preserves decimal losses for funds and does not reuse yesterday’s gain', async () => {
+  const { db, env } = setup();
+  const funds = zerodhaSnapshot('{"status":"success","data":[]}', '{"status":"success","data":[{"tradingsymbol":"INF000A01010","fund":"Fund","quantity":1.5,"average_price":10,"last_price":19.5,"last_price_date":"2026-10-09"}]}', new Date('2026-10-09T12:00:00Z'));
+  db.prepare('INSERT INTO market_prices VALUES (?, ?, ?, ?, ?, ?)').run('mutualFund','INF000A01010','20','2026-10-08','AMFI daily NAV',0);
+  const result = await valuedSnapshot(env, funds, new Date('2026-10-09T12:00:00Z'));
+  assert.equal(result.dailyGain, '-0.75');
+  assert.equal(result.dailyGainPercent, '-2.5');
+  assert.equal((await valuedSnapshot(env, funds, new Date('2026-10-10T12:00:00Z'))).dailyGain, null);
 });

@@ -16,10 +16,17 @@ struct DailyPerformanceCard: View {
                 Text(preferences.hideBalances ? "TRACKED ASSETS · ••••" : "TRACKED ASSETS · \(snapshot.value.map { DisplayFormat.compactMoney($0.value, currency: snapshot.reportingCurrency) } ?? "—")")
                     .font(.inter(.caption)).frame(minHeight: 18)
             }.foregroundStyle(Color(red: 148/255, green: 163/255, blue: 184/255))
-            HStack(alignment: .firstTextBaseline, spacing: 7) {
-                Text(preferences.hideBalances ? "••••" : "—").font(.inter(.title, weight: .bold))
-                Text(preferences.hideBalances ? "Hidden" : "Daily change unavailable")
-                    .font(.inter(.caption)).foregroundStyle(Color.white.opacity(0.65))
+            Group {
+                if snapshot.dailyGain != nil {
+                    GainLossLabel(gain: snapshot.dailyGain, percent: snapshot.dailyGainPercent, currency: snapshot.reportingCurrency)
+                        .font(.inter(.title2, weight: .bold))
+                } else {
+                    HStack(alignment: .firstTextBaseline, spacing: 7) {
+                        Text(preferences.hideBalances ? "••••" : "—").font(.inter(.title, weight: .bold))
+                        Text(preferences.hideBalances ? "Hidden" : "Daily change unavailable")
+                            .font(.inter(.caption)).foregroundStyle(Color.white.opacity(0.65))
+                    }
+                }
             }.frame(minHeight: 42)
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), alignment: .leading), count: typeSize.isAccessibilitySize ? 1 : 2), spacing: 10) {
                 ForEach(classes) { asset in

@@ -42,6 +42,8 @@ struct Holding: Codable, Identifiable, Sendable {
     let value: DecimalValue?
     let gain: DecimalValue?
     let gainPercent: DecimalValue?
+    var dailyGain: DecimalValue? = nil
+    var dailyGainPercent: DecimalValue? = nil
     let quote: DecimalValue?
     let quoteCurrency: String
     let fxRate: DecimalValue?
@@ -81,10 +83,13 @@ struct PortfolioSnapshot: Codable, Sendable {
     let coveredInvested: DecimalValue
     let gain: DecimalValue?
     let gainPercent: DecimalValue?
+    var dailyGain: DecimalValue? = nil
+    var dailyGainPercent: DecimalValue? = nil
     let holdings: [Holding]
     let allocation: [Allocation]
     let history: [HistoryPoint]
     let connections: [Connection]
+    var dailyBaselineDate: String? = nil
 
     func holding(id: String) -> Holding? { holdings.first { $0.id == id } }
 }
