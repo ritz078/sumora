@@ -63,6 +63,15 @@ final class AppDependencies {
         if isLivePortfolio { await portfolio.refresh() }
     }
 
+    func toggleDemoPortfolio() async {
+        if isLivePortfolio {
+            usesRemoteAPI = false
+            await selectScenario(.complete)
+        } else {
+            await showZerodhaPortfolio()
+        }
+    }
+
     func selectScenario(_ scenario: DemoScenario) async {
         let wasLive = isLivePortfolio
         isLivePortfolio = false

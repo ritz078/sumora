@@ -30,10 +30,8 @@ struct HomeHeader:View {
     Spacer(minLength:0)
     HStack(spacing:6) {
      Button { preferences.hideBalances.toggle() } label: { Image(systemName: preferences.hideBalances ? "eye.slash" : "eye").resizable().scaledToFit().frame(width:18,height:18) }.accessibilityIdentifier("balanceVisibility").accessibilityLabel(preferences.hideBalances ? "Show balances" : "Hide balances").frame(width:36,height:36).background(HomeStyle.card,in:Circle()).overlay(Circle().stroke(HomeStyle.border,lineWidth:1))
-     Menu {
-      Button("Use demo portfolio", systemImage: "flask") { Task { await dependencies.selectScenario(.complete) } }
-      Button("Use linked portfolio", systemImage: "link") { Task { await dependencies.showZerodhaPortfolio() } }
-       .disabled(dependencies.zerodha.sessionToken == nil)
+     Button {
+      Task { await dependencies.toggleDemoPortfolio() }
      } label: {
       HStack(spacing:4) {
        Image(systemName:"flask").font(.system(size:15))
