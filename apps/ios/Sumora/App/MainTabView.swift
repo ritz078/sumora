@@ -8,6 +8,7 @@ struct MainTabView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var tab: AppTab = .overview
     @State private var keyboardVisible = false
+    @State private var instrumentPage = false
 
     var body: some View {
         TabView(selection: $tab) {
@@ -23,12 +24,13 @@ struct MainTabView: View {
         }
         .toolbar(.hidden, for: .tabBar)
         .safeAreaInset(edge: .bottom, spacing: 24) {
-            if !keyboardVisible {
+            if !keyboardVisible && !instrumentPage {
                 PortfolioTabBar(selection: $tab, holdingsCount: store.snapshot?.holdings.count ?? 0)
                     .padding(.horizontal, 16)
                     .padding(.bottom, 8)
             }
         }
+        .onPreferenceChange(InstrumentPageKey.self) { instrumentPage = $0 }
         .overlay(alignment: .top) {
             if let toast = store.errorToast {
                 PortfolioErrorToastView(message: toast.message) {

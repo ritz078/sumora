@@ -34,8 +34,7 @@ struct HomeAllocationCard: View {
    VStack(spacing: 8) {
     ForEach(allocations) { allocation in
      NavigationLink {
-      HoldingsView(assetClass: allocation.assetClass).toolbar(.visible, for: .navigationBar)
-       .navigationTitle(HomeStyle.title(allocation.assetClass)).navigationBarTitleDisplayMode(.inline)
+      InstrumentDestination(assetClass: allocation.assetClass)
      } label: {
       HStack(spacing: 8) {
        Circle().fill(HomeStyle.allocationColor(allocation.assetClass)).frame(width: 8, height: 8)

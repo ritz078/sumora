@@ -13,20 +13,22 @@ struct HomeTrajectoryCard: View {
   guard points.count > 1, let first = points.first, let last = points.last, first.value.value > 0 else { return nil }
   return (last.value.value - first.value.value) / first.value.value * 100
  }
+ var title = "Portfolio Trajectory"
+ var instrumentStyle = false
  var body: some View {
   VStack(alignment: .leading, spacing: 0) {
    HStack {
     VStack(alignment: .leading, spacing: 3) {
-     Text("Portfolio Trajectory").font(.inter(.headline, weight: .bold, size: 17)).tracking(-0.425)
-     Text(subtitle).font(.inter(.caption, size: 12)).foregroundStyle(HomeStyle.secondary)
+     Text(title).font(.inter(.headline, weight: .bold, size: instrumentStyle ? 15 : 17)).tracking(-0.425)
+     Text(subtitle).font(.inter(.caption, size: instrumentStyle ? 11 : 12)).foregroundStyle(HomeStyle.secondary)
     }
     Spacer(minLength: 4)
     if let change, !preferences.hideBalances {
      Text("\(change >= 0 ? "+" : "")\(DisplayFormat.decimal(change, digits: 1))%")
       .font(.inter(.caption2, weight: .semibold, size: 10)).foregroundStyle(change >= 0 ? DashboardStyle.positive : .red)
       .padding(.horizontal, 8).padding(.vertical, 2)
-      .background(HomeStyle.emerald.opacity(0.08), in: RoundedRectangle(cornerRadius: 4))
-      .overlay(RoundedRectangle(cornerRadius: 4).stroke(HomeStyle.emerald.opacity(0.2), lineWidth: 1))
+      .background(HomeStyle.emerald.opacity(0.08), in: RoundedRectangle(cornerRadius: instrumentStyle ? 99 : 4))
+      .overlay(RoundedRectangle(cornerRadius: instrumentStyle ? 99 : 4).stroke(HomeStyle.emerald.opacity(0.2), lineWidth: 1))
     }
    }.padding(.bottom, 12)
    HStack(spacing: 0) {
@@ -99,6 +101,7 @@ struct HomeTrajectoryCard: View {
      }.stroke(Color(red: 226/255, green: 232/255, blue: 240/255), style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
       .accessibilityHidden(true)
      plot.accessibilityLabel("Daily portfolio values")
+     if !instrumentStyle {
      ForEach(0..<3) { index in
       let y = 20.0 + Double(index) * 45
       let value = upper - (upper - lower) * y / 140
@@ -107,15 +110,19 @@ struct HomeTrajectoryCard: View {
        .frame(maxWidth: .infinity, alignment: .trailing).offset(y: y - 15)
        .accessibilityIdentifier("home-y-label-\(index)")
      }
+     }
      if let last = points.last {
       HStack(spacing: 4) {
-       Circle().fill(HomeStyle.emerald).frame(width: 6, height: 6)
+       if !instrumentStyle { Circle().fill(HomeStyle.emerald).frame(width: 6, height: 6) }
        Text(DisplayFormat.compactMoney(last.value.value, currency: currency))
         .font(.inter(.caption2, weight: .semibold, size: 10))
       }.foregroundStyle(.white).padding(.horizontal, 8).padding(.vertical, 3)
-       .background(Color(red: 15/255, green: 23/255, blue: 42/255), in: Capsule())
+       .background(Color(red: 15/255, green: 23/255, blue: 42/255), in: RoundedRectangle(cornerRadius: instrumentStyle ? 2 : 99))
+       .overlay(alignment: .bottom) {
+        if instrumentStyle { Rectangle().fill(Color(red: 15/255, green: 23/255, blue: 42/255)).frame(width: 6, height: 6).rotationEffect(.degrees(45)).offset(y: 3) }
+       }
        .shadow(color: .black.opacity(0.12), radius: 3, y: 2)
-       .fixedSize().frame(maxWidth: .infinity, alignment: .trailing).offset(x: -4, y: -18)
+       .fixedSize().frame(maxWidth: .infinity, alignment: .trailing).offset(x: -4, y: instrumentStyle ? -8 : -18)
        .accessibilityElement(children: .ignore)
        .accessibilityLabel("Latest recorded value " + DisplayFormat.compactMoney(last.value.value, currency: currency))
        .accessibilityIdentifier("home-latest-value")

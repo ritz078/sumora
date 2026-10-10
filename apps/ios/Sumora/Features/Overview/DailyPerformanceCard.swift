@@ -21,7 +21,7 @@ struct DailyPerformanceCard:View {
    }.foregroundStyle(preferences.hideBalances ? HomeStyle.muted:(total.gain?.value ?? 0)>=0 ? HomeStyle.brightGreen:.red).frame(minHeight:38).padding(.bottom,20)
    LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
     ForEach(classes) { asset in
-     NavigationLink { HoldingsView(assetClass:asset).toolbar(.visible,for:.navigationBar).navigationTitle(HomeStyle.title(asset)).navigationBarTitleDisplayMode(.inline) } label: { performanceTile(asset) }
+     NavigationLink { InstrumentDestination(assetClass:asset) } label: { performanceTile(asset) }
       .buttonStyle(.plain).accessibilityIdentifier("home-instrument-\(asset.rawValue)")
     }
    }

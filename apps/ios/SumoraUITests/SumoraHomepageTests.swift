@@ -10,6 +10,34 @@ final class SumoraHomepageTests: XCTestCase {
         return app
     }
 
+    func testIndianEquitiesHasDedicatedPageAndStockDetails() {
+        let app = launch()
+        app.buttons["home-instrument-indianEquity"].tap()
+        XCTAssertTrue(app.staticTexts["Indian Equities"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["equityValue"].label, "₹10,80,000")
+        XCTAssertFalse(app.buttons["tab-Overview"].exists)
+        let top = XCTAttachment(screenshot: app.screenshot())
+        top.name = "Indian stocks summary and trajectory"
+        top.lifetime = .keepAlways
+        add(top)
+        let sort = app.buttons["Sort Indian stocks"]
+        for _ in 0..<3 where !sort.isHittable { app.swipeUp() }
+        sort.tap()
+        app.buttons["Value: Low to High"].tap()
+        let row = app.buttons["equity-holding-hdfc"]
+        XCTAssertTrue(row.exists)
+        XCTAssertLessThan(row.frame.minY, app.buttons["equity-holding-reliance"].frame.minY)
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Indian stocks holdings"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
+        row.tap()
+        XCTAssertTrue(app.navigationBars.buttons.firstMatch.exists)
+        app.navigationBars.buttons.firstMatch.tap()
+        app.buttons["equitiesBack"].tap()
+        XCTAssertTrue(app.buttons["tab-Overview"].waitForExistence(timeout: 5))
+    }
+
     func testTrajectoryLabelsMatchReferencePlacement() {
         let app = launch()
         app.swipeUp()

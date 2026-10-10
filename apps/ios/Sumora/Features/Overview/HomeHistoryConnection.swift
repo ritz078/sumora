@@ -9,8 +9,9 @@ final class HomeHistoryConnection {
  @ObservationIgnored private var token: String?
  @ObservationIgnored private var generation = UUID()
  @ObservationIgnored private var isBusy = false
+ @ObservationIgnored private let assetClass: AssetClass?
  @ObservationIgnored private let session: URLSession
- init(session: URLSession = .shared) { self.session = session }
+ init(session: URLSession = .shared, assetClass: AssetClass? = nil) { self.session = session; self.assetClass = assetClass }
  func configure(address: String, token: String?) {
   guard self.address != address || self.token != token else { return }
   self.address = address; self.token = token; generation = UUID()
@@ -45,7 +46,11 @@ final class HomeHistoryConnection {
     guard let date = dayDate(record.day) else { throw PortfolioAPIError.invalidSnapshot }
     // Never connect partial valuations into a misleading net-worth curve.
     merged.removeValue(forKey: date)
-    if record.coverage == .complete, let value = record.value { merged[date] = HistoryPoint(date: date, value: value) }
+    if let assetClass {
+     if let instrument = record.instruments?.first(where: { $0.assetClass == assetClass }), instrument.coverage == .complete, let value = instrument.value {
+      merged[date] = HistoryPoint(date: date, value: value)
+     }
+    } else if record.coverage == .complete, let value = record.value { merged[date] = HistoryPoint(date: date, value: value) }
    }
    history = merged.values.sorted { $0.date < $1.date }; errorMessage = nil
   } catch is CancellationError { }
@@ -65,5 +70,6 @@ final class HomeHistoryConnection {
   let f = DateFormatter(); f.timeZone = TimeZone(identifier: "Asia/Kolkata"); f.dateFormat = "yyyy-MM-dd"; f.locale = Locale(identifier: "en_US_POSIX"); return f.string(from: date)
  }
  private struct Page: Decodable { let from: String; let firstRecordedDay: String?; let snapshots: [Record] }
- private struct Record: Decodable { let day: String; let value: DecimalValue?; let coverage: Coverage }
+ private struct Record: Decodable { let day: String; let value: DecimalValue?; let coverage: Coverage; let instruments: [Instrument]? }
+ private struct Instrument: Decodable { let assetClass: AssetClass; let value: DecimalValue?; let coverage: Coverage }
 }

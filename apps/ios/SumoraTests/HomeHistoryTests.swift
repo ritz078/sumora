@@ -4,6 +4,15 @@ import Testing
 
 @Suite(.serialized) @MainActor
 struct HomeHistoryTests {
+ @Test func instrumentHistoryUsesItsOwnCoverageAndNeverPortfolioTotals() async {
+  let config = URLSessionConfiguration.ephemeral; config.protocolClasses = [HomeHistoryProtocol.self]
+  let session = URLSession(configuration: config); defer { session.invalidateAndCancel() }
+  let connection = HomeHistoryConnection(session: session, assetClass: .indianEquity)
+  connection.configure(address: "https://example.com", token: "account")
+  HomeHistoryProtocol.responses = [(200, #"{"from":"2026-10-01","firstRecordedDay":"2026-10-01","snapshots":[{"day":"2026-10-08","value":"9000","coverage":"partial","instruments":[{"assetClass":"indianEquity","value":"1200","coverage":"complete"}]},{"day":"2026-10-09","value":"9900","coverage":"complete","instruments":[{"assetClass":"indianEquity","value":"1300","coverage":"partial"}]},{"day":"2026-10-10","value":"9999","coverage":"complete"}]}"#)]
+  await connection.refresh()
+  #expect(connection.history.map { $0.value.value } == [1200])
+ }
  @Test func paginatesOlderSnapshotsAndRetainsHistoryOnFailureThenClearsForAnotherAccount() async {
   let config = URLSessionConfiguration.ephemeral; config.protocolClasses = [HomeHistoryProtocol.self]
   let session = URLSession(configuration: config); defer { session.invalidateAndCancel() }
