@@ -43,12 +43,15 @@ export async function capturePortfolioDay(env:Environment,owner:string,input:Por
 
 /** One owner per invocation bounds D1 work; attempt rotation also moves past failing sources. */
 export async function scheduledPortfolioSnapshots(env:Environment,at=new Date()) {
- const next=await env.DB.prepare(`WITH owners AS (
+ // D1 bounds compound SELECT terms; keep each UNION group small.
+ const next=await env.DB.prepare(`WITH core_owners AS (
   SELECT owner_id FROM zerodha_snapshots UNION SELECT owner_id FROM properties
   UNION SELECT owner_id FROM gullak_checkpoints UNION SELECT owner_id FROM hdfc_snapshots
-  UNION SELECT owner_id FROM nps_snapshots UNION SELECT owner_id FROM bonds_snapshots
+ ), other_owners AS (
+  SELECT owner_id FROM nps_snapshots UNION SELECT owner_id FROM bonds_snapshots
   UNION SELECT owner_id FROM indmoney_snapshots
- ) SELECT o.owner_id,z.snapshot FROM owners o
+ ), owners AS (SELECT owner_id FROM core_owners UNION SELECT owner_id FROM other_owners)
+ SELECT o.owner_id,z.snapshot FROM owners o
  LEFT JOIN zerodha_snapshots z ON z.owner_id=o.owner_id
  LEFT JOIN portfolio_snapshot_jobs j ON j.owner_id=o.owner_id
  ORDER BY COALESCE(j.last_attempt_at,0),o.owner_id LIMIT 1`).first<{owner_id:string;snapshot:string|null}>();
