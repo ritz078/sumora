@@ -133,3 +133,14 @@ test('undated broker quotes retain unknown valuation dates and manual-only accou
  saved=JSON.parse(db.prepare('SELECT data FROM portfolio_daily_snapshots').get()!.data as string);
  assert.equal(saved.portfolio.connections.some((c:any)=>c.id==='zerodha'),false);
 });
+
+test('USD snapshots preserve reported dollars independently of INR and never fill missing USD with a converted value',async()=>{
+ const {env,db}=setupGold();const p=base();
+ p.holdings=[holding('usEquity','1200',{valueUSD:'12.125',investedUSD:'10',quoteCurrency:'USD',fxRate:'100'})];
+ const record=await history.capturePortfolioDay(env,'one',p,new Date('2026-10-10T12:00:00Z'));
+ assert.equal(record.instruments.find(i=>i.assetClass==='usEquity')?.valueUSD,'12.125');
+ assert.equal(JSON.parse(String(db.prepare('SELECT data FROM portfolio_daily_snapshots').get()?.data)).portfolio.holdings[0].investedUSD,'10');
+ p.holdings.push(holding('usEquity','100',{id:'legacy',quoteCurrency:'USD',fxRate:'100'}));
+ const partial=await history.capturePortfolioDay(env,'one',p,new Date('2026-10-10T12:15:00Z'));
+ assert.equal(partial.instruments.find(i=>i.assetClass==='usEquity')?.valueUSD,null);
+});

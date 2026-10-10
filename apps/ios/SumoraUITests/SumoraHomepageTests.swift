@@ -38,6 +38,36 @@ final class SumoraHomepageTests: XCTestCase {
         XCTAssertTrue(app.buttons["tab-Overview"].waitForExistence(timeout: 5))
     }
 
+    func testUSStocksUsesSharedLayoutAndOnlyUSHoldings() {
+        let app = launch()
+        app.buttons["home-instrument-usEquity"].tap()
+        XCTAssertTrue(app.staticTexts["US Stocks"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["equityValue"].label, "₹11,90,000")
+        app.buttons["stockCurrencyToggle"].tap()
+        XCTAssertEqual(app.staticTexts["equityValue"].label, "$14,000")
+        app.buttons["stockCurrencyToggle"].tap()
+        XCTAssertEqual(app.staticTexts["equityValue"].label, "₹11,90,000")
+        XCTAssertFalse(app.buttons["tab-Overview"].exists)
+        let sort = app.buttons["Sort US stocks"]
+        for _ in 0..<3 where !sort.isHittable { app.swipeUp() }
+        sort.tap()
+        app.buttons["Value: Low to High"].tap()
+        app.swipeUp()
+        let apple = app.descendants(matching: .any)["equity-holding-apple"].firstMatch
+        let voo = app.descendants(matching: .any)["equity-holding-voo"].firstMatch
+        XCTAssertTrue(apple.exists && voo.exists)
+        XCTAssertFalse(app.descendants(matching: .any)["equity-holding-hdfc"].firstMatch.exists)
+        XCTAssertLessThan(apple.frame.minY, voo.frame.minY)
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "US stocks shared layout and holdings"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
+        apple.tap()
+        XCTAssertFalse(app.staticTexts["holdingName"].exists)
+        app.buttons["equitiesBack"].tap()
+        XCTAssertTrue(app.buttons["tab-Overview"].waitForExistence(timeout: 5))
+    }
+
     func testTrajectoryLabelsMatchReferencePlacement() {
         let app = launch()
         app.swipeUp()
@@ -129,10 +159,8 @@ final class SumoraHomepageTests: XCTestCase {
         let category = app.buttons["allocation-usEquity"]
         for _ in 0..<3 where !category.isHittable { app.swipeUp() }
         category.tap()
-        XCTAssertTrue(app.buttons["US stocks"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["US stocks"].isSelected)
-        XCTAssertTrue(app.navigationBars.buttons.firstMatch.exists)
-        app.navigationBars.buttons.firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["US Stocks"].waitForExistence(timeout: 5))
+        app.buttons["equitiesBack"].tap()
         for _ in 0..<6 where !app.buttons["homeSettings"].isHittable { app.swipeDown() }
         app.buttons["homeSettings"].tap()
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))

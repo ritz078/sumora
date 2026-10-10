@@ -31,7 +31,9 @@ export function parseIndHoldings(result:any,at:Date):Portfolio['holdings'] {
   const quantity=amount(row.total_units),inr=amount(row.market_value),usd=amount(row.current_value_usd);
   if(!quantity.gt(0) || !usd.gt(0) || !inr.gt(0))throw invalid();
   const invested=amount(row.invested_amount??0),known=invested.gt(0),gain=inr.minus(invested);
+  const investedUSD=row.invested_value_usd==null?null:amount(row.invested_value_usd),usdCostKnown=investedUSD!==null && investedUSD.gt(0),gainUSD=usdCostKnown?usd.minus(investedUSD):null;
   return {id,name:row.investment,symbol:row.investment_code,assetClass:'usEquity',accountID:'indmoney',quantity:quantity.toFixed(),unit:'shares',
+   valueUSD:usd.toFixed(),investedUSD:usdCostKnown?investedUSD.toFixed():null,gainUSD:gainUSD?.toFixed()??null,gainPercentUSD:gainUSD && investedUSD?gainUSD.div(investedUSD).times(100).toFixed():null,
    invested:invested.toFixed(),costBasisKnown:known,value:inr.toFixed(),gain:known?gain.toFixed():null,gainPercent:known?gain.div(invested).times(100).toFixed():null,
    quote:usd.div(quantity).toFixed(),quoteCurrency:'USD',fxRate:inr.div(usd).toFixed(),fxAt:timestamp,quoteAt:timestamp,
    source:'INDmoney · '+row.broker,priceBasis:'Reported US holdings value in INR. USD unit value and implied INR/USD conversion are derived from the same snapshot. Retrieved '+timestamp+'; INDmoney does not provide a market-price or FX quote timestamp. Daily performance uses INDmoney’s trading-session definition and is not included in Sumora’s midnight baseline.',history:[]};

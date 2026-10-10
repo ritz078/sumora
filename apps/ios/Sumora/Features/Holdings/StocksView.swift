@@ -1,18 +1,28 @@
 import SwiftUI
 
-/// Dedicated Indian-equity page. Values always come from the selected portfolio source.
-struct IndianStocksView: View {
+/// Shared stock-page layout. Values always come from the selected instrument and portfolio source.
+struct StocksView: View {
+ let assetClass: AssetClass
+ init(assetClass: AssetClass) {
+  self.assetClass = assetClass
+  _history = State(initialValue: HomeHistoryConnection(assetClass: assetClass))
+ }
+ private var isUS: Bool { assetClass == .usEquity }
+ private var title: String { isUS ? "US Stocks" : "Indian Stocks" }
+ private var sortLabel: String { isUS ? "Sort US stocks" : "Sort Indian stocks" }
  @Environment(PortfolioStore.self) private var store
  @Environment(AppDependencies.self) private var dependencies
  @Environment(AppPreferences.self) private var preferences
  @Environment(\.dismiss) private var dismiss
- @State private var history = HomeHistoryConnection(assetClass: .indianEquity)
+ @State private var history: HomeHistoryConnection
  @State private var sort: EquitySort = .valueDescending
- private var holdings: [Holding] { store.snapshot?.holdings.filter { $0.assetClass == .indianEquity } ?? [] }
- private var currency: String { store.snapshot?.reportingCurrency ?? "INR" }
- private var value: DecimalValue? { !holdings.isEmpty && holdings.allSatisfy { $0.value != nil } ? DecimalValue(holdings.reduce(0) { $0 + $1.value!.value }) : nil }
- private var invested: DecimalValue { DecimalValue(holdings.filter { $0.costBasisKnown != false }.reduce(0) { $0 + $1.invested.value }) }
- private var costKnown: Bool { !holdings.isEmpty && holdings.allSatisfy { $0.costBasisKnown != false } }
+ @State private var usesUSD = false
+ private var holdings: [Holding] { store.snapshot?.holdings.filter { $0.assetClass == assetClass } ?? [] }
+ private var presentation: StockCurrencyPresentation { StockCurrencyPresentation(holdings: holdings, reportingCurrency: store.snapshot?.reportingCurrency ?? "INR", usesUSD: isUS && usesUSD) }
+ private var currency: String { presentation.currency }
+ private var value: DecimalValue? { !holdings.isEmpty && holdings.allSatisfy { selectedValue($0) != nil } ? DecimalValue(holdings.reduce(0) { $0 + selectedValue($1)!.value }) : nil }
+ private var invested: DecimalValue { DecimalValue(holdings.reduce(0) { $0 + (usesUSD ? $1.investedUSD?.value ?? 0 : $1.costBasisKnown != false ? $1.invested.value : 0) }) }
+ private var costKnown: Bool { !holdings.isEmpty && holdings.allSatisfy { usesUSD ? $0.investedUSD != nil : $0.costBasisKnown != false } }
  private var gain: DecimalValue? { costKnown ? value.map { DecimalValue($0.value - invested.value) } : nil }
  private var percent: DecimalValue? { invested.value > 0 ? gain.map { DecimalValue($0.value / invested.value * 100) } : nil }
  private var scope: String { "\(dependencies.isLivePortfolio):\(dependencies.zerodha.address):\(dependencies.zerodha.sessionToken ?? "demo")" }
@@ -22,14 +32,14 @@ struct IndianStocksView: View {
    VStack(spacing:16) {
     valuation
     if let snapshot = store.snapshot { daily(snapshot) }
-    HomeTrajectoryCard(history: dependencies.isLivePortfolio ? history.history : demoHistory,
+    HomeTrajectoryCard(history: dependencies.isLivePortfolio ? (usesUSD ? history.usdHistory : history.history) : presentation.history(demoHistory),
      referenceDate: dependencies.demoDate, currency: currency, errorMessage: history.errorMessage,
      title: "Equities Trajectory", instrumentStyle: true)
     positions
     VStack(spacing:4) {
      Text("Sync baseline: Quantities remain unchanged while prices update · \(syncTime) IST")
       .font(.inter(.caption2,weight:.medium,size:11))
-     Text(dependencies.isLivePortfolio ? "Recorded Zerodha holdings · Prices may be delayed" : "Sample portfolio · Illustrative values, not live prices")
+     Text(isUS && usesUSD ? "Recorded USD values · History starts when USD snapshots are saved" : dependencies.isLivePortfolio ? (isUS ? "Recorded US holdings · Prices and exchange rates may be delayed" : "Recorded Zerodha holdings · Prices may be delayed") : "Sample portfolio · Illustrative values, not live prices")
       .font(.inter(.caption2,size:10))
     }.foregroundStyle(HomeStyle.muted).multilineTextAlignment(.center).padding(.horizontal,8).padding(.vertical,4)
    }.padding(16).padding(.bottom,24)
@@ -48,9 +58,15 @@ struct IndianStocksView: View {
    Button { dismiss() } label: { Image(systemName:"chevron.left").font(.system(size:17,weight:.semibold)).frame(width:36,height:36) }
     .foregroundStyle(HomeStyle.indigo).accessibilityLabel("Go back").accessibilityIdentifier("equitiesBack")
    Spacer()
-   Text("Indian Stocks").font(.inter(.headline,weight:.bold,size:17)).tracking(-0.425)
+   Text(title).font(.inter(.headline,weight:.bold,size:17)).tracking(-0.425)
    Spacer()
-   Color.clear.frame(width:36,height:36)
+   if isUS {
+    Button { usesUSD.toggle() } label: {
+     Text(usesUSD ? "$" : "₹").font(.inter(.headline,weight:.semibold,size:17)).frame(width:36,height:36)
+      .background(HomeStyle.card,in:Circle()).overlay(Circle().stroke(HomeStyle.border,lineWidth:1))
+    }.foregroundStyle(HomeStyle.indigo).accessibilityIdentifier("stockCurrencyToggle")
+     .accessibilityLabel(usesUSD ? "Switch to Indian rupees" : "Switch to US dollars")
+   } else { Color.clear.frame(width:36,height:36) }
   }.padding(.horizontal,8).padding(.vertical,8).background(HomeStyle.background.opacity(0.95))
    .overlay(alignment:.bottom) { Rectangle().fill(HomeStyle.border).frame(height:1) }
  }
@@ -85,14 +101,14 @@ struct IndianStocksView: View {
   }.font(.inter(.caption,size:12))
  }
  private func daily(_ snapshot: PortfolioSnapshot) -> some View {
-  let metric = HomeDailyMetrics(snapshot:snapshot,asset:.indianEquity)
+  let metric = HomeDailyMetrics(snapshot:snapshot,asset:assetClass)
   return VStack(alignment:.leading,spacing:12) {
    HStack(spacing:8) {
     Circle().fill(Color.blue).frame(width:8,height:8)
     Text("DAILY PERFORMANCE").font(.inter(.caption2,weight:.semibold,size:11)).tracking(0.8).foregroundStyle(HomeStyle.brightGreen)
    }
    HStack(alignment:.firstTextBaseline,spacing:8) {
-    HomeSignedMoney(amount:metric.gain,currency:currency).font(.inter(.largeTitle,weight:.bold,size:32)).tracking(-0.8).foregroundStyle(.white)
+    HomeSignedMoney(amount:presentation.amount(metric.gain),currency:currency).font(.inter(.largeTitle,weight:.bold,size:32)).tracking(-0.8).foregroundStyle(.white)
     if let percent = metric.percent {
      Text(preferences.hideBalances ? "••••" : signed(percent.value)+"% today").font(.inter(.caption2,weight:.semibold,size:12))
       .lineLimit(1).fixedSize(horizontal:true,vertical:false)
@@ -115,11 +131,11 @@ struct IndianStocksView: View {
    HStack {
     VStack(alignment:.leading,spacing:4) {
      Text("Holdings").font(.inter(.headline,weight:.bold,size:17)).tracking(-0.425)
-     Text("\(holdings.count) Instruments · NSE/BSE Direct").font(.inter(.caption,size:12)).foregroundStyle(HomeStyle.secondary)
+     Text("\(holdings.count) Instruments · \(isUS ? "US Markets" : "NSE/BSE Direct")").font(.inter(.caption,size:12)).foregroundStyle(HomeStyle.secondary)
     }
     Spacer(minLength:4)
     Menu {
-     Picker("Sort Indian stocks",selection:$sort) { ForEach(EquitySort.allCases) { Text($0.rawValue).tag($0) } }
+     Picker(sortLabel,selection:$sort) { ForEach(EquitySort.allCases) { Text($0.rawValue).tag($0) } }
     } label: {
      HStack(spacing:6) {
       Text("Sort:").foregroundStyle(HomeStyle.muted)
@@ -128,7 +144,7 @@ struct IndianStocksView: View {
      }.font(.inter(.caption2,size:11)).padding(.horizontal,10).padding(.vertical,5)
       .background(Color(.tertiarySystemGroupedBackground),in:RoundedRectangle(cornerRadius:8))
       .overlay(RoundedRectangle(cornerRadius:8).stroke(HomeStyle.border,lineWidth:1))
-    }.accessibilityLabel("Sort Indian stocks")
+    }.accessibilityLabel(sortLabel)
    }
    VStack(spacing:0) {
     Rectangle().fill(HomeStyle.border).frame(height:1)
@@ -136,7 +152,7 @@ struct IndianStocksView: View {
      row(holding).accessibilityElement(children:.combine).accessibilityIdentifier("equity-holding-\(holding.id)")
      if holding.id != sortedHoldings.last?.id { Rectangle().fill(HomeStyle.border).frame(height:1) }
     }
-    if holdings.isEmpty { Text("No Indian stocks recorded yet").font(.inter(.caption,size:12)).foregroundStyle(HomeStyle.secondary).padding(.vertical,24) }
+    if holdings.isEmpty { Text(isUS ? "No US stocks recorded yet" : "No Indian stocks recorded yet").font(.inter(.caption,size:12)).foregroundStyle(HomeStyle.secondary).padding(.vertical,24) }
    }
   }.homeCard()
  }
@@ -150,20 +166,26 @@ struct IndianStocksView: View {
     }
     HStack(spacing:3) {
      Text("\(DisplayFormat.decimal(holding.quantity.value)) shares ·")
-     MoneyText(amount:holding.quote,currency:holding.quoteCurrency)
+     MoneyText(amount:quoteAmount(holding),currency:isUS ? currency : holding.quoteCurrency)
     }.font(.inter(.caption2,size:11)).foregroundStyle(HomeStyle.secondary)
    }.frame(maxWidth:.infinity,alignment:.leading)
    VStack(alignment:.trailing,spacing:4) {
-    MoneyText(amount:holding.value,currency:currency).font(.inter(.caption,weight:.bold,size:13))
-    Text(preferences.hideBalances ? "••••" : holding.gainPercent.map { signed($0.value)+"%"+(holding.gain.map { " ("+($0.value >= 0 ? "+" : "−")+DisplayFormat.compactMoney(abs($0.value),currency:currency)+")" } ?? "") } ?? "Return unavailable")
-     .font(.inter(.caption2,weight:.medium,size:11)).foregroundStyle(gainColor(holding.gain)).multilineTextAlignment(.trailing).lineLimit(1)
+    MoneyText(amount:selectedValue(holding),currency:currency).font(.inter(.caption,weight:.bold,size:13))
+    Text(preferences.hideBalances ? "••••" : (usesUSD ? holding.gainPercentUSD : holding.gainPercent).map { signed($0.value)+"%"+((usesUSD ? holding.gainUSD : holding.gain).map { " ("+($0.value >= 0 ? "+" : "−")+DisplayFormat.compactMoney(abs($0.value),currency:currency)+")" } ?? "") } ?? "Return unavailable")
+     .font(.inter(.caption2,weight:.medium,size:11)).foregroundStyle(gainColor(usesUSD ? holding.gainUSD : holding.gain)).multilineTextAlignment(.trailing).lineLimit(1)
    }.fixedSize(horizontal:true,vertical:false)
   }.padding(.vertical,12).contentShape(Rectangle())
  }
+ private func quoteAmount(_ holding: Holding) -> DecimalValue? {
+  guard isUS && !usesUSD else { return holding.quote }
+  guard let quote = holding.quote, let fx = holding.fxRate, fx.value > 0 else { return nil }
+  return DecimalValue(quote.value * fx.value)
+ }
+ private func selectedValue(_ holding: Holding) -> DecimalValue? { usesUSD ? holding.valueUSD : holding.value }
  private var sortedHoldings: [Holding] {
   holdings.sorted { left,right in
-   let a = sort.isValue ? left.value?.value : left.gain?.value
-   let b = sort.isValue ? right.value?.value : right.gain?.value
+   let a = sort.isValue ? selectedValue(left)?.value : (usesUSD ? left.gainUSD : left.gain)?.value
+   let b = sort.isValue ? selectedValue(right)?.value : (usesUSD ? right.gainUSD : right.gain)?.value
    switch (a,b) {
    case let (.some(a),.some(b)) where a != b: return sort.isAscending ? a < b : a > b
    case (.some,.none): return true
@@ -181,7 +203,7 @@ struct IndianStocksView: View {
   }.sorted { $0.date < $1.date }
  }
  private var syncTime: String {
-  guard let date = store.snapshot?.holdingsSyncAt else { return "—" }
+  guard let date = isUS ? store.snapshot?.capturedAt : store.snapshot?.holdingsSyncAt else { return "—" }
   let formatter = DateFormatter(); formatter.timeZone = TimeZone(identifier:"Asia/Kolkata"); formatter.dateFormat = "HH:mm"
   return formatter.string(from:date)
  }
@@ -203,7 +225,7 @@ struct InstrumentPageKey: PreferenceKey {
 struct InstrumentDestination: View {
  let assetClass: AssetClass
  var body: some View {
-  if assetClass == .indianEquity { IndianStocksView() }
+  if assetClass == .indianEquity || assetClass == .usEquity { StocksView(assetClass:assetClass) }
   else { HoldingsView(assetClass:assetClass).toolbar(.visible,for:.navigationBar).navigationTitle(HomeStyle.title(assetClass)).navigationBarTitleDisplayMode(.inline) }
  }
 }

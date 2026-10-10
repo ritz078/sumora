@@ -13,6 +13,7 @@ test('US import preserves fractional shares and uses reported INR value and acqu
  assert.equal(h.quantity,'0.125');assert.equal(h.value,'1200');assert.equal(h.invested,'800');assert.equal(h.gain,'400');
  assert.equal(h.quote,'96');assert.equal(h.quoteCurrency,'USD');assert.equal(h.fxRate,'100');
  assert.equal(h.costBasisKnown,true);
+ assert.equal(h.valueUSD,'12');assert.equal(h.investedUSD,'10');assert.equal(h.gainUSD,'2');assert.equal(h.gainPercentUSD,'20');
  const unknown=structuredClone(sample);unknown.holdings[0].invested_amount=0;
  assert.equal(parseIndHoldings(envelope(unknown),at)[0].gain,null);
 });
@@ -39,6 +40,7 @@ test('sync composes owner-scoped US allocation once and retains the previous sna
  await syncINDmoney(env,'owner',upstream(sample),at);
  const base=zerodhaSnapshot('{"status":"success","data":[]}','{"status":"success","data":[]}',at);
  const first=await indmoneyPortfolio(env,base,'owner',at);
+ assert.equal(first.holdings[0].valueUSD,'12');assert.equal(JSON.parse(String(db.prepare('SELECT snapshot FROM indmoney_snapshots').get()?.snapshot))[0].valueUSD,'12');
  assert.equal(first.value,'1200');assert.equal(first.allocation[0].assetClass,'usEquity');
  assert.equal((await indmoneyPortfolio(env,first,'owner',at)).holdings.length,1);
  assert.equal((await indmoneyPortfolio(env,base,'someone-else',at)).value,'0');

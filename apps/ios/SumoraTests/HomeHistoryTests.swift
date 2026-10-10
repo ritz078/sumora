@@ -13,6 +13,18 @@ struct HomeHistoryTests {
   await connection.refresh()
   #expect(connection.history.map { $0.value.value } == [1200])
  }
+ @Test func usdHistoryUsesRecordedDollarsAndDoesNotConvertOlderRupeeSnapshots() async {
+  let config = URLSessionConfiguration.ephemeral; config.protocolClasses = [HomeHistoryProtocol.self]
+  let session = URLSession(configuration: config); defer { session.invalidateAndCancel() }
+  let connection = HomeHistoryConnection(session: session, assetClass: .usEquity)
+  connection.configure(address: "https://example.com", token: "account")
+  HomeHistoryProtocol.responses = [(200, #"{"from":"2026-10-01","firstRecordedDay":"2026-10-01","snapshots":[{"day":"2026-10-08","coverage":"complete","instruments":[{"assetClass":"usEquity","value":"1200","coverage":"complete"}]},{"day":"2026-10-09","coverage":"complete","instruments":[{"assetClass":"usEquity","value":"1300","valueUSD":"12.125","coverage":"complete"}]}]}"#)]
+  await connection.refresh()
+  #expect(connection.history.map { $0.value.value } == [1200,1300])
+  #expect(connection.usdHistory.map { $0.value.value } == [Decimal(string: "12.125")!])
+  connection.configure(address: "https://example.com", token: "other")
+  #expect(connection.usdHistory.isEmpty)
+ }
  @Test func paginatesOlderSnapshotsAndRetainsHistoryOnFailureThenClearsForAnotherAccount() async {
   let config = URLSessionConfiguration.ephemeral; config.protocolClasses = [HomeHistoryProtocol.self]
   let session = URLSession(configuration: config); defer { session.invalidateAndCancel() }

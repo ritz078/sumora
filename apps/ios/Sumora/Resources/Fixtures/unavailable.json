@@ -71,7 +71,11 @@
       "quoteAt": null,
       "source": "NYSE Arca",
       "priceBasis": "Previous market close",
-      "history": []
+      "history": [],
+      "valueUSD": null,
+      "investedUSD": "8705.882352941176470588235294",
+      "gainUSD": null,
+      "gainPercentUSD": null
     },
     {
       "id": "apple",
@@ -92,7 +96,11 @@
       "quoteAt": null,
       "source": "NASDAQ",
       "priceBasis": "Previous market close",
-      "history": []
+      "history": [],
+      "valueUSD": null,
+      "investedUSD": "3529.411764705882352941176471",
+      "gainUSD": null,
+      "gainPercentUSD": null
     },
     {
       "id": "parag",

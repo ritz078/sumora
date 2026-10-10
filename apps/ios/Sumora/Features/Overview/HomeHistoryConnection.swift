@@ -4,6 +4,7 @@ import Observation
 @MainActor @Observable
 final class HomeHistoryConnection {
  private(set) var history: [HistoryPoint] = []
+ private(set) var usdHistory: [HistoryPoint] = []
  private(set) var errorMessage: String?
  @ObservationIgnored private var address = ""
  @ObservationIgnored private var token: String?
@@ -15,7 +16,7 @@ final class HomeHistoryConnection {
  func configure(address: String, token: String?) {
   guard self.address != address || self.token != token else { return }
   self.address = address; self.token = token; generation = UUID()
-  history = []; errorMessage = nil; isBusy = false
+  history = []; usdHistory = []; errorMessage = nil; isBusy = false
  }
  func refresh() async {
   guard let token, let base = APIConfiguration.baseURL(address), !isBusy else { return }
@@ -42,17 +43,20 @@ final class HomeHistoryConnection {
    }
    guard current == generation else { return }
    var merged = Dictionary(uniqueKeysWithValues: history.map { ($0.date, $0) })
+   var usdMerged = Dictionary(uniqueKeysWithValues: usdHistory.map { ($0.date, $0) })
    for record in records {
     guard let date = dayDate(record.day) else { throw PortfolioAPIError.invalidSnapshot }
     // Never connect partial valuations into a misleading net-worth curve.
     merged.removeValue(forKey: date)
+    usdMerged.removeValue(forKey: date)
     if let assetClass {
      if let instrument = record.instruments?.first(where: { $0.assetClass == assetClass }), instrument.coverage == .complete, let value = instrument.value {
       merged[date] = HistoryPoint(date: date, value: value)
+      if let usd = instrument.valueUSD { usdMerged[date] = HistoryPoint(date: date, value: usd) }
      }
     } else if record.coverage == .complete, let value = record.value { merged[date] = HistoryPoint(date: date, value: value) }
    }
-   history = merged.values.sorted { $0.date < $1.date }; errorMessage = nil
+   history = merged.values.sorted { $0.date < $1.date }; usdHistory = usdMerged.values.sorted { $0.date < $1.date }; errorMessage = nil
   } catch is CancellationError { }
   catch { if current == generation { errorMessage = "Saved history couldn’t refresh. Previous history is retained." } }
  }
@@ -71,5 +75,5 @@ final class HomeHistoryConnection {
  }
  private struct Page: Decodable { let from: String; let firstRecordedDay: String?; let snapshots: [Record] }
  private struct Record: Decodable { let day: String; let value: DecimalValue?; let coverage: Coverage; let instruments: [Instrument]? }
- private struct Instrument: Decodable { let assetClass: AssetClass; let value: DecimalValue?; let coverage: Coverage }
+ private struct Instrument: Decodable { let assetClass: AssetClass; let value: DecimalValue?; let coverage: Coverage; let valueUSD: DecimalValue? }
 }

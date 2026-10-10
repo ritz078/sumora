@@ -30,6 +30,7 @@ export async function capturePortfolioDay(env:Environment,owner:string,input:Por
   const holdings=portfolio.holdings.filter(h=>h.assetClass===assetClass),valued=holdings.filter(h=>h.value!==null);
   const dates=holdingDates.filter(d=>holdings.some(h=>h.id===d.id));
   return {assetClass,holdingCount:holdings.length,valuedHoldingCount:valued.length,
+   ...(assetClass==='usEquity'?{valueUSD:holdings.length && holdings.every(h=>h.valueUSD!=null)?holdings.reduce((sum,h)=>sum.plus(h.valueUSD!),new Money(0)).toFixed():null}:{}),
    value:holdings.length && !valued.length?null:valued.reduce((sum,h)=>sum.plus(h.value!),new Money(0)).toFixed(),
    coverage:valued.length===holdings.length?'complete':valued.length?'partial':'unavailable',
    carriedForwardCount:dates.filter(d=>d.carriedForward===true).length,unknownValuationDateCount:dates.filter(d=>d.carriedForward===null).length};

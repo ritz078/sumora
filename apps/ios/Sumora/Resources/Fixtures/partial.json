@@ -2246,7 +2246,11 @@
           "date": "2026-10-06T06:00:00Z",
           "value": "850000"
         }
-      ]
+      ],
+      "valueUSD": "10000",
+      "investedUSD": "8705.882352941176470588235294",
+      "gainUSD": "1294.117647058823529411764706",
+      "gainPercentUSD": "14.86"
     },
     {
       "id": "apple",
@@ -2267,7 +2271,11 @@
       "quoteAt": null,
       "source": "NASDAQ",
       "priceBasis": "Previous market close",
-      "history": []
+      "history": [],
+      "valueUSD": null,
+      "investedUSD": "3529.411764705882352941176471",
+      "gainUSD": null,
+      "gainPercentUSD": null
     },
     {
       "id": "parag",
