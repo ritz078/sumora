@@ -244,7 +244,8 @@ struct InstrumentPageKey: PreferenceKey {
 struct InstrumentDestination: View {
  let assetClass: AssetClass
  var body: some View {
-  if assetClass == .gold { GoldView() }
+  if assetClass == .fixedDeposit || assetClass == .nps { StatementInstrumentView(assetClass:assetClass) }
+  else if assetClass == .gold { GoldView() }
   else if assetClass == .realEstate { RealEstateView() }
   else if assetClass == .indianEquity || assetClass == .usEquity || assetClass == .mutualFund { StocksView(assetClass:assetClass) }
   else { HoldingsView(assetClass:assetClass).toolbar(.visible,for:.navigationBar).navigationTitle(HomeStyle.title(assetClass)).navigationBarTitleDisplayMode(.inline) }

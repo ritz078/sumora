@@ -52,7 +52,7 @@ struct MockPortfolioAPI: PortfolioAPI {
 
     static func load(_ scenario: DemoScenario) throws -> PortfolioSnapshot {
         let arguments = ProcessInfo.processInfo.arguments
-        let resource = arguments.contains("--ui-testing") && arguments.contains("--gold-fixture") ? "gold" : arguments.contains("--ui-testing") && arguments.contains("--real-estate-fixture") ? "real-estate" : scenario.rawValue
+        let resource = arguments.contains("--ui-testing") && arguments.contains("--statement-fixture") ? "statements" : arguments.contains("--ui-testing") && arguments.contains("--gold-fixture") ? "gold" : arguments.contains("--ui-testing") && arguments.contains("--real-estate-fixture") ? "real-estate" : scenario.rawValue
         guard let url = Bundle.main.url(forResource: resource, withExtension: "json") else {
             throw PortfolioAPIError.missingFixture
         }

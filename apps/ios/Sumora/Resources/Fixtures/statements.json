@@ -1,0 +1,175 @@
+{
+  "id": "demo-complete",
+  "reportingCurrency": "INR",
+  "capturedAt": "2026-10-06T06:00:00Z",
+  "holdingsSyncAt": "2026-10-06T05:00:00Z",
+  "coverage": "complete",
+  "value": "432020.0",
+  "invested": "0",
+  "coveredInvested": "0",
+  "gain": null,
+  "gainPercent": null,
+  "holdings": [
+    {
+      "id": "nps:1:E",
+      "name": "Pension Fund Scheme E \u2013 Tier I",
+      "symbol": "Tier 1 \u00b7 E",
+      "assetClass": "nps",
+      "accountID": "nps",
+      "quantity": "1200.5",
+      "unit": "units",
+      "invested": "0",
+      "value": "48020.0",
+      "gain": null,
+      "gainPercent": null,
+      "quote": "40",
+      "quoteCurrency": "INR",
+      "fxRate": "1",
+      "fxAt": null,
+      "quoteAt": "2026-10-06T05:00:00Z",
+      "source": "Sample NPS statement",
+      "priceBasis": "Illustrative statement NAV",
+      "history": [
+        {
+          "date": "2026-09-01T00:00:00Z",
+          "value": "47059.600"
+        },
+        {
+          "date": "2026-10-06T06:00:00Z",
+          "value": "48020.0"
+        }
+      ],
+      "costBasisKnown": false
+    },
+    {
+      "id": "nps:1:C",
+      "name": "Pension Fund Scheme C \u2013 Tier I",
+      "symbol": "Tier 1 \u00b7 C",
+      "assetClass": "nps",
+      "accountID": "nps",
+      "quantity": "800",
+      "unit": "units",
+      "invested": "0",
+      "value": "24000",
+      "gain": null,
+      "gainPercent": null,
+      "quote": "30",
+      "quoteCurrency": "INR",
+      "fxRate": "1",
+      "fxAt": null,
+      "quoteAt": "2026-10-06T05:00:00Z",
+      "source": "Sample NPS statement",
+      "priceBasis": "Illustrative statement NAV",
+      "history": [
+        {
+          "date": "2026-09-01T00:00:00Z",
+          "value": "23520.00"
+        },
+        {
+          "date": "2026-10-06T06:00:00Z",
+          "value": "24000"
+        }
+      ],
+      "costBasisKnown": false
+    },
+    {
+      "id": "hdfc:fd:1234",
+      "name": "HDFC FD \u2022\u20221234",
+      "symbol": "FD \u2022\u20221234",
+      "assetClass": "fixedDeposit",
+      "accountID": "hdfc",
+      "quantity": "1",
+      "unit": "deposit",
+      "invested": "0",
+      "value": "120000",
+      "gain": null,
+      "gainPercent": null,
+      "quote": "120000",
+      "quoteCurrency": "INR",
+      "fxRate": "1",
+      "fxAt": null,
+      "quoteAt": "2026-10-06T05:00:00Z",
+      "source": "Sample bank statement",
+      "priceBasis": "Maturity amount includes future interest",
+      "history": [
+        {
+          "date": "2026-09-01T00:00:00Z",
+          "value": "120000"
+        },
+        {
+          "date": "2026-10-06T06:00:00Z",
+          "value": "120000"
+        }
+      ],
+      "costBasisKnown": false,
+      "depositTerms": {
+        "originalPrincipal": "100000",
+        "currentAmount": "105000.00",
+        "maturityAmount": "120000",
+        "rate": "7.25",
+        "openedOn": "2024-03-31",
+        "maturesOn": "2027-03-31",
+        "lien": "0"
+      }
+    },
+    {
+      "id": "hdfc:fd:5678",
+      "name": "HDFC FD \u2022\u20225678",
+      "symbol": "FD \u2022\u20225678",
+      "assetClass": "fixedDeposit",
+      "accountID": "hdfc",
+      "quantity": "1",
+      "unit": "deposit",
+      "invested": "0",
+      "value": "240000",
+      "gain": null,
+      "gainPercent": null,
+      "quote": "240000",
+      "quoteCurrency": "INR",
+      "fxRate": "1",
+      "fxAt": null,
+      "quoteAt": "2026-10-06T05:00:00Z",
+      "source": "Sample bank statement",
+      "priceBasis": "Maturity amount includes future interest",
+      "history": [
+        {
+          "date": "2026-09-01T00:00:00Z",
+          "value": "240000"
+        },
+        {
+          "date": "2026-10-06T06:00:00Z",
+          "value": "240000"
+        }
+      ],
+      "costBasisKnown": false,
+      "depositTerms": {
+        "originalPrincipal": "200000",
+        "currentAmount": "210000.00",
+        "maturityAmount": "240000",
+        "rate": "7.5",
+        "openedOn": "2024-03-31",
+        "maturesOn": "2028-06-30",
+        "lien": "0"
+      }
+    }
+  ],
+  "allocation": [
+    {
+      "assetClass": "fixedDeposit",
+      "value": "360000",
+      "percent": "83.32947548724596083514652099"
+    },
+    {
+      "assetClass": "nps",
+      "value": "72020.0",
+      "percent": "16.67052451275403916485347901"
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-06T06:00:00Z",
+      "value": "432020.0"
+    }
+  ],
+  "connections": []
+}

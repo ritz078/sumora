@@ -135,6 +135,64 @@ final class SumoraHomepageTests: XCTestCase {
         let rows = XCTAttachment(screenshot: app.screenshot()); rows.name = "Mixed Gold sorted holdings"; rows.lifetime = .keepAlways; add(rows)
     }
 
+    private func statementPage(_ asset: String) -> XCUIApplication {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing", "--statement-fixture"]
+        app.launch()
+        XCTAssertTrue(app.staticTexts["portfolioValue"].waitForExistence(timeout: 10))
+        let category = app.buttons["allocation-" + asset]
+        for _ in 0..<5 where !category.isHittable { app.swipeUp() }
+        category.tap()
+        return app
+    }
+
+    func testNPSPageUsesStatementUnitsWithoutDailyPerformance() {
+        let app = statementPage("nps")
+        XCTAssertTrue(app.staticTexts["statementValue"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["statementValue"].label, "₹72,020")
+        XCTAssertTrue(app.staticTexts["NPS Trajectory"].exists)
+        XCTAssertFalse(app.staticTexts["DAILY PERFORMANCE"].exists)
+        XCTAssertFalse(app.staticTexts["NSE/BSE Direct"].exists)
+        let top = XCTAttachment(screenshot:app.screenshot()); top.name = "NPS instrument summary"; top.lifetime = .keepAlways; add(top)
+        let sort = app.buttons["Sort NPS holdings"]
+        for _ in 0..<3 where !sort.isHittable { app.swipeUp() }
+        sort.tap();app.buttons["Value: Low to High"].tap()
+        let c = app.descendants(matching:.any)["statement-holding-nps:1:C"].firstMatch
+        let e = app.descendants(matching:.any)["statement-holding-nps:1:E"].firstMatch
+        XCTAssertTrue(c.exists && e.exists)
+        XCTAssertTrue(c.label.contains("800 units"))
+        XCTAssertTrue(c.label.contains("NAV"))
+        XCTAssertTrue(c.label.contains("Return unavailable"))
+        XCTAssertLessThan(c.frame.minY,e.frame.minY)
+        let rows = XCTAttachment(screenshot:app.screenshot()); rows.name = "NPS holdings"; rows.lifetime = .keepAlways; add(rows)
+        app.buttons["statementBack"].tap()
+        XCTAssertTrue(app.buttons["tab-Overview"].waitForExistence(timeout:5))
+    }
+
+    func testFixedDepositsPageUsesMaturityAmountsWithoutDailyPerformance() {
+        let app = statementPage("fixedDeposit")
+        XCTAssertTrue(app.staticTexts["statementValue"].waitForExistence(timeout:5))
+        XCTAssertEqual(app.staticTexts["statementValue"].label, "₹3,60,000")
+        XCTAssertEqual(app.staticTexts["statementPrincipal"].label, "₹3,00,000")
+        XCTAssertTrue(app.staticTexts["statementGain"].label.contains("60,000"))
+        XCTAssertTrue(app.staticTexts["MATURITY VALUE"].exists)
+        XCTAssertTrue(app.staticTexts["Fixed Deposit Trajectory"].exists)
+        XCTAssertFalse(app.staticTexts["DAILY PERFORMANCE"].exists)
+        let top = XCTAttachment(screenshot:app.screenshot()); top.name = "Fixed Deposit instrument summary"; top.lifetime = .keepAlways; add(top)
+        let sort = app.buttons["Sort fixed deposits"]
+        for _ in 0..<3 where !sort.isHittable { app.swipeUp() }
+        sort.tap();app.buttons["Value: Low to High"].tap()
+        let first = app.descendants(matching:.any)["statement-holding-hdfc:fd:1234"].firstMatch
+        let second = app.descendants(matching:.any)["statement-holding-hdfc:fd:5678"].firstMatch
+        XCTAssertTrue(first.exists && second.exists)
+        XCTAssertTrue(first.label.contains("7.25% p.a."))
+        XCTAssertTrue(first.label.contains("31 Mar 2027"))
+        XCTAssertLessThan(first.frame.minY,second.frame.minY)
+        let rows = XCTAttachment(screenshot:app.screenshot()); rows.name = "Fixed Deposit holdings"; rows.lifetime = .keepAlways; add(rows)
+        app.buttons["statementBack"].tap()
+        XCTAssertTrue(app.buttons["tab-Overview"].waitForExistence(timeout:5))
+    }
+
     func testRealEstateEmptyStateAndAddSheetHaveNoOwnershipOrLoanFields() {
         let app = launch()
         let category = app.buttons["allocation-realEstate"]
