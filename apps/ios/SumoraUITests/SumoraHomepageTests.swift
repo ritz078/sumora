@@ -86,8 +86,12 @@ final class SumoraHomepageTests: XCTestCase {
 
     func testRealEstateEmptyStateAndAddSheetHaveNoOwnershipOrLoanFields() {
         let app = launch()
-        app.buttons["homeSettings"].tap()
-        app.buttons["Real estate"].tap()
+        let category = app.buttons["allocation-realEstate"]
+        for _ in 0..<5 where !category.isHittable { app.swipeUp() }
+        XCTAssertTrue(category.exists)
+        XCTAssertTrue(category.label.contains("0%"))
+        let allocation = XCTAttachment(screenshot: app.screenshot()); allocation.name = "Homepage Real Estate allocation"; allocation.lifetime = .keepAlways; add(allocation)
+        category.tap()
         XCTAssertTrue(app.staticTexts["realEstateEmpty"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["realEstateBack"].exists)
         app.swipeDown()

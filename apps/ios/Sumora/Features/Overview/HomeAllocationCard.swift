@@ -5,6 +5,9 @@ struct HomeAllocationCard: View {
  let snapshot: PortfolioSnapshot
  @State private var showMoney = false
  private var allocations: [Allocation] { snapshot.allocation.sorted { $0.value.value > $1.value.value } }
+ private var allocationRows: [Allocation] {
+  allocations.contains { $0.assetClass == .realEstate } ? allocations : allocations + [Allocation(assetClass: .realEstate, value: DecimalValue(0), percent: DecimalValue(0))]
+ }
  var body: some View {
   VStack(alignment: .leading, spacing: 16) {
    HStack(alignment: .top) {
@@ -32,7 +35,7 @@ struct HomeAllocationCard: View {
     Text(snapshot.coverage == .complete ? "100% Allocated" : "Available valuations")
    }.font(.inter(.caption2, size: 10)).foregroundStyle(HomeStyle.secondary).padding(.top, -8)
    VStack(spacing: 8) {
-    ForEach(allocations) { allocation in
+    ForEach(allocationRows) { allocation in
      NavigationLink {
       InstrumentDestination(assetClass: allocation.assetClass)
      } label: {
