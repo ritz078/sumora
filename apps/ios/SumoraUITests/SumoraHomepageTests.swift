@@ -10,6 +10,36 @@ final class SumoraHomepageTests: XCTestCase {
         return app
     }
 
+    func testTrajectoryLabelsMatchReferencePlacement() {
+        let app = launch()
+        app.swipeUp()
+        let before = XCTAttachment(screenshot: app.screenshot())
+        before.name = "Trajectory label placement"
+        let hierarchy = XCTAttachment(string: app.debugDescription)
+        hierarchy.name = "Trajectory accessibility geometry"
+        hierarchy.lifetime = .keepAlways
+        add(hierarchy)
+        before.lifetime = .keepAlways
+        add(before)
+        let today = app.staticTexts["Today"]
+        XCTAssertTrue(today.exists, "The final date belongs in a dedicated footer as Today, matching Stitch")
+        guard today.exists else { return }
+        for index in 0..<3 {
+            let price = app.staticTexts["home-y-label-\(index)"]
+            XCTAssertTrue(price.exists)
+            guard price.exists else { return }
+            XCTAssertEqual(price.frame.maxX, today.frame.maxX, accuracy: 1, "Prices must align inside the plot with the final date")
+        }
+        XCTAssertGreaterThan(today.frame.minY, app.staticTexts["home-y-label-2"].frame.maxY + 20, "Dates belong below the plot, separated from its price labels")
+        let first = app.staticTexts["home-x-label-0"]
+        XCTAssertTrue(first.exists)
+        XCTAssertEqual(first.frame.midY, today.frame.midY, accuracy: 1, "First and last dates share a separate footer row")
+        XCTAssertLessThan(first.frame.minX, today.frame.minX)
+        let latest = app.descendants(matching: .any)["home-latest-value"].firstMatch
+        XCTAssertTrue(latest.exists)
+        XCTAssertLessThan(latest.frame.maxY, app.staticTexts["home-y-label-0"].frame.minY)
+    }
+
     func testSettingsRemainReachableWhenPortfolioCannotLoad() {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "--scenario=failure"]

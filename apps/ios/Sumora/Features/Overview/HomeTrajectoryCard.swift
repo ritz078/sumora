@@ -14,7 +14,7 @@ struct HomeTrajectoryCard: View {
   return (last.value.value - first.value.value) / first.value.value * 100
  }
  var body: some View {
-  VStack(alignment: .leading, spacing: 16) {
+  VStack(alignment: .leading, spacing: 0) {
    HStack {
     VStack(alignment: .leading, spacing: 3) {
      Text("Portfolio Trajectory").font(.inter(.headline, weight: .bold, size: 17)).tracking(-0.425)
@@ -23,21 +23,24 @@ struct HomeTrajectoryCard: View {
     Spacer(minLength: 4)
     if let change, !preferences.hideBalances {
      Text("\(change >= 0 ? "+" : "")\(DisplayFormat.decimal(change, digits: 1))%")
-      .font(.inter(.caption, weight: .bold, size: 12)).foregroundStyle(change >= 0 ? HomeStyle.emerald : .red)
-      .padding(.horizontal, 8).padding(.vertical, 4).background(HomeStyle.emerald.opacity(0.08), in: Capsule())
+      .font(.inter(.caption2, weight: .semibold, size: 10)).foregroundStyle(change >= 0 ? DashboardStyle.positive : .red)
+      .padding(.horizontal, 8).padding(.vertical, 2)
+      .background(HomeStyle.emerald.opacity(0.08), in: RoundedRectangle(cornerRadius: 4))
+      .overlay(RoundedRectangle(cornerRadius: 4).stroke(HomeStyle.emerald.opacity(0.2), lineWidth: 1))
     }
-   }
+   }.padding(.bottom, 12)
    HStack(spacing: 0) {
     ForEach([HistoryPeriod.month, .halfYear, .year, .all]) { item in
      Button { period = item } label: {
-      Text(item == .all ? "ALL" : item.rawValue).font(.inter(.caption2, weight: .semibold, size: 11))
+      Text(item == .all ? "ALL" : item.rawValue).font(.inter(.caption2, weight: period == item ? .semibold : .medium, size: 11))
        .foregroundStyle(period == item ? HomeStyle.ink : HomeStyle.secondary)
-       .frame(maxWidth: .infinity, minHeight: 26)
+       .frame(maxWidth: .infinity, minHeight: 22)
        .background(period == item ? HomeStyle.card : .clear, in: RoundedRectangle(cornerRadius: 6))
        .shadow(color: .black.opacity(period == item ? 0.05 : 0), radius: 1, y: 1)
      }.buttonStyle(.plain).accessibilityLabel("\(item.rawValue) history").accessibilityAddTraits(period == item ? .isSelected : [])
     }
-   }.padding(3).background(HomeStyle.fill, in: RoundedRectangle(cornerRadius: 8))
+   }.padding(2).background(Color(.tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
+    .overlay(RoundedRectangle(cornerRadius: 8).stroke(HomeStyle.border, lineWidth: 1)).padding(.bottom, 16)
    if preferences.hideBalances {
     Text("History hidden").font(.inter(.caption)).foregroundStyle(HomeStyle.secondary).frame(maxWidth: .infinity, minHeight: 158)
    } else if points.count < 2 {
@@ -46,10 +49,12 @@ struct HomeTrajectoryCard: View {
      Text(points.isEmpty ? "Daily snapshots will appear here" : "History starts today")
       .font(.inter(.caption, size: 12)).foregroundStyle(HomeStyle.secondary)
     }.frame(maxWidth: .infinity, minHeight: 158)
-   } else { chart.frame(height: 158).accessibilityIdentifier("portfolioHistory") }
-   Text(errorMessage ?? "Valuation changes include deposits and withdrawals.")
-    .font(.inter(.caption2, size: 10)).foregroundStyle(HomeStyle.secondary).lineLimit(2)
+   } else { chart.accessibilityElement(children: .contain).accessibilityLabel("Portfolio history").accessibilityIdentifier("portfolioHistory") }
+   if let errorMessage {
+    Text(errorMessage).font(.inter(.caption2, size: 10)).foregroundStyle(HomeStyle.secondary).lineLimit(2).padding(.top, 8)
+   }
   }.homeCard().foregroundStyle(HomeStyle.ink)
+   .accessibilityHint("Valuation changes include deposits and withdrawals.")
  }
  private var subtitle: String {
   guard !preferences.hideBalances, let first = points.first, let last = points.last, points.count > 1 else { return "Your recorded net worth over time" }
@@ -61,38 +66,100 @@ struct HomeTrajectoryCard: View {
  private var upper: Double { max((points.map { number($0.value) }.max() ?? 1) * 1.03, lower + 1) }
  private var axisDates: [Date] {
   guard let first = points.first, let last = points.last else { return [] }
-  return [first.date] + (1...3).map { first.date.addingTimeInterval(last.date.timeIntervalSince(first.date) * Double($0) / 4) } + [last.date]
+  let interval = last.date.timeIntervalSince(first.date)
+  let segments = min(4, max(1, Int(interval / 86400)))
+  return (0...segments).map { first.date.addingTimeInterval(interval * Double($0) / Double(segments)) }
+ }
+ private func dateLabel(_ date: Date, latest: Bool) -> String {
+  var calendar = Calendar(identifier: .gregorian)
+  calendar.timeZone = TimeZone(identifier: "Asia/Kolkata")!
+  if latest { return calendar.isDate(date, inSameDayAs: referenceDate) ? "Today" : "Latest" }
+  let formatter = DateFormatter()
+  formatter.timeZone = calendar.timeZone
+  formatter.locale = Locale(identifier: "en_IN")
+  formatter.dateFormat = (points.last!.date.timeIntervalSince(points.first!.date) < 90 * 86400) ? "d MMM" : "MMM ''yy"
+  return formatter.string(from: date)
+ }
+ private func axisLabel(_ value: Double) -> String {
+  let amount = Decimal(value)
+  if currency == "INR", abs(amount) >= 10_000_000 { return "₹" + DisplayFormat.decimal(amount / 10_000_000, digits: 1) + " Cr" }
+  if currency == "INR", abs(amount) >= 100_000 { return "₹" + DisplayFormat.decimal(amount / 100_000, digits: 1) + " L" }
+  return DisplayFormat.money(amount, currency: currency)
  }
  private var chart: some View {
-  Chart(points) { point in
-   AreaMark(x: .value("Date", point.date), yStart: .value("Base", lower), yEnd: .value("Net worth", number(point.value)))
-    .foregroundStyle(LinearGradient(colors: [HomeStyle.indigo.opacity(0.24), HomeStyle.indigo.opacity(0)], startPoint: .top, endPoint: .bottom))
-   LineMark(x: .value("Date", point.date), y: .value("Net worth", number(point.value)))
-    .foregroundStyle(HomeStyle.indigo).lineStyle(StrokeStyle(lineWidth: 2.5))
-   if point.id == points.last?.id {
-    PointMark(x: .value("Date", point.date), y: .value("Net worth", number(point.value))).symbolSize(24).foregroundStyle(HomeStyle.indigo)
-     .annotation(position: .top, alignment: .trailing) {
+  VStack(spacing: 0) {
+   GeometryReader { geometry in
+    ZStack(alignment: .topLeading) {
+     // Stitch's labels sit inside the plot. Native axes reserve an extra gutter.
+     Path { path in
+      for y in [20.0, 65.0, 110.0] {
+       path.move(to: CGPoint(x: 0, y: y))
+       path.addLine(to: CGPoint(x: geometry.size.width, y: y))
+      }
+     }.stroke(Color(red: 226/255, green: 232/255, blue: 240/255), style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
+      .accessibilityHidden(true)
+     plot.accessibilityLabel("Daily portfolio values")
+     ForEach(0..<3) { index in
+      let y = 20.0 + Double(index) * 45
+      let value = upper - (upper - lower) * y / 140
+      Text(axisLabel(value))
+       .font(.inter(.caption2, size: 9)).foregroundStyle(HomeStyle.muted)
+       .frame(maxWidth: .infinity, alignment: .trailing).offset(y: y - 15)
+       .accessibilityIdentifier("home-y-label-\(index)")
+     }
+     if let last = points.last {
       HStack(spacing: 4) {
        Circle().fill(HomeStyle.emerald).frame(width: 6, height: 6)
-       Text(DisplayFormat.compactMoney(point.value.value, currency: currency)).font(.inter(.caption2, weight: .semibold, size: 10))
+       Text(DisplayFormat.compactMoney(last.value.value, currency: currency))
+        .font(.inter(.caption2, weight: .semibold, size: 10))
       }.foregroundStyle(.white).padding(.horizontal, 8).padding(.vertical, 3)
        .background(Color(red: 15/255, green: 23/255, blue: 42/255), in: Capsule())
+       .shadow(color: .black.opacity(0.12), radius: 3, y: 2)
+       .fixedSize().frame(maxWidth: .infinity, alignment: .trailing).offset(x: -4, y: -18)
+       .accessibilityElement(children: .ignore)
+       .accessibilityLabel("Latest recorded value " + DisplayFormat.compactMoney(last.value.value, currency: currency))
+       .accessibilityIdentifier("home-latest-value")
      }
+    }.accessibilityElement(children: .contain).accessibilityLabel("Recorded net worth plot").accessibilityIdentifier("home-plot")
+   }.frame(height: 140).padding(.top, 8)
+   dateFooter
+  }
+ }
+ private var plot: some View {
+  Chart(points) { point in
+   AreaMark(x: .value("Date", point.date), yStart: .value("Base", lower), yEnd: .value("Net worth", number(point.value)))
+    .interpolationMethod(.monotone)
+    .foregroundStyle(LinearGradient(stops: [.init(color: HomeStyle.indigo.opacity(0.24), location: 0), .init(color: HomeStyle.indigo.opacity(0.02), location: 0.8), .init(color: .clear, location: 1)], startPoint: .top, endPoint: .bottom))
+   LineMark(x: .value("Date", point.date), y: .value("Net worth", number(point.value)))
+    .interpolationMethod(.monotone)
+    .foregroundStyle(HomeStyle.indigo).lineStyle(StrokeStyle(lineWidth: 2.5, lineCap: .round))
+   if point.id == points.last?.id {
+    PointMark(x: .value("Date", point.date), y: .value("Net worth", number(point.value)))
+     .symbolSize(154).foregroundStyle(HomeStyle.indigo.opacity(0.15))
+    PointMark(x: .value("Date", point.date), y: .value("Net worth", number(point.value)))
+     .symbolSize(50).foregroundStyle(HomeStyle.indigo)
+    PointMark(x: .value("Date", point.date), y: .value("Net worth", number(point.value)))
+     .symbolSize(10).foregroundStyle(.white)
    }
   }.chartYScale(domain: lower...upper)
-   .chartYAxis {
-    AxisMarks(position: .trailing, values: .automatic(desiredCount: 3)) { value in
-     AxisGridLine(stroke: StrokeStyle(lineWidth: 1, dash: [4, 4])).foregroundStyle(HomeStyle.border)
-     AxisValueLabel { if let number = value.as(Double.self) { Text(DisplayFormat.compactMoney(Decimal(number), currency: currency)).font(.inter(.caption2, size: 9)).foregroundStyle(HomeStyle.muted) } }
-    }
+   .chartXScale(domain: points.first!.date...points.last!.date)
+   .chartXAxis(.hidden).chartYAxis(.hidden)
+ }
+ private var dateFooter: some View {
+  GeometryReader { geometry in
+   let dates = axisDates
+   let width = geometry.size.width / CGFloat(max(dates.count, 1))
+   ForEach(Array(dates.enumerated()), id: \.offset) { index, date in
+    let latest = index == dates.count - 1
+    let x = index == 0 ? width / 2 : latest ? geometry.size.width - width / 2 : geometry.size.width * CGFloat(date.timeIntervalSince(dates[0]) / dates.last!.timeIntervalSince(dates[0]))
+    Text(dateLabel(date, latest: latest))
+     .font(.inter(.caption2, weight: latest ? .semibold : .medium, size: 10))
+     .foregroundStyle(latest ? HomeStyle.indigo : HomeStyle.muted)
+     .frame(width: width, alignment: index == 0 ? .leading : latest ? .trailing : .center)
+     .position(x: x, y: 14)
+     .accessibilityIdentifier("home-x-label-\(index)")
    }
-   .chartXAxis {
-    AxisMarks(values: axisDates) { value in
-     AxisValueLabel(anchor: value.as(Date.self) == points.last?.date ? .topTrailing : .topLeading) {
-      if value.as(Date.self) == points.last?.date { Text("Latest").foregroundStyle(HomeStyle.indigo).font(.inter(.caption2, weight: .semibold, size: 10)) }
-      else if let date = value.as(Date.self) { Text(date, format: .dateTime.month(.abbreviated).year(.twoDigits)).font(.inter(.caption2, size: 10)).foregroundStyle(HomeStyle.muted) }
-     }
-    }
-   }
+  }.frame(height: 26)
+   .overlay(alignment: .top) { Rectangle().fill(HomeStyle.border).frame(height: 1).accessibilityHidden(true) }
  }
 }
