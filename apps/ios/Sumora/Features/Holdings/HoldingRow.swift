@@ -64,6 +64,7 @@ struct HoldingRow: View {
         case .usEquity: ("HoldingUSEquity", Color(red: 2/255, green: 132/255, blue: 199/255))
         case .mutualFund: ("HoldingMutualFund", DashboardStyle.positive)
         case .gold: ("HoldingGold", Color(red: 217/255, green: 119/255, blue: 6/255))
+        case .realEstate: ("HoldingBond", Color.brown)
         case .bond, .fixedDeposit, .nps: ("HoldingBond", Color(red: 126/255, green: 34/255, blue: 206/255))
         }
         return Image(style.name).renderingMode(.template).resizable().frame(width: 19, height: 19)

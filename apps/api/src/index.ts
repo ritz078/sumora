@@ -1,3 +1,4 @@
+import {propertiesRoutes} from './properties';
 import {bondsRoutes} from './bonds';
 import {npsRoutes} from './nps';
 import { refreshGoldPrice } from './gold-prices';
@@ -30,6 +31,7 @@ app.route('/v1/gold', gullakRoutes());
 app.route('/v1/hdfc', hdfcRoutes());
 app.route('/v1/nps', npsRoutes());
 app.route('/v1/bonds', bondsRoutes());
+app.route('/v1/properties', propertiesRoutes());
 app.route('/v1/indmoney', indmoneyRoutes());
 app.get('/v1/demo/portfolio', (c) => {
   const scenario = c.req.query('scenario') ?? 'complete';

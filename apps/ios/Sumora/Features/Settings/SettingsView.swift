@@ -29,6 +29,11 @@ struct SettingsView: View {
             Section("Accounts") {
                 NavigationLink { ConnectionsView() } label: { Label("Connections", systemImage: "link") }
             }
+            Section("Manual assets") {
+                NavigationLink { PropertiesView() } label: { Label("Real estate",systemImage:"house.fill") }
+                    .disabled(dependencies.zerodha.sessionToken == nil)
+                if dependencies.zerodha.sessionToken == nil { Text("Sign in to add manual properties.").font(.footnote).foregroundStyle(.secondary) }
+            }
             GmailDocumentsSection()
             GoldConnectionSection()
             HDFCConnectionSection()

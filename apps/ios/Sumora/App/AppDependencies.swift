@@ -11,6 +11,7 @@ final class AppDependencies {
     let hdfc = HDFCConnection()
     let nps = NPSConnection()
     let bonds = BondsConnection()
+    let properties = PropertiesConnection()
     let indmoney = INDmoneyConnection()
     private(set) var isLivePortfolio = false
     private(set) var scenario: DemoScenario = .complete

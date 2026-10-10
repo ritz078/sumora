@@ -24,13 +24,15 @@ struct HoldingDetailView: View {
                             }
                         }
                         VStack(alignment: .leading, spacing: 12) {
-                            Text(holding.assetClass == .fixedDeposit ? "MATURITY AMOUNT" : holding.assetClass == .bond ? (holding.bondTerms?.valuationBasis == "projectedMaturity" ? "PROJECTED MATURITY VALUE" : "CAS PURCHASE VALUE") : "CURRENT VALUE").font(.caption.weight(.semibold)).tracking(1).foregroundStyle(.secondary)
+                            Text(holding.assetClass == .fixedDeposit ? "MATURITY AMOUNT" : holding.assetClass == .bond ? (holding.bondTerms?.valuationBasis == "projectedMaturity" ? "PROJECTED MATURITY VALUE" : "CAS PURCHASE VALUE") : holding.assetClass == .realEstate ? "YOUR PROPERTY VALUE" : "CURRENT VALUE").font(.caption.weight(.semibold)).tracking(1).foregroundStyle(.secondary)
                             MoneyText(amount: holding.value, currency: snapshot.reportingCurrency)
                                 .font(.largeTitle.bold()).minimumScaleFactor(0.7).lineLimit(1)
                             if holding.assetClass == .fixedDeposit {
                                 Text("Includes future interest · counted toward net worth").font(.caption).foregroundStyle(.secondary)
                             } else if holding.assetClass == .bond {
                                 Text(holding.bondTerms?.valuationBasis == "projectedMaturity" ? "Includes projected future returns · counted toward net worth" : "CAS purchase value used · maturity projection unavailable").font(.caption).foregroundStyle(.secondary)
+                            } else if holding.assetClass == .realEstate {
+                                Text("Manually entered estimate · adjusted for ownership").font(.caption).foregroundStyle(.secondary)
                             } else {
                                 GainLossLabel(gain: holding.gain, percent: holding.gainPercent, currency: snapshot.reportingCurrency)
                                 Text("Unrealized return").font(.caption).foregroundStyle(.secondary)
@@ -51,7 +53,7 @@ struct HoldingDetailView: View {
                                 else if holding.costBasisKnown == false { Text("Unavailable") }
                                 else { MoneyText(amount: holding.invested, currency: snapshot.reportingCurrency) }
                             }
-                            if holding.assetClass != .fixedDeposit {
+                            if holding.assetClass != .fixedDeposit && holding.assetClass != .realEstate {
                                 Divider()
                                 detailRow(holding.assetClass == .bond ? "CAS unit value" : "Unit price") { MoneyText(amount: holding.quote, currency: holding.quoteCurrency, fractionDigits: 2) }
                             }
@@ -60,6 +62,15 @@ struct HoldingDetailView: View {
                                     .font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading)
                             }
                         }.portfolioCard()
+                        if let property = holding.propertyTerms {
+                            VStack(spacing:18) {
+                                detailRow("Full property value") { MoneyText(amount:property.estimatedValue) }
+                                detailRow("Your ownership") { Text("\(DisplayFormat.decimal(property.ownershipPercent.value))%") }
+                                detailRow("Valuation date") { Text(property.valuationDate) }
+                                if let cost=property.purchaseCost { detailRow("Full purchase cost") { MoneyText(amount:cost) } }
+                                NavigationLink("Manage real estate") { PropertiesView() }
+                            }.portfolioCard()
+                        }
                         if let terms = holding.depositTerms {
                             VStack(spacing: 18) {
                                 detailRow("Original principal") { MoneyText(amount: terms.originalPrincipal) }
@@ -101,7 +112,7 @@ struct HoldingDetailView: View {
                                 Text("Cash flows come from matched Wint emails. Imported totals may be incomplete. They are shown separately from the valuation; accrued interest is not estimated.").font(.caption).foregroundStyle(.secondary)
                             }.portfolioCard()
                         }
-                        if holding.assetClass != .fixedDeposit && holding.assetClass != .bond {
+                        if holding.assetClass != .fixedDeposit && holding.assetClass != .bond && holding.assetClass != .realEstate {
                         PortfolioHistoryChart(history: holding.history, referenceDate: snapshot.capturedAt, currency: snapshot.reportingCurrency, title: "Holding history").portfolioCard()
                         }
                         VStack(alignment: .leading, spacing: 16) {

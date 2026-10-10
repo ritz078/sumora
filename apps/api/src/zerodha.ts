@@ -18,7 +18,7 @@ type Attempt = { id: string; challenge: string; expires_at: number; encrypted_to
 type Session = { token_hash: string; encrypted_token: string; provider_expires_at: number; owner_id: string; expires_at: number };
 type Snapshot = Portfolio;
 export class APIError extends Error {
-  constructor(readonly status: 400 | 401 | 403 | 409 | 429 | 502 | 503, readonly code: string, message: string) { super(message); }
+  constructor(readonly status: 400 | 401 | 403 | 404 | 409 | 429 | 500 | 502 | 503, readonly code: string, message: string) { super(message); }
 }
 export async function digest(text: string) {
   const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));

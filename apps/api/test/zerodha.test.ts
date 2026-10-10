@@ -18,6 +18,7 @@ function setup(owner = 'AB1234') {
   db.exec(readFileSync(new URL('../migrations/0016_bonds.sql', import.meta.url), 'utf8'));
   db.exec(readFileSync(new URL('../migrations/0017_wint_events.sql', import.meta.url), 'utf8'));
   db.exec(readFileSync(new URL('../migrations/0018_wint_ytm.sql', import.meta.url), 'utf8'));
+  db.exec(readFileSync(new URL('../migrations/0019_properties.sql', import.meta.url), 'utf8'));
   const env: KiteEnvironment = {
     DB: { prepare(sql): Statement {
       let values: any[] = [];
