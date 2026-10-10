@@ -22,11 +22,7 @@ struct StatementInstrumentView: View {
   return DecimalValue(holdings.reduce(0) { $0 + amount($1)!.value })
  }
  private var invested:DecimalValue? {
-  guard !holdings.isEmpty else { return nil }
-  if isFD {
-   guard holdings.allSatisfy({ $0.depositTerms != nil }) else { return nil }
-   return DecimalValue(holdings.reduce(0) { $0 + $1.depositTerms!.originalPrincipal.value })
-  }
+  guard !isFD,!holdings.isEmpty else { return nil }
   guard holdings.allSatisfy({ $0.costBasisKnown != false }) else { return nil }
   return DecimalValue(holdings.reduce(0) { $0 + $1.invested.value })
  }
@@ -82,27 +78,29 @@ struct StatementInstrumentView: View {
    HStack {
     Text(isFD ? "MATURITY VALUE" : "VALUATION").font(.inter(.caption2,weight:.semibold,size:11)).tracking(0.8).foregroundStyle(HomeStyle.muted)
     Spacer(minLength:4)
-    ReturnBadge(percent:percent,label:isFD ? "At maturity" : "All-time")
+    if !isFD { ReturnBadge(percent:percent,label:"All-time") }
    }.frame(minHeight:18)
    MoneyText(amount:value,currency:currency).font(.inter(.largeTitle,weight:.bold,size:32)).tracking(-0.8).padding(.vertical,8).accessibilityIdentifier("statementValue")
-   Rectangle().fill(HomeStyle.border).frame(height:1)
-   ViewThatFits(in:.horizontal) {
-    HStack { investedLabel;Spacer(minLength:8);gainLabel }
-    VStack(alignment:.leading,spacing:8) { investedLabel;gainLabel }
-   }.padding(.top,8)
-   if isFD { Text("Includes future interest · counted toward net worth").font(.inter(.caption2,size:10)).foregroundStyle(HomeStyle.secondary).padding(.top,8) }
+   if !isFD {
+    Rectangle().fill(HomeStyle.border).frame(height:1)
+    ViewThatFits(in:.horizontal) {
+     HStack { investedLabel;Spacer(minLength:8);gainLabel }
+     VStack(alignment:.leading,spacing:8) { investedLabel;gainLabel }
+    }.padding(.top,8)
+   }
+   if isFD { Text("Statement maturity amount · counted toward net worth").font(.inter(.caption2,size:10)).foregroundStyle(HomeStyle.secondary).padding(.top,4) }
    if value == nil && !holdings.isEmpty { Text("Some statement valuations are unavailable. Recorded holdings are retained.").font(.inter(.caption2,size:10)).foregroundStyle(.orange).padding(.top,8) }
   }.homeCard()
  }
  private var investedLabel:some View {
   HStack(spacing:6) {
-   Text(isFD ? "Principal:" : "Invested:").foregroundStyle(HomeStyle.muted)
+   Text("Invested:").foregroundStyle(HomeStyle.muted)
    MoneyText(amount:invested,currency:currency).fontWeight(.semibold).accessibilityIdentifier("statementPrincipal")
   }.font(.inter(.caption,size:12))
  }
  private var gainLabel:some View {
   HStack(spacing:4) {
-   Text(isFD ? "Interest:" : "Gain:").foregroundStyle(HomeStyle.muted)
+   Text("Gain:").foregroundStyle(HomeStyle.muted)
    HomeSignedMoney(amount:gain,currency:currency).fontWeight(.semibold).foregroundStyle(gainColor(gain)).accessibilityIdentifier("statementGain")
   }.font(.inter(.caption,size:12))
  }
@@ -156,15 +154,9 @@ struct StatementInstrumentView: View {
    }
    if let terms=holding.depositTerms {
     Text("\(DisplayFormat.decimal(terms.rate.value))% p.a. · Matures \(dateLabel(terms.maturesOn))").font(.inter(.caption2,size:11)).foregroundStyle(HomeStyle.secondary)
-    ViewThatFits(in:.horizontal) {
-     HStack { principal(terms);Spacer(minLength:4);interest(terms) }
-     VStack(alignment:.leading,spacing:4) { principal(terms);interest(terms) }
-    }.font(.inter(.caption2,size:11))
    } else { Text("Deposit terms unavailable").font(.inter(.caption2,size:11)).foregroundStyle(HomeStyle.secondary) }
   }.padding(.vertical,12)
  }
- private func principal(_ terms:DepositTerms) -> some View { HStack(spacing:4) { Text("Principal:");MoneyText(amount:terms.originalPrincipal,currency:currency) }.foregroundStyle(HomeStyle.secondary) }
- private func interest(_ terms:DepositTerms) -> some View { HStack(spacing:3) { Text("Interest:");HomeSignedMoney(amount:DecimalValue(terms.maturityAmount.value-terms.originalPrincipal.value),currency:currency) }.foregroundStyle(gainColor(DecimalValue(terms.maturityAmount.value-terms.originalPrincipal.value))) }
  private func npsReturn(_ holding:Holding) -> String {
   guard !preferences.hideBalances else { return "••••" }
   guard holding.costBasisKnown != false,holding.value != nil,let percent=holding.gainPercent else { return "Return unavailable" }

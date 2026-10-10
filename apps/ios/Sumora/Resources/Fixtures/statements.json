@@ -103,7 +103,7 @@
       ],
       "costBasisKnown": false,
       "depositTerms": {
-        "originalPrincipal": "100000",
+        "originalPrincipal": "350000",
         "currentAmount": "105000.00",
         "maturityAmount": "120000",
         "rate": "7.25",

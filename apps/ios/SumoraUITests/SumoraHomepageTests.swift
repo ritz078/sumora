@@ -173,8 +173,9 @@ final class SumoraHomepageTests: XCTestCase {
         let app = statementPage("fixedDeposit")
         XCTAssertTrue(app.staticTexts["statementValue"].waitForExistence(timeout:5))
         XCTAssertEqual(app.staticTexts["statementValue"].label, "₹3,60,000")
-        XCTAssertEqual(app.staticTexts["statementPrincipal"].label, "₹3,00,000")
-        XCTAssertTrue(app.staticTexts["statementGain"].label.contains("60,000"))
+        XCTAssertFalse(app.staticTexts["statementPrincipal"].exists)
+        XCTAssertFalse(app.staticTexts["statementGain"].exists)
+        XCTAssertFalse(app.staticTexts["At maturity"].exists)
         XCTAssertTrue(app.staticTexts["MATURITY VALUE"].exists)
         XCTAssertTrue(app.staticTexts["Fixed Deposit Trajectory"].exists)
         XCTAssertFalse(app.staticTexts["DAILY PERFORMANCE"].exists)
@@ -185,6 +186,9 @@ final class SumoraHomepageTests: XCTestCase {
         let first = app.descendants(matching:.any)["statement-holding-hdfc:fd:1234"].firstMatch
         let second = app.descendants(matching:.any)["statement-holding-hdfc:fd:5678"].firstMatch
         XCTAssertTrue(first.exists && second.exists)
+        XCTAssertTrue(first.label.contains("1,20,000"))
+        XCTAssertFalse(first.label.contains("Interest:"))
+        XCTAssertFalse(first.label.contains("Principal:"))
         XCTAssertTrue(first.label.contains("7.25% p.a."))
         XCTAssertTrue(first.label.contains("31 Mar 2027"))
         XCTAssertLessThan(first.frame.minY,second.frame.minY)
