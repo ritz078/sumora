@@ -51,7 +51,9 @@ struct MockPortfolioAPI: PortfolioAPI {
     }
 
     static func load(_ scenario: DemoScenario) throws -> PortfolioSnapshot {
-        guard let url = Bundle.main.url(forResource: scenario.rawValue, withExtension: "json") else {
+        let arguments = ProcessInfo.processInfo.arguments
+        let resource = arguments.contains("--ui-testing") && arguments.contains("--real-estate-fixture") ? "real-estate" : scenario.rawValue
+        guard let url = Bundle.main.url(forResource: resource, withExtension: "json") else {
             throw PortfolioAPIError.missingFixture
         }
         let decoder = JSONDecoder()

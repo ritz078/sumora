@@ -8,13 +8,15 @@ struct HomeTrajectoryCard: View {
  let currency: String
  var errorMessage: String?
  @State private var period: HistoryPeriod = .year
- private var points: [HistoryPoint] { period.points(in: history, relativeTo: referenceDate).sorted { $0.date < $1.date } }
+ private var points: [HistoryPoint] { (showsPeriodSelector ? period : .all).points(in: history, relativeTo: referenceDate).sorted { $0.date < $1.date } }
  private var change: Decimal? {
   guard points.count > 1, let first = points.first, let last = points.last, first.value.value > 0 else { return nil }
   return (last.value.value - first.value.value) / first.value.value * 100
  }
  var title = "Portfolio Trajectory"
  var instrumentStyle = false
+ var roundedInstrumentCallout = false
+ var showsPeriodSelector = true
  var body: some View {
   VStack(alignment: .leading, spacing: 0) {
    HStack {
@@ -31,7 +33,7 @@ struct HomeTrajectoryCard: View {
       .overlay(RoundedRectangle(cornerRadius: instrumentStyle ? 99 : 4).stroke(HomeStyle.emerald.opacity(0.2), lineWidth: 1))
     }
    }.padding(.bottom, 12)
-   HStack(spacing: 0) {
+   if showsPeriodSelector { HStack(spacing: 0) {
     ForEach([HistoryPeriod.month, .halfYear, .year, .all]) { item in
      Button { period = item } label: {
       Text(item == .all ? "ALL" : item.rawValue).font(.inter(.caption2, weight: period == item ? .semibold : .medium, size: 11))
@@ -42,7 +44,7 @@ struct HomeTrajectoryCard: View {
      }.buttonStyle(.plain).accessibilityLabel("\(item.rawValue) history").accessibilityAddTraits(period == item ? .isSelected : [])
     }
    }.padding(2).background(Color(.tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
-    .overlay(RoundedRectangle(cornerRadius: 8).stroke(HomeStyle.border, lineWidth: 1)).padding(.bottom, 16)
+    .overlay(RoundedRectangle(cornerRadius: 8).stroke(HomeStyle.border, lineWidth: 1)).padding(.bottom, 16) }
    if preferences.hideBalances {
     Text("History hidden").font(.inter(.caption)).foregroundStyle(HomeStyle.secondary).frame(maxWidth: .infinity, minHeight: 158)
    } else if points.count < 2 {
@@ -113,13 +115,13 @@ struct HomeTrajectoryCard: View {
      }
      if let last = points.last {
       HStack(spacing: 4) {
-       if !instrumentStyle { Circle().fill(HomeStyle.emerald).frame(width: 6, height: 6) }
+       if !instrumentStyle || roundedInstrumentCallout { Circle().fill(HomeStyle.emerald).frame(width: 6, height: 6) }
        Text(DisplayFormat.compactMoney(last.value.value, currency: currency))
         .font(.inter(.caption2, weight: .semibold, size: 10))
       }.foregroundStyle(.white).padding(.horizontal, 8).padding(.vertical, 3)
-       .background(Color(red: 15/255, green: 23/255, blue: 42/255), in: RoundedRectangle(cornerRadius: instrumentStyle ? 2 : 99))
+       .background(Color(red: 15/255, green: 23/255, blue: 42/255), in: RoundedRectangle(cornerRadius: instrumentStyle && !roundedInstrumentCallout ? 2 : 99))
        .overlay(alignment: .bottom) {
-        if instrumentStyle { Rectangle().fill(Color(red: 15/255, green: 23/255, blue: 42/255)).frame(width: 6, height: 6).rotationEffect(.degrees(45)).offset(y: 3) }
+        if instrumentStyle && !roundedInstrumentCallout { Rectangle().fill(Color(red: 15/255, green: 23/255, blue: 42/255)).frame(width: 6, height: 6).rotationEffect(.degrees(45)).offset(y: 3) }
        }
        .shadow(color: .black.opacity(0.12), radius: 3, y: 2)
        .fixedSize().frame(maxWidth: .infinity, alignment: .trailing).offset(x: -4, y: instrumentStyle ? -8 : -18)

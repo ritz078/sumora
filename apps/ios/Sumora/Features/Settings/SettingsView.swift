@@ -30,8 +30,7 @@ struct SettingsView: View {
                 NavigationLink { ConnectionsView() } label: { Label("Connections", systemImage: "link") }
             }
             Section("Manual assets") {
-                NavigationLink { PropertiesView() } label: { Label("Real estate",systemImage:"house.fill") }
-                    .disabled(dependencies.zerodha.sessionToken == nil)
+                NavigationLink { RealEstateView() } label: { Label("Real estate",systemImage:"house.fill") }
                 if dependencies.zerodha.sessionToken == nil { Text("Sign in to add manual properties.").font(.footnote).foregroundStyle(.secondary) }
             }
             GmailDocumentsSection()

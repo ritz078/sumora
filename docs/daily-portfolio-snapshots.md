@@ -6,7 +6,7 @@ Today's row is replaced only by a later observation. At midnight IST a new row i
 
 Each record contains all holdings and their quantities, original valuation basis/source, investment-specific terms, source connection dates, total net worth, coverage, and totals for all eight instrument types. Holding metadata separately records valuation and quantity dates. NPS quantity dates are preserved separately for each tier. Undated broker quote and US-stock retrieval times are stored separately because INDmoney does not supply the market valuation timestamp. A carried-forward flag means the valuation date predates the snapshot day; missing/future source dates are marked unknown. This is not a claim that the quantity was independently verified that day.
 
-FDs use maturity amounts; bonds use projected maturity value with CAS purchase value fallback; properties use ownership-adjusted estimates. Their source dates and basis remain visible. Unknown prices stay null, with partial/unavailable coverage; no fake zero prices or daily P&L is generated.
+FDs use maturity amounts; bonds use projected maturity value with CAS purchase value fallback; properties use full manually entered estimates. Their source dates and basis remain visible. Unknown prices stay null, with partial/unavailable coverage; no fake zero prices or daily P&L is generated.
 
 Records persist independently of the 30-day price-baseline retention. There is no history deletion on ordinary broker disconnect/reconnect. Snapshot data contains financial holdings, not provider tokens, passwords, PAN or Gmail bodies.
 

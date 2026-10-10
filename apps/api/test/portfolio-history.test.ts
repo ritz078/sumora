@@ -49,11 +49,11 @@ test('scheduled capture composes stored sources without broker access and rotate
  assert.equal((await history.scheduledPortfolioSnapshots(env,new Date('2026-10-10T12:00:00Z'))).captured,1);
  assert.equal((await history.scheduledPortfolioSnapshots(env,new Date('2026-10-10T12:15:00Z'))).captured,1);
  const rows=db.prepare('SELECT owner_id,data FROM portfolio_daily_snapshots ORDER BY owner_id').all();
- assert.equal(rows.length,2);assert.equal(JSON.parse(rows[0].data as string).value,'5000000');assert.equal(JSON.parse(rows[1].data as string).value,'0');
+ assert.equal(rows.length,2);assert.equal(JSON.parse(rows[0].data as string).value,'10000000');assert.equal(JSON.parse(rows[1].data as string).value,'0');
  // Missing broker snapshot must not prevent manual-only accounts from recording history.
  db.prepare('DELETE FROM zerodha_snapshots WHERE owner_id=?').run('one');
  await history.scheduledPortfolioSnapshots(env,new Date('2026-10-10T12:30:00Z'));
- assert.equal(JSON.parse(db.prepare('SELECT data FROM portfolio_daily_snapshots WHERE owner_id=?').get('one')!.data as string).value,'5000000');
+ assert.equal(JSON.parse(db.prepare('SELECT data FROM portfolio_daily_snapshots WHERE owner_id=?').get('one')!.data as string).value,'10000000');
 });
 
 test('malformed source failures keep previous daily data and do not publish a fake empty portfolio',async()=>{

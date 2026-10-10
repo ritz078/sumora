@@ -5,11 +5,11 @@ struct PropertyEntry: Codable, Identifiable, Sendable {
  let id: String
  let name: String
  let estimatedValue: DecimalValue
- let ownershipPercent: DecimalValue
  let valuationDate: String
  let purchaseCost: DecimalValue?
  let updatedAt: Double
- var ownedValue: Decimal { estimatedValue.value * ownershipPercent.value / 100 }
+ var classification: String? = nil
+ var location: String? = nil
 }
 
 @MainActor @Observable
@@ -37,12 +37,12 @@ final class PropertiesConnection {
    properties = result.properties; errorMessage = nil
   } catch { if generation == current { errorMessage = error.localizedDescription } }
  }
- func save(id: String, name: String, value: String, ownership: String, date: String, cost: String) async -> Bool {
+ func save(id: String, name: String, value: String, date: String, cost: String, classification: String = "", location: String = "") async -> Bool {
   guard token != nil, !isBusy else { return false }
   isBusy = true; let current = generation
   defer { if generation == current { isBusy = false } }
   do {
-   let result: SaveResponse = try await send(id,method:"PUT",body:["name":name,"estimatedValue":value,"ownershipPercent":ownership,"valuationDate":date,"purchaseCost":cost])
+   let result: SaveResponse = try await send(id,method:"PUT",body:["name":name,"estimatedValue":value,"valuationDate":date,"purchaseCost":cost,"classification":classification,"location":location])
    guard generation == current else { return false }
    properties.removeAll { $0.id == id }; properties.insert(result.property,at:0); errorMessage = nil; return true
   } catch { if generation == current { errorMessage = error.localizedDescription }; return false }

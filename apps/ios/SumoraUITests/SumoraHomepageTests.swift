@@ -68,6 +68,70 @@ final class SumoraHomepageTests: XCTestCase {
         XCTAssertTrue(app.buttons["tab-Overview"].waitForExistence(timeout: 5))
     }
 
+    func testMutualFundsUsesInstrumentLayoutAndUnits() {
+        let app = launch()
+        app.buttons["home-instrument-mutualFund"].tap()
+        XCTAssertTrue(app.staticTexts["Mutual Funds"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["equityValue"].label, "₹14,80,000")
+        XCTAssertFalse(app.buttons["stockCurrencyToggle"].exists)
+        let top = XCTAttachment(screenshot: app.screenshot()); top.name = "Mutual Funds summary"; top.lifetime = .keepAlways; add(top)
+        let sort = app.buttons["Sort mutual funds"]
+        for _ in 0..<3 where !sort.isHittable { app.swipeUp() }
+        sort.tap(); app.buttons["Value: Low to High"].tap()
+        app.swipeUp()
+        XCTAssertTrue(app.descendants(matching: .any)["equity-holding-parag"].firstMatch.exists)
+        XCTAssertFalse(app.descendants(matching: .any)["equity-holding-hdfc"].firstMatch.exists)
+        let rows = XCTAttachment(screenshot: app.screenshot()); rows.name = "Mutual Funds holdings"; rows.lifetime = .keepAlways; add(rows)
+    }
+
+    func testRealEstateEmptyStateAndAddSheetHaveNoOwnershipOrLoanFields() {
+        let app = launch()
+        app.buttons["homeSettings"].tap()
+        app.buttons["Real estate"].tap()
+        XCTAssertTrue(app.staticTexts["realEstateEmpty"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["realEstateBack"].exists)
+        app.swipeDown()
+        let hierarchy = XCTAttachment(string:app.debugDescription); hierarchy.name = "Real Estate empty geometry"; hierarchy.lifetime = .keepAlways; add(hierarchy)
+        let empty = XCTAttachment(screenshot: app.screenshot()); empty.name = "Real Estate empty state"; empty.lifetime = .keepAlways; add(empty)
+        app.buttons["first-property"].tap()
+        XCTAssertTrue(app.staticTexts["property-editor-title"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["property-class-apartment"].isSelected)
+        app.buttons["property-class-house"].tap()
+        XCTAssertTrue(app.buttons["property-class-house"].isSelected)
+        XCTAssertTrue(app.textFields["property-name"].exists)
+        XCTAssertFalse(app.textFields["property-ownership"].exists)
+        XCTAssertFalse(app.textFields["Loan balance"].exists)
+        XCTAssertFalse(app.buttons["save-property"].isEnabled)
+        let sheet = XCTAttachment(screenshot: app.screenshot()); sheet.name = "Add Real Estate Property"; sheet.lifetime = .keepAlways; add(sheet)
+        app.buttons["discard-property"].tap()
+        XCTAssertTrue(app.staticTexts["realEstateEmpty"].exists)
+    }
+
+    func testRealEstateFullValuationRegistryAndEditSheet() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing", "--real-estate-fixture"]
+        app.launch()
+        XCTAssertTrue(app.staticTexts["portfolioValue"].waitForExistence(timeout: 10))
+        let category = app.buttons["allocation-realEstate"]
+        for _ in 0..<5 where !category.isHittable { app.swipeUp() }
+        category.tap()
+        XCTAssertTrue(app.staticTexts["realEstateValue"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["realEstateValue"].label, "₹1,50,00,000")
+        let top = XCTAttachment(screenshot: app.screenshot()); top.name = "Real Estate valuation and trajectory"; top.lifetime = .keepAlways; add(top)
+        let sort = app.buttons["Sort properties"]
+        for _ in 0..<4 where !sort.isHittable { app.swipeUp() }
+        sort.tap(); app.buttons["Value: Low to High"].tap()
+        app.swipeUp()
+        let first = app.buttons["property-card-22222222-2222-4222-8222-222222222222"]
+        XCTAssertTrue(first.exists)
+        let rows = XCTAttachment(screenshot: app.screenshot()); rows.name = "Real Estate registry"; rows.lifetime = .keepAlways; add(rows)
+        first.tap()
+        XCTAssertTrue(app.staticTexts["property-editor-title"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.textFields["property-name"].value as? String, "Brigade Orchards Villa 18")
+        XCTAssertEqual(app.textFields["property-location"].value as? String, "Bengaluru, KA")
+        XCTAssertFalse(app.textFields["property-ownership"].exists)
+    }
+
     func testTrajectoryLabelsMatchReferencePlacement() {
         let app = launch()
         app.swipeUp()

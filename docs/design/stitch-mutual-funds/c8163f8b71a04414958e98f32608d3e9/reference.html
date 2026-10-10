@@ -1,0 +1,151 @@
+<!DOCTYPE html><html class="h-full bg-[#F8FAFC]" lang="en" style=""><head></head><body class="h-full text-on-surface bg-[#F8FAFC] antialiased flex justify-center font-body-md text-body-md"><svg class="inline-defs-container" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden"></svg>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport">
+<title>Sumora - Mutual Funds</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "error": "#ba1a1a",
+            "outline": "#777587",
+            "surface-container-lowest": "#ffffff",
+            "on-surface-variant": "#464555",
+            "background": "#f7f9fb",
+            "inverse-primary": "#c3c0ff",
+            "inverse-surface": "#2d3133",
+            "tertiary-container": "#516177",
+            "on-primary-fixed": "#0f0069",
+            "secondary": "#565e74",
+            "surface-container": "#eceef0",
+            "secondary-fixed-dim": "#bec6e0",
+            "on-error-container": "#93000a",
+            "on-secondary-fixed-variant": "#3f465c",
+            "on-primary-container": "#dad7ff",
+            "secondary-container": "#dae2fd",
+            "on-primary": "#ffffff",
+            "surface-container-low": "#f2f4f6",
+            "secondary-fixed": "#dae2fd",
+            "on-tertiary-fixed-variant": "#38485d",
+            "on-secondary": "#ffffff",
+            "outline-variant": "#c7c4d8",
+            "primary-fixed-dim": "#c3c0ff",
+            "tertiary-fixed-dim": "#b7c8e1",
+            "on-error": "#ffffff",
+            "tertiary": "#3a495f",
+            "primary-container": "#4f46e5",
+            "on-surface": "#191c1e",
+            "surface-container-high": "#e6e8ea",
+            "on-secondary-fixed": "#131b2e",
+            "on-background": "#191c1e",
+            "inverse-on-surface": "#eff1f3",
+            "surface-tint": "#4d44e3",
+            "on-secondary-container": "#5c647a",
+            "on-primary-fixed-variant": "#3323cc",
+            "primary-fixed": "#e2dfff",
+            "on-tertiary": "#ffffff",
+            "on-tertiary-fixed": "#0b1c30",
+            "surface": "#f7f9fb",
+            "error-container": "#ffdad6",
+            "surface-container-highest": "#e0e3e5",
+            "tertiary-fixed": "#d3e4fe",
+            "primary": "#3525cd",
+            "surface-bright": "#f7f9fb",
+            "surface-dim": "#d8dadc",
+            "on-tertiary-container": "#ccdcf7",
+            "surface-variant": "#e0e3e5"
+          },
+          borderRadius: {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          spacing: {
+            "space-2xl": "2rem",
+            "gutter": "1rem",
+            "margin": "1rem",
+            "space-md": "0.75rem",
+            "gutter-lg": "1.5rem",
+            "space-xs": "0.25rem",
+            "space-xl": "1.5rem",
+            "margin-lg": "2rem",
+            "margin-md": "1.5rem",
+            "space-2xs": "0.125rem",
+            "space-sm": "0.5rem"
+          },
+          fontFamily: {
+            "numeric-md": ["Inter"],
+            "headline-lg": ["Inter"],
+            "display-lg": ["Inter"],
+            "body-md": ["Inter"],
+            "numeric-sm": ["Inter"],
+            "numeric-lg": ["Inter"],
+            "body-lg": ["Inter"],
+            "label-sm": ["Inter"],
+            "headline-sm": ["Inter"],
+            "headline-md": ["Inter"],
+            "body-sm": ["Inter"],
+            "label-md": ["Inter"]
+          },
+          fontSize: {
+            "numeric-md": ["14px", { lineHeight: "20px", fontWeight: "500" }],
+            "headline-lg": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+            "display-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "600" }],
+            "body-md": ["13px", { lineHeight: "18px", fontWeight: "400" }],
+            "numeric-sm": ["12px", { lineHeight: "16px", fontWeight: "500" }],
+            "numeric-lg": ["28px", { lineHeight: "32px", letterSpacing: "-0.02em", fontWeight: "600" }],
+            "body-lg": ["15px", { lineHeight: "22px", fontWeight: "400" }],
+            "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.04em", fontWeight: "600" }],
+            "headline-sm": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+            "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+            "body-sm": ["12px", { lineHeight: "16px", fontWeight: "400" }],
+            "label-md": ["13px", { lineHeight: "18px", fontWeight: "500" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Tabular numbers for high precision institutional ledger */
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+    /* Safe area padding for standalone mobile screens */
+    .pt-safe {
+      padding-top: env(safe-area-inset-top, 0px);
+    }
+    .pb-safe {
+      padding-bottom: env(safe-area-inset-bottom, 20px);
+    }
+    /* Smooth minimal touch styling */
+    body {
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+  </style>
+
+
+<!-- Mobile Container Shell (iOS Viewport Max 430px) -->
+<div class="w-full max-w-[420px] min-h-screen bg-[#F2F2F7] relative flex flex-col shadow-2xl border-x border-slate-200/60 pb-28 mx-auto">
+<!-- 1. Native iOS Status Bar & Dynamic Island -->
+<header class="sticky top-0 z-40 bg-[#F2F2F7]/90 backdrop-blur-xl border-b border-black/[0.04]"><div class="flex items-center justify-between px-6 pt-3 pb-1 h-11 w-full text-slate-900 select-none"><span class="text-[14px] font-semibold tracking-tight w-12 pl-0.5">9:41</span><div class="w-28 h-6 bg-black rounded-full flex items-center justify-end px-2 space-x-1.5 shadow-sm"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span class="w-1.5 h-1.5 rounded-full bg-[#1e293b]"></span></div><div class="flex items-center justify-end space-x-1.5 w-12 text-slate-900"><span class="material-symbols-outlined text-[15px]" style="font-size: 15px;">signal_cellular_alt</span><span class="text-[11px] font-bold tracking-tight">5G</span><span class="material-symbols-outlined text-[19px]" style="font-size: 19px;">battery_full</span></div></div><div class="relative flex items-center justify-between px-4 py-2"><button aria-label="Go Back" class="flex items-center text-indigo-600 active:scale-95 transition-transform z-10 w-9 h-9 justify-center -ml-2 rounded-full" onclick="history.back()"><span class="material-symbols-outlined text-[20px]" style="font-size: 20px;">chevron_left</span></button><div class="absolute inset-0 flex items-center justify-center pointer-events-none"><div class="flex items-center gap-1.5"><h1 class="text-[17px] font-bold text-slate-900 tracking-tight leading-none">Mutual Funds</h1></div></div><div class="w-9 h-9"></div></div></header>
+<!-- Main Content Canvas -->
+<main class="flex-1 px-4 pt-4 pb-28 space-y-4"><section class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between"><div class="flex items-center justify-between pb-1"><div class="flex items-center gap-2"><span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">VALUATION</span></div><span class="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/70 shadow-2xs"><span class="material-symbols-outlined text-[13px]" style="font-size: 13px;">arrow_upward</span><span class="">+32.77%</span><span class="text-emerald-600/70 font-normal text-[10px]">All-time</span></span></div><div class="text-[32px] font-bold text-slate-900 tracking-tight leading-tight my-2 tabular-nums">₹50,98,420</div><div class="flex items-center justify-between pt-2 border-t border-slate-100 text-[12px]"><div class="flex items-center space-x-1.5 text-slate-500"><span class="text-slate-400 font-medium">Invested:</span><span class="font-semibold text-slate-800 tabular-nums">₹38,40,000</span></div><div class="flex items-center space-x-1 text-emerald-600 font-medium"><span class="text-slate-400 font-normal">Gain:</span><span class="font-semibold tabular-nums">+₹12,58,420</span></div></div></section><section class="p-5 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-white shadow-lg relative overflow-hidden border border-white/60"><div class="flex items-center justify-between mb-3"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-[#F59E0B] animate-pulse"></span><span class="text-[11px] uppercase tracking-wider text-emerald-400 font-semibold">Daily Performance</span></div></div><div class="mb-3"><div class="flex items-baseline gap-2"><span class="text-[32px] font-bold tracking-tight text-white leading-none tabular-nums">+₹18,940</span><span class="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 tabular-nums">+0.37% today</span></div></div><div class="pt-2 border-t border-emerald-500/20 flex items-center justify-between text-[11px] text-slate-300"><div class="flex items-center space-x-1.5"><span class="material-symbols-outlined text-[13px] text-emerald-400/80" style="font-size: 13px;">info</span><span class="text-slate-300">Price movement on recorded units based on AMFI daily NAV</span></div></div></section><section class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col"><div class="flex items-center justify-between pb-1"><div class="flex items-center gap-2"><h3 class="text-[14px] font-bold text-slate-900 tracking-tight">Portfolio Trajectory</h3></div><span class="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/70 shadow-2xs"><span class="material-symbols-outlined text-[13px]" style="font-size: 13px;">arrow_upward</span><span class="">+32.77%</span></span></div><div class="flex items-center justify-between mb-4"><p class="text-[12px] text-slate-500 font-normal">+₹12.58 L over past 12 months</p></div><div class="flex items-center justify-center mb-4"><div class="inline-flex items-center w-full justify-between bg-[#F2F2F7] p-0.5 rounded-lg border border-slate-200/60"><button type="button" class="flex-1 py-1 text-[11px] font-medium text-slate-500 text-center rounded-md transition-colors">1M</button><button type="button" class="flex-1 py-1 text-[11px] font-medium text-slate-500 text-center rounded-md transition-colors">6M</button><button type="button" class="flex-1 py-1 text-[11px] font-semibold text-slate-900 bg-white text-center rounded-md shadow-xs transition-colors">1Y</button><button type="button" class="flex-1 py-1 text-[11px] font-medium text-slate-500 text-center rounded-md transition-colors">ALL</button></div></div><div class="relative w-full h-36"><svg class="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 350 120"><defs><linearGradient id="mf-chart-grad" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#4f46e5" stop-opacity="0.28"></stop><stop offset="100%" stop-color="#4f46e5" stop-opacity="0.0"></stop></linearGradient></defs><line stroke="#f1f5f9" stroke-dasharray="3 3" stroke-width="1" x1="0" x2="350" y1="30"></line><line stroke="#f1f5f9" stroke-dasharray="3 3" stroke-width="1" x1="0" x2="350" y1="75"></line><path d="M 0 108 C 45 102, 70 88, 115 82 C 160 76, 185 64, 230 46 C 275 28, 305 18, 350 12 L 350 120 L 0 120 Z" fill="url(#mf-chart-grad)"></path><path d="M 0 108 C 45 102, 70 88, 115 82 C 160 76, 185 64, 230 46 C 275 28, 305 18, 350 12" fill="none" stroke="#4f46e5" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path><circle cx="350" cy="12" fill="#ffffff" r="4" stroke="#4f46e5" stroke-width="2.5"></circle></svg><div class="absolute right-0 top-0 -translate-y-2 translate-x-1"><div class="bg-slate-900 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md tracking-tight tabular-nums flex items-center gap-1 border border-white/20"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>₹50.98 L</div></div></div><div class="flex items-center justify-between pt-2 border-t border-slate-100 text-[10px] text-slate-400 font-medium tracking-tight"><span class="">Nov '23</span><span class="">Feb '24</span><span class="">May '24</span><span class="">Aug '24</span><span class="font-semibold text-slate-700">Today</span></div></section><section class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100"><div class="flex items-center justify-between pb-3 border-b border-slate-100"><div class="flex flex-col"><div class="flex items-center gap-2"><h2 class="text-[17px] font-bold text-slate-900 tracking-tight">Holdings</h2></div><p class="text-[12px] text-slate-500 pl-4.5 mt-0.5">6 Instruments · Direct Growth</p></div><button class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-container-low border border-slate-200/60 shadow-xs hover:bg-slate-100/70 active:scale-95 transition-transform cursor-pointer text-slate-700" type="button"><span class="text-[11px] font-normal text-slate-400">Sort:</span><span class="text-[11px] font-semibold text-slate-900">Value</span><span class="material-symbols-outlined text-[15px] text-slate-400" style="font-size: 15px;">keyboard_arrow_down</span></button></div><div class="flex flex-col divide-y divide-slate-100"><div class="py-3.5 flex flex-col gap-1.5 hover:bg-slate-50/70 transition-colors cursor-pointer"><div class="flex items-center justify-between gap-2"><span class="text-[14px] font-semibold text-slate-900 leading-snug">HDFC Mid-Cap Opportunities Fund</span></div><div class="flex items-end justify-between gap-2 text-slate-500"><div class="flex items-center gap-1.5 text-[11px] text-slate-500 leading-tight"><span class="">5,820.80 units</span><span class="text-slate-300">·</span><span class="text-slate-400">NAV ₹178.60</span></div><div class="text-right shrink-0"><div class="text-[14px] font-bold text-slate-900 tabular-nums leading-tight">₹10,39,595</div><div class="text-[11px] font-semibold text-emerald-600 tabular-nums mt-0.5">+38.90% (+₹2,91,400)</div></div></div></div><div class="py-3.5 flex flex-col gap-1.5 hover:bg-slate-50/70 transition-colors cursor-pointer"><div class="flex items-center justify-between gap-2"><span class="text-[14px] font-semibold text-slate-900 leading-snug">Mirae Asset Large &amp; Midcap Fund</span></div><div class="flex items-end justify-between gap-2 text-slate-500"><div class="flex items-center gap-1.5 text-[11px] text-slate-500 leading-tight"><span class="">7,110.12 units</span><span class="text-slate-300">·</span><span class="text-slate-400">NAV ₹134.80</span></div><div class="text-right shrink-0"><div class="text-[14px] font-bold text-slate-900 tabular-nums leading-tight">₹9,58,444</div><div class="text-[11px] font-semibold text-emerald-600 tabular-nums mt-0.5">+34.65% (+₹2,46,800)</div></div></div></div><div class="py-3.5 flex flex-col gap-1.5 hover:bg-slate-50/70 transition-colors cursor-pointer"><div class="flex items-center justify-between gap-2"><span class="text-[14px] font-semibold text-slate-900 leading-snug">Quant Small Cap Fund</span></div><div class="flex items-end justify-between gap-2 text-slate-500"><div class="flex items-center gap-1.5 text-[11px] text-slate-500 leading-tight"><span class="">3,940.21 units</span><span class="text-slate-300">·</span><span class="text-slate-400">NAV ₹242.15</span></div><div class="text-right shrink-0"><div class="text-[14px] font-bold text-slate-900 tabular-nums leading-tight">₹9,54,122</div><div class="text-[11px] font-semibold text-emerald-600 tabular-nums mt-0.5">+48.20% (+₹3,10,300)</div></div></div></div><div class="py-3.5 flex flex-col gap-1.5 hover:bg-slate-50/70 transition-colors cursor-pointer"><div class="flex items-center justify-between gap-2"><span class="text-[14px] font-semibold text-slate-900 leading-snug">ICICI Prudential Bluechip Fund</span></div><div class="flex items-end justify-between gap-2 text-slate-500"><div class="flex items-center gap-1.5 text-[11px] text-slate-500 leading-tight"><span class="">8,450.60 units</span><span class="text-slate-300">·</span><span class="text-slate-400">NAV ₹112.40</span></div><div class="text-right shrink-0"><div class="text-[14px] font-bold text-slate-900 tabular-nums leading-tight">₹9,49,847</div><div class="text-[11px] font-semibold text-emerald-600 tabular-nums mt-0.5">+21.40% (+₹1,67,200)</div></div></div></div><div class="py-3.5 flex flex-col gap-1.5 hover:bg-slate-50/70 transition-colors cursor-pointer"><div class="flex items-center justify-between gap-2"><span class="text-[14px] font-semibold text-slate-900 leading-snug">SBI Magnum Global Fund</span></div><div class="flex items-end justify-between gap-2 text-slate-500"><div class="flex items-center gap-1.5 text-[11px] text-slate-500 leading-tight"><span class="">2,840.50 units</span><span class="text-slate-300">·</span><span class="text-slate-400">NAV ₹244.02</span></div><div class="text-right shrink-0"><div class="text-[14px] font-bold text-slate-900 tabular-nums leading-tight">₹6,92,920</div><div class="text-[11px] font-semibold text-emerald-600 tabular-nums mt-0.5">+14.20% (+₹86,200)</div></div></div></div><div class="py-3.5 flex flex-col gap-1.5 hover:bg-slate-50/70 transition-colors cursor-pointer"><div class="flex items-center justify-between gap-2"><span class="text-[14px] font-semibold text-slate-900 leading-snug">Parag Parikh Flexi Cap Fund</span></div><div class="flex items-end justify-between gap-2 text-slate-500"><div class="flex items-center gap-1.5 text-[11px] text-slate-500 leading-tight"><span class="">6,420.45 units</span><span class="text-slate-300">·</span><span class="text-slate-400">NAV ₹78.42</span></div><div class="text-right shrink-0"><div class="text-[14px] font-bold text-slate-900 tabular-nums leading-tight">₹5,03,492</div><div class="text-[11px] font-semibold text-emerald-600 tabular-nums mt-0.5">+42.10% (+₹1,49,120)</div></div></div></div></div></section><div class="px-2 py-1 text-center"><p class="text-[11px] text-slate-400 font-medium leading-tight">Sync baseline: Units remain unchanged while NAV updates daily · 08:30 IST</p><p class="text-[10px] text-slate-400/80 mt-1">Integrated with MFCentral / CAMS CAS · End-of-day NAV reconciliation active</p></div></main>
+<!-- 6. Frosted iOS Navigation Dock (BottomNavBar) -->
+
+</div>
+
+
+
+
+</body></html>

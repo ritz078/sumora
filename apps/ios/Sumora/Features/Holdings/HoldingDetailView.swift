@@ -32,7 +32,7 @@ struct HoldingDetailView: View {
                             } else if holding.assetClass == .bond {
                                 Text(holding.bondTerms?.valuationBasis == "projectedMaturity" ? "Includes projected future returns · counted toward net worth" : "CAS purchase value used · maturity projection unavailable").font(.caption).foregroundStyle(.secondary)
                             } else if holding.assetClass == .realEstate {
-                                Text("Manually entered estimate · adjusted for ownership").font(.caption).foregroundStyle(.secondary)
+                                Text("Full manually entered property estimate").font(.caption).foregroundStyle(.secondary)
                             } else {
                                 GainLossLabel(gain: holding.gain, percent: holding.gainPercent, currency: snapshot.reportingCurrency)
                                 Text("Unrealized return").font(.caption).foregroundStyle(.secondary)
@@ -65,10 +65,9 @@ struct HoldingDetailView: View {
                         if let property = holding.propertyTerms {
                             VStack(spacing:18) {
                                 detailRow("Full property value") { MoneyText(amount:property.estimatedValue) }
-                                detailRow("Your ownership") { Text("\(DisplayFormat.decimal(property.ownershipPercent.value))%") }
                                 detailRow("Valuation date") { Text(property.valuationDate) }
                                 if let cost=property.purchaseCost { detailRow("Full purchase cost") { MoneyText(amount:cost) } }
-                                NavigationLink("Manage real estate") { PropertiesView() }
+                                NavigationLink("Manage real estate") { RealEstateView() }
                             }.portfolioCard()
                         }
                         if let terms = holding.depositTerms {

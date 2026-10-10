@@ -8,8 +8,9 @@ struct StocksView: View {
   _history = State(initialValue: HomeHistoryConnection(assetClass: assetClass))
  }
  private var isUS: Bool { assetClass == .usEquity }
- private var title: String { isUS ? "US Stocks" : "Indian Stocks" }
- private var sortLabel: String { isUS ? "Sort US stocks" : "Sort Indian stocks" }
+ private var isFund: Bool { assetClass == .mutualFund }
+ private var title: String { HomeStyle.title(assetClass) }
+ private var sortLabel: String { isFund ? "Sort mutual funds" : isUS ? "Sort US stocks" : "Sort Indian stocks" }
  @Environment(PortfolioStore.self) private var store
  @Environment(AppDependencies.self) private var dependencies
  @Environment(AppPreferences.self) private var preferences
@@ -34,12 +35,12 @@ struct StocksView: View {
     if let snapshot = store.snapshot { daily(snapshot) }
     HomeTrajectoryCard(history: dependencies.isLivePortfolio ? (usesUSD ? history.usdHistory : history.history) : presentation.history(demoHistory),
      referenceDate: dependencies.demoDate, currency: currency, errorMessage: history.errorMessage,
-     title: "Equities Trajectory", instrumentStyle: true)
+     title: isFund ? "Portfolio Trajectory" : "Equities Trajectory", instrumentStyle: true, roundedInstrumentCallout: isFund)
     positions
     VStack(spacing:4) {
-     Text("Sync baseline: Quantities remain unchanged while prices update · \(syncTime) IST")
+     Text(isFund ? "Sync baseline: Units remain unchanged while NAV updates daily · \(syncTime) IST" : "Sync baseline: Quantities remain unchanged while prices update · \(syncTime) IST")
       .font(.inter(.caption2,weight:.medium,size:11))
-     Text(isUS && usesUSD ? "Recorded USD values · History starts when USD snapshots are saved" : dependencies.isLivePortfolio ? (isUS ? "Recorded US holdings · Prices and exchange rates may be delayed" : "Recorded Zerodha holdings · Prices may be delayed") : "Sample portfolio · Illustrative values, not live prices")
+     Text(isUS && usesUSD ? "Recorded USD values · History starts when USD snapshots are saved" : dependencies.isLivePortfolio ? (isUS ? "Recorded US holdings · Prices and exchange rates may be delayed" : (isFund ? "Recorded fund units · AMFI daily NAV" : "Recorded Zerodha holdings · Prices may be delayed")) : "Sample portfolio · Illustrative values, not live prices")
       .font(.inter(.caption2,size:10))
     }.foregroundStyle(HomeStyle.muted).multilineTextAlignment(.center).padding(.horizontal,8).padding(.vertical,4)
    }.padding(16).padding(.bottom,24)
@@ -104,7 +105,7 @@ struct StocksView: View {
   let metric = HomeDailyMetrics(snapshot:snapshot,asset:assetClass)
   return VStack(alignment:.leading,spacing:12) {
    HStack(spacing:8) {
-    Circle().fill(Color.blue).frame(width:8,height:8)
+    Circle().fill(isFund ? HomeStyle.allocationColor(.mutualFund) : Color.blue).frame(width:8,height:8)
     Text("DAILY PERFORMANCE").font(.inter(.caption2,weight:.semibold,size:11)).tracking(0.8).foregroundStyle(HomeStyle.brightGreen)
    }
    HStack(alignment:.firstTextBaseline,spacing:8) {
@@ -119,7 +120,7 @@ struct StocksView: View {
    Rectangle().fill(HomeStyle.emerald.opacity(0.2)).frame(height:1)
    HStack(spacing:6) {
     Image(systemName:"info.circle").foregroundStyle(HomeStyle.brightGreen.opacity(0.8))
-    Text(metric.gain == nil ? "Daily baseline unavailable for recorded shares" : "Price movement on recorded shares")
+    Text(metric.gain == nil ? (isFund ? "Daily baseline unavailable for recorded units" : "Daily baseline unavailable for recorded shares") : isFund ? "Price movement on recorded units based on AMFI daily NAV" : "Price movement on recorded shares")
    }.font(.inter(.caption2,size:11)).foregroundStyle(Color(red:203/255,green:213/255,blue:225/255))
   }.padding(20).frame(maxWidth:.infinity,alignment:.leading)
    .background(LinearGradient(colors:[Color(red:2/255,green:6/255,blue:23/255),Color(red:15/255,green:23/255,blue:42/255),Color(red:30/255,green:27/255,blue:75/255)],startPoint:.topLeading,endPoint:.bottomTrailing),in:RoundedRectangle(cornerRadius:16))
@@ -131,7 +132,7 @@ struct StocksView: View {
    HStack {
     VStack(alignment:.leading,spacing:4) {
      Text("Holdings").font(.inter(.headline,weight:.bold,size:17)).tracking(-0.425)
-     Text("\(holdings.count) Instruments · \(isUS ? "US Markets" : "NSE/BSE Direct")").font(.inter(.caption,size:12)).foregroundStyle(HomeStyle.secondary)
+     Text("\(holdings.count) Instruments · \(isFund ? "Recorded fund units" : isUS ? "US Markets" : "NSE/BSE Direct")").font(.inter(.caption,size:12)).foregroundStyle(HomeStyle.secondary)
     }
     Spacer(minLength:4)
     Menu {
@@ -149,10 +150,10 @@ struct StocksView: View {
    VStack(spacing:0) {
     Rectangle().fill(HomeStyle.border).frame(height:1)
     ForEach(sortedHoldings) { holding in
-     row(holding).accessibilityElement(children:.combine).accessibilityIdentifier("equity-holding-\(holding.id)")
+     Group { if isFund { fundRow(holding) } else { row(holding) } }.accessibilityElement(children:.combine).accessibilityIdentifier("equity-holding-\(holding.id)")
      if holding.id != sortedHoldings.last?.id { Rectangle().fill(HomeStyle.border).frame(height:1) }
     }
-    if holdings.isEmpty { Text(isUS ? "No US stocks recorded yet" : "No Indian stocks recorded yet").font(.inter(.caption,size:12)).foregroundStyle(HomeStyle.secondary).padding(.vertical,24) }
+    if holdings.isEmpty { Text(isFund ? "No mutual funds recorded yet" : isUS ? "No US stocks recorded yet" : "No Indian stocks recorded yet").font(.inter(.caption,size:12)).foregroundStyle(HomeStyle.secondary).padding(.vertical,24) }
    }
   }.homeCard()
  }
@@ -175,6 +176,24 @@ struct StocksView: View {
      .font(.inter(.caption2,weight:.medium,size:11)).foregroundStyle(gainColor(usesUSD ? holding.gainUSD : holding.gain)).multilineTextAlignment(.trailing).lineLimit(1)
    }.fixedSize(horizontal:true,vertical:false)
   }.padding(.vertical,12).contentShape(Rectangle())
+ }
+ private func fundRow(_ holding: Holding) -> some View {
+  VStack(alignment:.leading,spacing:6) {
+   Text(holding.name).font(.inter(.caption,weight:.semibold,size:14)).lineLimit(1).truncationMode(.tail)
+   HStack(alignment:.bottom,spacing:8) {
+    HStack(spacing:4) {
+     Text("\(DisplayFormat.decimal(holding.quantity.value,digits:2)) units ·")
+     Text("NAV").foregroundStyle(HomeStyle.muted)
+     MoneyText(amount:holding.quote,currency:holding.quoteCurrency,fractionDigits:2)
+    }.font(.inter(.caption2,size:11)).foregroundStyle(HomeStyle.secondary).lineLimit(1).minimumScaleFactor(0.8)
+    Spacer(minLength:0)
+    VStack(alignment:.trailing,spacing:2) {
+     MoneyText(amount:holding.value,currency:currency).font(.inter(.caption,weight:.bold,size:14))
+     Text(preferences.hideBalances ? "••••" : holding.gainPercent.map { signed($0.value)+"%"+(holding.gain.map { " ("+($0.value >= 0 ? "+" : "−")+DisplayFormat.money(abs($0.value),currency:currency)+")" } ?? "") } ?? "Return unavailable")
+      .font(.inter(.caption2,weight:.semibold,size:11)).foregroundStyle(gainColor(holding.gain)).lineLimit(1)
+    }.fixedSize(horizontal:true,vertical:false)
+   }
+  }.padding(.vertical,14)
  }
  private func quoteAmount(_ holding: Holding) -> DecimalValue? {
   guard isUS && !usesUSD else { return holding.quote }
@@ -225,7 +244,8 @@ struct InstrumentPageKey: PreferenceKey {
 struct InstrumentDestination: View {
  let assetClass: AssetClass
  var body: some View {
-  if assetClass == .indianEquity || assetClass == .usEquity { StocksView(assetClass:assetClass) }
+  if assetClass == .realEstate { RealEstateView() }
+  else if assetClass == .indianEquity || assetClass == .usEquity || assetClass == .mutualFund { StocksView(assetClass:assetClass) }
   else { HoldingsView(assetClass:assetClass).toolbar(.visible,for:.navigationBar).navigationTitle(HomeStyle.title(assetClass)).navigationBarTitleDisplayMode(.inline) }
  }
 }

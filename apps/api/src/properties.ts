@@ -4,29 +4,34 @@ import {APIError,appSession,type KiteEnvironment} from './zerodha';
 import {validDay} from './gold-prices';
 import {istDate} from './daily-prices';
 import {portfolioTotals,type Portfolio} from './portfolio-valuation';
-export type PropertyEntry={id:string;name:string;estimatedValue:string;ownershipPercent:string;valuationDate:string;purchaseCost:string|null;updatedAt:number};
+export type PropertyEntry={id:string;name:string;estimatedValue:string;valuationDate:string;purchaseCost:string|null;updatedAt:number;classification?:string|null;location?:string|null;ownershipPercent?:'100'};
 const uuid=/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
 function entry(raw:unknown,id:string,at:Date):PropertyEntry {
  if(!raw || typeof raw!=='object' || Array.isArray(raw))throw new APIError(400,'INVALID_PROPERTY','Enter property details.');
  const v=raw as Record<string,unknown>;
  const amount=(key:string,max:string)=>{
-  const value=v[key];if(typeof value!=='string' || !/^\d{1,13}(?:\.\d{1,4})?$/.test(value))throw new APIError(400,'INVALID_PROPERTY','Enter valid positive amounts and ownership.');
-  const n=new Decimal(value);if(n.gt(max))throw new APIError(400,'INVALID_PROPERTY','Property amount or ownership is too large.');return n;
+  const value=v[key];if(typeof value!=='string' || !/^\d{1,13}(?:\.\d{1,4})?$/.test(value))throw new APIError(400,'INVALID_PROPERTY','Enter valid positive amounts.');
+  const n=new Decimal(value);if(n.gt(max))throw new APIError(400,'INVALID_PROPERTY','Property amount is too large.');return n;
  };
- const estimated=amount('estimatedValue','1000000000000'),ownership=amount('ownershipPercent','100');
- if(ownership.lte(0) || typeof v.name!=='string' || !v.name.trim() || v.name.trim().length>80 || /[\x00-\x1f]/.test(v.name))throw new APIError(400,'INVALID_PROPERTY','Enter a property name and ownership between 0 and 100 percent.');
+ const estimated=amount('estimatedValue','1000000000000');
+ if(typeof v.name!=='string' || !v.name.trim() || v.name.trim().length>80 || /[\x00-\x1f]/.test(v.name))throw new APIError(400,'INVALID_PROPERTY','Enter a valid property name.');
  if(typeof v.valuationDate!=='string' || !validDay(v.valuationDate) || v.valuationDate>istDate(at))throw new APIError(400,'INVALID_PROPERTY','Choose a valid valuation date that is not in the future.');
  const purchase=v.purchaseCost==null || v.purchaseCost===''?null:amount('purchaseCost','1000000000000').toFixed();
- return {id,name:v.name.trim(),estimatedValue:estimated.toFixed(),ownershipPercent:ownership.toFixed(),valuationDate:v.valuationDate,purchaseCost:purchase,updatedAt:at.getTime()};
+ const classification=v.classification==null || v.classification===''?null:v.classification;
+ if(classification!==null && (typeof classification!=="string" || !['apartment','house','commercial','land'].includes(classification)))throw new APIError(400,'INVALID_PROPERTY','Choose a valid property classification.');
+ const location=v.location==null?null:typeof v.location==='string'?v.location.trim():false;
+ if(location===false || location!==null && (location.length>100 || /[\x00-\x1f]/.test(location)))throw new APIError(400,'INVALID_PROPERTY','Enter a valid location.');
+ // Older installed clients require this field; it is fixed at 100, never used in valuation.
+ return {ownershipPercent:'100',classification:classification as string|null,location:location || null,id,name:v.name.trim(),estimatedValue:estimated.toFixed(),valuationDate:v.valuationDate,purchaseCost:purchase,updatedAt:at.getTime()};
 }
 export async function propertyEntries(env:Pick<KiteEnvironment,'DB'>,owner:string):Promise<PropertyEntry[]> {
- const row=await env.DB.prepare("SELECT json_group_array(json(data)) AS properties FROM (SELECT data FROM properties WHERE owner_id=? ORDER BY updated_at DESC,id)").bind(owner).first<{properties:string}>();return JSON.parse(row?.properties??'[]');
+ const row=await env.DB.prepare("SELECT json_group_array(json(data)) AS properties FROM (SELECT data FROM properties WHERE owner_id=? ORDER BY updated_at DESC,id)").bind(owner).first<{properties:string}>();return (JSON.parse(row?.properties??'[]') as PropertyEntry[]).map(property=>({...property,ownershipPercent:'100'}));
 }
 export async function propertiesPortfolio(env:Pick<KiteEnvironment,'DB'>,snapshot:Portfolio,owner:string):Promise<Portfolio> {
  const entries=await propertyEntries(env,owner);
  if(!entries.length && !snapshot.holdings.some(h=>h.accountID==='properties') && !snapshot.connections.some(c=>c.id==='properties'))return snapshot;
- const holdings:Portfolio['holdings']=entries.map(p=>({id:'property:'+p.id,name:p.name,symbol:'PROPERTY',assetClass:'realEstate',accountID:'properties',quantity:p.ownershipPercent,unit:'% ownership',invested:'0',costBasisKnown:false,value:new Decimal(p.estimatedValue).times(p.ownershipPercent).div(100).toDecimalPlaces(2).toFixed(),gain:null,gainPercent:null,quote:null,quoteAt:p.valuationDate+'T00:00:00Z',quoteCurrency:'INR',fxRate:'1',fxAt:null,history:[],source:'Manually entered',priceBasis:`Estimated property value × ownership share. Valuation dated ${p.valuationDate}; no automatic appreciation.`,propertyTerms:p}));
- return portfolioTotals({...snapshot,holdings:[...snapshot.holdings.filter(h=>h.accountID!=='properties'),...holdings],connections:[...snapshot.connections.filter(c=>c.id!=='properties'),...(entries.length?[{id:'properties',name:'Manual real estate',symbol:'P',status:'connected',lastSyncAt:new Date(Math.max(...entries.map(p=>p.updatedAt))).toISOString(),description:'Manually entered valuations, adjusted for your ownership share.'}]:[])]});
+ const holdings:Portfolio['holdings']=entries.map(p=>({id:'property:'+p.id,name:p.name,symbol:'PROPERTY',assetClass:'realEstate',accountID:'properties',quantity:'1',unit:'property',invested:'0',costBasisKnown:false,value:new Decimal(p.estimatedValue).toDecimalPlaces(2).toFixed(),gain:null,gainPercent:null,quote:null,quoteAt:p.valuationDate+'T00:00:00Z',quoteCurrency:'INR',fxRate:'1',fxAt:null,history:[],source:'Manually entered',priceBasis:`Full estimated property value. Valuation dated ${p.valuationDate}; no automatic appreciation.`,propertyTerms:p}));
+ return portfolioTotals({...snapshot,holdings:[...snapshot.holdings.filter(h=>h.accountID!=='properties'),...holdings],connections:[...snapshot.connections.filter(c=>c.id!=='properties'),...(entries.length?[{id:'properties',name:'Manual real estate',symbol:'P',status:'connected',lastSyncAt:new Date(Math.max(...entries.map(p=>p.updatedAt))).toISOString(),description:'Full manually entered property valuations.'}]:[])]});
 }
 export function propertiesRoutes(now=Date.now) {
  const app=new Hono<{Bindings:KiteEnvironment}>();
