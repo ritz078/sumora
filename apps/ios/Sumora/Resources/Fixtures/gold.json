@@ -1,0 +1,264 @@
+{
+  "id": "demo-complete",
+  "reportingCurrency": "INR",
+  "capturedAt": "2026-10-06T06:00:00Z",
+  "holdingsSyncAt": "2026-10-06T05:00:00Z",
+  "coverage": "complete",
+  "value": "1580089.0",
+  "invested": "1226334",
+  "coveredInvested": "3800000",
+  "gain": null,
+  "gainPercent": null,
+  "holdings": [
+    {
+      "id": "sgb-2028",
+      "name": "Sovereign Gold Bond 2028 Series IX",
+      "symbol": "SGB2028-IX",
+      "assetClass": "gold",
+      "accountID": "zerodha",
+      "quantity": "120",
+      "unit": "units",
+      "invested": "700800",
+      "value": "856800",
+      "gain": "156000",
+      "gainPercent": "22.26027397260273972602739726",
+      "quote": "7140",
+      "quoteCurrency": "INR",
+      "fxRate": null,
+      "fxAt": null,
+      "quoteAt": "2026-10-06T05:00:00Z",
+      "source": "Illustrative UI test data",
+      "priceBasis": "Sample quote; not live data",
+      "history": [
+        {
+          "date": "2026-04-09T06:00:00Z",
+          "value": "694008.00"
+        },
+        {
+          "date": "2026-05-09T06:00:00Z",
+          "value": "714000.82"
+        },
+        {
+          "date": "2026-06-08T06:00:00Z",
+          "value": "742874.98"
+        },
+        {
+          "date": "2026-07-08T06:00:00Z",
+          "value": "778464.00"
+        },
+        {
+          "date": "2026-08-07T06:00:00Z",
+          "value": "810246.38"
+        },
+        {
+          "date": "2026-09-06T06:00:00Z",
+          "value": "832437.50"
+        },
+        {
+          "date": "2026-10-06T06:00:00Z",
+          "value": "856800"
+        }
+      ],
+      "costBasisKnown": true,
+      "dailyGain": "4686.6235703630034808552959",
+      "dailyGainPercent": "0.55"
+    },
+    {
+      "id": "sgb-2029",
+      "name": "SGB Series 2029-IV",
+      "symbol": "SGB2029-IV",
+      "assetClass": "gold",
+      "accountID": "zerodha",
+      "quantity": "60",
+      "unit": "units",
+      "invested": "365600",
+      "value": "428400",
+      "gain": "62800",
+      "gainPercent": "17.17724288840262582056892779",
+      "quote": "7140",
+      "quoteCurrency": "INR",
+      "fxRate": null,
+      "fxAt": null,
+      "quoteAt": "2026-10-06T05:00:00Z",
+      "source": "Illustrative UI test data",
+      "priceBasis": "Sample quote; not live data",
+      "history": [
+        {
+          "date": "2026-04-09T06:00:00Z",
+          "value": "347004.00"
+        },
+        {
+          "date": "2026-05-09T06:00:00Z",
+          "value": "357000.41"
+        },
+        {
+          "date": "2026-06-08T06:00:00Z",
+          "value": "371437.49"
+        },
+        {
+          "date": "2026-07-08T06:00:00Z",
+          "value": "389232.00"
+        },
+        {
+          "date": "2026-08-07T06:00:00Z",
+          "value": "405123.19"
+        },
+        {
+          "date": "2026-09-06T06:00:00Z",
+          "value": "416218.75"
+        },
+        {
+          "date": "2026-10-06T06:00:00Z",
+          "value": "428400"
+        }
+      ],
+      "costBasisKnown": true,
+      "dailyGain": "2343.3117851815017404276479",
+      "dailyGainPercent": "0.55"
+    },
+    {
+      "id": "digital-gold",
+      "name": "MMTC-PAMP Digital Gold",
+      "symbol": "DIGITAL_GOLD",
+      "assetClass": "gold",
+      "accountID": "digital-gold",
+      "quantity": "25.4",
+      "unit": "grams",
+      "invested": "159934",
+      "value": "183134.0",
+      "gain": "23200.0",
+      "gainPercent": "14.50598371828379206422649343",
+      "quote": "7210",
+      "quoteCurrency": "INR",
+      "fxRate": null,
+      "fxAt": null,
+      "quoteAt": "2026-10-06T05:00:00Z",
+      "source": "Illustrative UI test data",
+      "priceBasis": "Sample quote; not live data",
+      "history": [
+        {
+          "date": "2026-04-09T06:00:00Z",
+          "value": "148338.54"
+        },
+        {
+          "date": "2026-05-09T06:00:00Z",
+          "value": "152611.84"
+        },
+        {
+          "date": "2026-06-08T06:00:00Z",
+          "value": "158783.46"
+        },
+        {
+          "date": "2026-07-08T06:00:00Z",
+          "value": "166390.32"
+        },
+        {
+          "date": "2026-08-07T06:00:00Z",
+          "value": "173183.54"
+        },
+        {
+          "date": "2026-09-06T06:00:00Z",
+          "value": "177926.72"
+        },
+        {
+          "date": "2026-10-06T06:00:00Z",
+          "value": "183134.0"
+        }
+      ],
+      "costBasisKnown": true,
+      "dailyGain": "1001.7274987568373943311785",
+      "dailyGainPercent": "0.55"
+    },
+    {
+      "id": "gullak:gold",
+      "name": "Gullak Gold",
+      "symbol": "GOLD_999_INR_GRAM",
+      "assetClass": "gold",
+      "accountID": "gullak",
+      "quantity": "15.5",
+      "unit": "grams",
+      "invested": "0",
+      "value": "111755.0",
+      "gain": null,
+      "gainPercent": null,
+      "quote": "7210",
+      "quoteCurrency": "INR",
+      "fxRate": null,
+      "fxAt": null,
+      "quoteAt": "2026-10-06T05:00:00Z",
+      "source": "Illustrative UI test data",
+      "priceBasis": "Sample quote; not live data",
+      "history": [
+        {
+          "date": "2026-04-09T06:00:00Z",
+          "value": "90521.55"
+        },
+        {
+          "date": "2026-05-09T06:00:00Z",
+          "value": "93129.27"
+        },
+        {
+          "date": "2026-06-08T06:00:00Z",
+          "value": "96895.42"
+        },
+        {
+          "date": "2026-07-08T06:00:00Z",
+          "value": "101537.40"
+        },
+        {
+          "date": "2026-08-07T06:00:00Z",
+          "value": "105682.87"
+        },
+        {
+          "date": "2026-09-06T06:00:00Z",
+          "value": "108577.33"
+        },
+        {
+          "date": "2026-10-06T06:00:00Z",
+          "value": "111755.0"
+        }
+      ],
+      "costBasisKnown": false,
+      "dailyGain": "611.2904027846842366981601",
+      "dailyGainPercent": "0.55"
+    }
+  ],
+  "allocation": [
+    {
+      "assetClass": "gold",
+      "value": "1580089.0",
+      "percent": "100"
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-04-09T06:00:00Z",
+      "value": "1279872.09"
+    },
+    {
+      "date": "2026-05-09T06:00:00Z",
+      "value": "1316742.34"
+    },
+    {
+      "date": "2026-06-08T06:00:00Z",
+      "value": "1369991.34"
+    },
+    {
+      "date": "2026-07-08T06:00:00Z",
+      "value": "1435623.72"
+    },
+    {
+      "date": "2026-08-07T06:00:00Z",
+      "value": "1494235.99"
+    },
+    {
+      "date": "2026-09-06T06:00:00Z",
+      "value": "1535160.30"
+    },
+    {
+      "date": "2026-10-06T06:00:00Z",
+      "value": "1580089.0"
+    }
+  ],
+  "connections": []
+}

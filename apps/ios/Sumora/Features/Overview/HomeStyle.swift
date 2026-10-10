@@ -37,10 +37,10 @@ enum HomeStyle {
  }
 }
 extension View {
- func homeCard() -> some View {
-  padding(20).frame(maxWidth:.infinity,alignment:.leading)
-   .background(HomeStyle.card,in:RoundedRectangle(cornerRadius:16))
-   .overlay(RoundedRectangle(cornerRadius:16).stroke(HomeStyle.border,lineWidth:1))
+ func homeCard(padding amount:CGFloat = 20,cornerRadius:CGFloat = 16) -> some View {
+  padding(amount).frame(maxWidth:.infinity,alignment:.leading)
+   .background(HomeStyle.card,in:RoundedRectangle(cornerRadius:cornerRadius))
+   .overlay(RoundedRectangle(cornerRadius:cornerRadius).stroke(HomeStyle.border,lineWidth:1))
    .shadow(color:.black.opacity(0.04),radius:4,y:2)
  }
 }

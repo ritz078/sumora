@@ -84,6 +84,57 @@ final class SumoraHomepageTests: XCTestCase {
         let rows = XCTAttachment(screenshot: app.screenshot()); rows.name = "Mutual Funds holdings"; rows.lifetime = .keepAlways; add(rows)
     }
 
+    func testGoldBullionShowsRecordedValuesAndDedicatedLayout() {
+        let app = launch()
+        let category = app.buttons["allocation-gold"]
+        for _ in 0..<5 where !category.isHittable { app.swipeUp() }
+        category.tap()
+        XCTAssertTrue(app.staticTexts["goldValue"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["goldValue"].label, "₹3,50,000")
+        XCTAssertTrue(app.buttons["goldRefresh"].exists)
+        XCTAssertTrue(app.staticTexts["Gold & Bullion Trajectory"].exists)
+        let top = XCTAttachment(screenshot: app.screenshot()); top.name = "Gold and Bullion summary"; top.lifetime = .keepAlways; add(top)
+        let sort = app.buttons["Sort gold holdings"]
+        for _ in 0..<3 where !sort.isHittable { app.swipeUp() }
+        sort.tap(); app.buttons["Value: Low to High"].tap()
+        let row = app.descendants(matching: .any)["gold-holding-gold"].firstMatch
+        XCTAssertTrue(row.exists)
+        XCTAssertTrue(row.label.contains("35 grams"))
+        XCTAssertTrue(row.label.contains("BULLION"))
+        XCTAssertFalse(app.descendants(matching: .any)["gold-holding-hdfc"].firstMatch.exists)
+        let rows = XCTAttachment(screenshot: app.screenshot()); rows.name = "Gold and Bullion holdings"; rows.lifetime = .keepAlways; add(rows)
+        app.buttons["goldBack"].tap()
+        XCTAssertTrue(app.buttons["tab-Overview"].waitForExistence(timeout: 5))
+    }
+
+    func testGoldMixedHoldingsPreserveUnknownCostsAndDailyBaseline() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing", "--gold-fixture"]
+        app.launch()
+        XCTAssertTrue(app.staticTexts["portfolioValue"].waitForExistence(timeout: 10))
+        let category = app.buttons["allocation-gold"]
+        for _ in 0..<5 where !category.isHittable { app.swipeUp() }
+        category.tap()
+        XCTAssertTrue(app.staticTexts["goldValue"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["goldValue"].label, "₹15,80,089")
+        XCTAssertTrue(app.staticTexts["Known invested"].exists)
+        XCTAssertTrue(app.staticTexts["+0.55% today"].exists)
+        let top = XCTAttachment(screenshot: app.screenshot()); top.name = "Mixed Gold summary and daily performance"; top.lifetime = .keepAlways; add(top)
+        let sort = app.buttons["Sort gold holdings"]
+        for _ in 0..<3 where !sort.isHittable { app.swipeUp() }
+        sort.tap();app.buttons["Value: Low to High"].tap()
+        app.swipeUp()
+        let gullak = app.descendants(matching: .any)["gold-holding-gullak:gold"].firstMatch
+        let sgb = app.descendants(matching: .any)["gold-holding-sgb-2028"].firstMatch
+        XCTAssertTrue(gullak.exists && sgb.exists)
+        XCTAssertTrue(gullak.label.contains("GULLAK"))
+        XCTAssertTrue(gullak.label.contains("Return unavailable"))
+        XCTAssertTrue(sgb.label.contains("SGB2028-IX"))
+        XCTAssertTrue(sgb.label.contains("120 units"))
+        XCTAssertLessThan(gullak.frame.minY,sgb.frame.minY)
+        let rows = XCTAttachment(screenshot: app.screenshot()); rows.name = "Mixed Gold sorted holdings"; rows.lifetime = .keepAlways; add(rows)
+    }
+
     func testRealEstateEmptyStateAndAddSheetHaveNoOwnershipOrLoanFields() {
         let app = launch()
         let category = app.buttons["allocation-realEstate"]
