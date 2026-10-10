@@ -57,6 +57,7 @@ struct BondTerms: Codable, Sendable {
  let repayment: String?
  let ytm: DecimalValue?
  let projectedMaturityValue: DecimalValue?
+ let projectionUsesOrderDate: Bool?
  let quotedCoupon: DecimalValue?
  let valuationBasis: String?
  let reconciliationNote: String?

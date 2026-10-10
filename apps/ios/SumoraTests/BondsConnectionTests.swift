@@ -26,13 +26,14 @@ struct BondsConnectionTests {
   #expect(status.balance?.matchedPurchases == 8)
   #expect(status.redeemed?.first?.principal.value == Decimal(50000))
   let terms=try JSONDecoder().decode(BondTerms.self,from:Data("""
-  {"coupon":"9.3","maturesOn":"2028-11-20","redemptionCheck":false,"investedAmount":"48616.58","accruedAtPurchase":"152.88","interestGross":"1000","interestNet":"900","tds":"100","principalReceived":"0","nextPayout":"2026-11-01","frequency":"Monthly","repayment":"At Maturity","ytm":"11.75","projectedMaturityValue":"12100","quotedCoupon":"9.3","valuationBasis":"statement","reconciliationNote":null,"payoutDifference":"0.2"}
+  {"coupon":"9.3","maturesOn":"2028-11-20","redemptionCheck":false,"investedAmount":"48616.58","accruedAtPurchase":"152.88","interestGross":"1000","interestNet":"900","tds":"100","principalReceived":"0","nextPayout":"2026-11-01","frequency":"Monthly","repayment":"At Maturity","ytm":"11.75","projectedMaturityValue":"12100","projectionUsesOrderDate":true,"quotedCoupon":"9.3","valuationBasis":"statement","reconciliationNote":null,"payoutDifference":"0.2"}
   """.utf8))
   #expect(terms.investedAmount?.value == Decimal(string:"48616.58"))
   #expect(terms.interestNet?.value == Decimal(900))
   #expect(terms.nextPayout == "2026-11-01")
   #expect(terms.ytm?.value == Decimal(string:"11.75"))
   #expect(terms.projectedMaturityValue?.value == Decimal(12100))
+  #expect(terms.projectionUsesOrderDate == true)
   #expect(terms.payoutDifference?.value == Decimal(string:"0.2"))
  }
 

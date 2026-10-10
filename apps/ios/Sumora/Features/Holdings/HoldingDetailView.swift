@@ -82,7 +82,8 @@ struct HoldingDetailView: View {
                                 if let ytm = terms.ytm { detailRow("YTM after brokerage") { Text("\(DisplayFormat.decimal(ytm.value))% p.a.") } }
                                 if let projected = terms.projectedMaturityValue {
                                     detailRow("Projected value at maturity") { MoneyText(amount:projected,fractionDigits:2) }
-                                    Text("Estimated from invested cash and purchase YTM, from settlement to maturity. Assumes all payouts are reinvested at the same rate, with annual compounding and actual days / 365, before tax. This is separate from today’s net worth and the final bond payment.").font(.caption).foregroundStyle(.secondary)
+                                    if terms.projectionUsesOrderDate == true { Text("Uses the order date where a confirmed settlement date is unavailable.").font(.caption).foregroundStyle(.secondary) }
+                                    Text("Estimated from invested cash and purchase YTM, from the investment date to maturity. Assumes all payouts are reinvested at the same rate, with annual compounding and actual days / 365, before tax. This is separate from today’s net worth and the final bond payment.").font(.caption).foregroundStyle(.secondary)
                                 }
                                 if let frequency = terms.frequency { detailRow("Interest frequency") { Text(frequency) } }
                                 if let repayment = terms.repayment { detailRow("Principal repayment") { Text(repayment) } }

@@ -169,7 +169,7 @@ test('projection compounds matched settled lots separately without changing CAS 
  const lots=[{...lot,quantity:'2',invested:'10000'},{...lot,key:'other',quantity:'3',invested:'20000',ytm:'20'}];
  const combined=reconcileBonds(cas,hash,lots.map(event=>({accountHash:hash,event})),at).holdings.find(h=>h.symbol===p.isin)!;
  assert.equal(combined.bondTerms?.projectedMaturityValue,'40900');assert.equal(combined.bondTerms?.ytm,null);
- for(const event of [{...lot,ytm:null},{...lot,confirmed:false}])assert.equal(reconcileBonds(cas,hash,[{accountHash:hash,event}],at).holdings.find(h=>h.symbol===p.isin)?.bondTerms?.projectedMaturityValue,null);
+ for(const event of [{...lot,ytm:null}])assert.equal(reconcileBonds(cas,hash,[{accountHash:hash,event}],at).holdings.find(h=>h.symbol===p.isin)?.bondTerms?.projectedMaturityValue,null);
 });
 test('YTM backfill upgrades legacy events atomically without regressing confirmed settlement or accepting conflicting yields',async()=>{
  const {env,db}=setupGold();const p=parseWintEmail('Investment Successful for Example Finance',purchase,at);if(p.kind!=='purchase')throw Error();
@@ -184,4 +184,17 @@ test('YTM backfill upgrades legacy events atomically without regressing confirme
  await assert.rejects(()=>saveWintEvent(other,'owner',p,'upgrade',at));
  assert.equal((await readWintEvents(other,'owner'))[0].event.kind,'purchase');
  assert.equal(JSON.parse(String(otherDB.prepare('SELECT data FROM wint_events').get()?.data)).ytm,undefined);
+});
+
+test('CAS-corroborated receipt projections use order date and switch to confirmed settlement when available',async()=>{
+ const hash=await digest('owner:bonds:'+cas.accountID);
+ const p=parseWintEmail('Your order receipt for Example Finance is here',purchase,at);if(p.kind!=='purchase')throw Error();
+ const lot={...p,invested:'10000',ytm:'10',orderDate:'2025-08-03',date:'2025-08-03',maturesOn:'2028-08-02'};
+ const holding=(event:typeof lot)=>reconcileBonds(cas,hash,[{accountHash:hash,event}],at).holdings.find(h=>h.symbol===p.isin)!;
+ assert.equal(holding(lot).bondTerms?.projectedMaturityValue,'13310');
+ assert.equal(holding(lot).bondTerms?.projectionUsesOrderDate,true);
+ const settled=holding({...lot,confirmed:true,date:'2026-08-03'});
+ assert.equal(settled.bondTerms?.projectedMaturityValue,'12100');assert.equal(settled.bondTerms?.projectionUsesOrderDate,false);
+ assert.equal(settled.value,'50000');
+ assert.equal(holding({...lot,quantity:'4'}).bondTerms?.projectedMaturityValue,null);
 });

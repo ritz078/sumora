@@ -21,9 +21,11 @@ export function reconcileBonds(cas:CAS|null,accountHash:string|null,events:Store
   const ytm=known && matched.every(p=>p.ytm!=null && p.ytm===matched[0].ytm)?matched[0].ytm??null:null;
   // Terminal wealth assumes all interim payments are reinvested at each lot's
   // purchase YTM. ACT/365 and annual compounding are estimates, before tax.
-  const projectable=known && matched.every(p=>p.confirmed && p.ytm!=null && p.date<=p.maturesOn);
+  const projectionStart=(p:StoredPurchase)=>p.confirmed?p.date:p.orderDate;
+  const projectable=known && matched.every(p=>p.ytm!=null && projectionStart(p)<=p.maturesOn);
+  const projectionUsesOrderDate=projectable && matched.some(p=>!p.confirmed);
   const projectedMaturityValue=projectable?sum(matched.map(p=>{
-   const years=new Decimal(Date.parse(p.maturesOn+'T00:00:00Z')-Date.parse(p.date+'T00:00:00Z')).div(86400000).div(365);
+   const years=new Decimal(Date.parse(p.maturesOn+'T00:00:00Z')-Date.parse(projectionStart(p)+'T00:00:00Z')).div(86400000).div(365);
    return new Decimal(p.invested).times(new Decimal(p.ytm!).div(100).plus(1).pow(years)).toFixed();
   })).toDecimalPlaces(2).toFixed():null;
   // Exclude cash flows from prior ownership. Without matched lots, show only
@@ -39,7 +41,7 @@ export function reconcileBonds(cas:CAS|null,accountHash:string|null,events:Store
   const pendingPrincipal=flows.some(f=>new Decimal(f.principal).gt(0) && f.date>cas.statementDate);
   const note=pendingPrincipal?'Principal repayment recorded; remaining value awaits reconciliation.':!known?'Purchase quantities do not fully reconcile; invested amount unavailable.':null;
   const maturity=base.maturesOn??newest?.maturesOn??null;
-  holdings.push({id:'bonds:'+isin,name:base.name,symbol:isin,assetClass:'bond',accountID:'bonds',quantity:base.quantity,unit:'bonds',invested:'0',costBasisKnown:false,value:base.value,gain:null,gainPercent:null,quote:base.price,quoteAt:cas.statementDate+'T00:00:00Z',quoteCurrency:'INR',fxRate:'1',fxAt:null,history:[],source:'CDSL CAS · NSDL',priceBasis:`CAS value as of ${cas.statementDate}; stated market price or face value, not a live quote. Interest and principal receipts are shown separately.`,bondTerms:{ytm,projectedMaturityValue,coupon:base.coupon??newest?.coupon??null,maturesOn:maturity,redemptionCheck:!!maturity && maturity<=today,investedAmount:known?sum(matched.map(p=>p.invested)).toFixed():null,accruedAtPurchase:known?sum(matched.map(p=>p.accrued)).toFixed():null,interestGross:sum(flows.map(f=>f.gross)).toFixed(),interestNet:sum(flows.map(f=>f.net)).toFixed(),tds:sum(flows.map(f=>f.tds)).toFixed(),principalReceived:principal.toFixed(),nextPayout:flows.at(-1)?.nextPayout??null,frequency:newest?.frequency??null,repayment:newest?.repayment??null,quotedCoupon:newest?.coupon??null,valuationBasis:'statement',reconciliationNote:note,payoutDifference:sum(flows.map(f=>f.reconciliationDifference??'0')).toFixed()}});
+  holdings.push({id:'bonds:'+isin,name:base.name,symbol:isin,assetClass:'bond',accountID:'bonds',quantity:base.quantity,unit:'bonds',invested:'0',costBasisKnown:false,value:base.value,gain:null,gainPercent:null,quote:base.price,quoteAt:cas.statementDate+'T00:00:00Z',quoteCurrency:'INR',fxRate:'1',fxAt:null,history:[],source:'CDSL CAS · NSDL',priceBasis:`CAS value as of ${cas.statementDate}; stated market price or face value, not a live quote. Interest and principal receipts are shown separately.`,bondTerms:{ytm,projectedMaturityValue,projectionUsesOrderDate,coupon:base.coupon??newest?.coupon??null,maturesOn:maturity,redemptionCheck:!!maturity && maturity<=today,investedAmount:known?sum(matched.map(p=>p.invested)).toFixed():null,accruedAtPurchase:known?sum(matched.map(p=>p.accrued)).toFixed():null,interestGross:sum(flows.map(f=>f.gross)).toFixed(),interestNet:sum(flows.map(f=>f.net)).toFixed(),tds:sum(flows.map(f=>f.tds)).toFixed(),principalReceived:principal.toFixed(),nextPayout:flows.at(-1)?.nextPayout??null,frequency:newest?.frequency??null,repayment:newest?.repayment??null,quotedCoupon:newest?.coupon??null,valuationBasis:'statement',reconciliationNote:note,payoutDifference:sum(flows.map(f=>f.reconciliationDifference??'0')).toFixed()}});
  }
  return {holdings,redeemed};
 }
