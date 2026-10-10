@@ -72,7 +72,7 @@ test('history endpoints authenticate, isolate accounts and validate bounded cale
  const call=(path:string,auth=true)=>app.request('/v1/portfolio/history'+path,{headers:auth?{Authorization:'Bearer '+token}:{}},env as any);
  assert.equal((await call('',false)).status,401);
  const list=await (await call('?from=2026-10-01&to=2026-10-10')).json() as any;
- assert.equal(list.snapshots.length,1);assert.equal(list.snapshots[0].value,'10');assert.equal(list.snapshots[0].portfolio,undefined);
+ assert.equal(list.firstRecordedDay,'2026-10-10');assert.equal(list.snapshots.length,1);assert.equal(list.snapshots[0].value,'10');assert.equal(list.snapshots[0].portfolio,undefined);
  assert.equal((await call('/2026-10-09')).status,404);
  const detail=await (await call('/2026-10-10')).json() as any;assert.equal(detail.portfolio.holdings[0].value,'10');
  for(const query of ['?from=2026-02-30','?from=2025-01-01&to=2026-10-10','?from=2026-10-10&to=2026-10-01'])assert.equal((await call(query)).status,400);

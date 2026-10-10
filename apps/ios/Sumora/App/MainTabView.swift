@@ -20,8 +20,6 @@ struct MainTabView: View {
                 .tabItem { Label("Allocation", systemImage: "chart.pie") }.tag(AppTab.allocation)
             tabContent { AnalyticsView() }
                 .tabItem { Label("Analytics", systemImage: "chart.xyaxis.line") }.tag(AppTab.analytics)
-            tabContent { SettingsView() }
-                .tabItem { Label("Settings", systemImage: "gearshape.fill") }.tag(AppTab.settings)
         }
         .toolbar(.hidden, for: .tabBar)
         .safeAreaInset(edge: .bottom, spacing: 24) {

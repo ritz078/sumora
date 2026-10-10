@@ -8,6 +8,10 @@ struct HoldingsView: View {
     @State private var selectedHolding: String?
     @FocusState private var searchFocused: Bool
 
+    init(assetClass: AssetClass? = nil) {
+        _query = State(initialValue: HoldingsQuery(assetClass: assetClass))
+    }
+
     var body: some View {
         Group {
             if let snapshot = store.snapshot {

@@ -17,7 +17,7 @@ final class SumoraAPIIntegrationTests: XCTestCase {
         app.launchArguments = ["--ui-testing"]
         app.launch()
         XCTAssertTrue(app.staticTexts["portfolioValue"].waitForExistence(timeout: 10))
-        app.buttons["tab-Settings"].tap()
+        app.buttons["homeSettings"].tap()
         let connect = app.buttons["connect-api"]
         for _ in 0..<4 where !connect.isHittable { app.swipeUp() }
         XCTAssertTrue(connect.isHittable)
@@ -25,16 +25,16 @@ final class SumoraAPIIntegrationTests: XCTestCase {
         let source = app.descendants(matching: .any)["portfolio-source"]
         XCTAssertTrue(source.waitForExistence(timeout: 10))
         XCTAssertEqual(source.value as? String, "Sample API")
-        app.buttons["tab-Overview"].tap()
+        app.navigationBars.buttons.firstMatch.tap()
         XCTAssertTrue(app.staticTexts["portfolioValue"].waitForExistence(timeout: 10))
         let value = app.staticTexts["portfolioValue"].label
         XCTAssertFalse(app.staticTexts["refreshError"].exists)
-        app.buttons["tab-Settings"].tap()
+        app.buttons["homeSettings"].tap()
         let failure = app.buttons["scenario-failure"]
         for _ in 0..<5 where !failure.isHittable { app.swipeUp() }
         XCTAssertTrue(failure.isHittable)
         failure.tap()
-        app.buttons["tab-Overview"].tap()
+        app.navigationBars.buttons.firstMatch.tap()
         XCTAssertTrue(app.staticTexts["refreshError"].waitForExistence(timeout: 20))
         XCTAssertTrue(app.staticTexts["refreshError"].label.contains("503"))
         XCTAssertEqual(app.staticTexts["portfolioValue"].label, value)

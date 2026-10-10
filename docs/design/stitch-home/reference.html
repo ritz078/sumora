@@ -1,0 +1,198 @@
+<!DOCTYPE html><html lang="en" style=""><head></head><body class="bg-[#F2F2F7] text-slate-900 min-h-screen flex justify-center selection:bg-indigo-500 selection:text-white"><svg class="inline-defs-container" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden"></svg>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+<title>Ledger — Personal Wealth Dashboard</title>
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "on-primary-fixed": "#0f0069",
+            "inverse-surface": "#2d3133",
+            "on-secondary-container": "#5c647a",
+            "surface-container-low": "#f2f4f6",
+            "on-surface": "#191c1e",
+            "on-error": "#ffffff",
+            "background": "#f7f9fb",
+            "outline": "#777587",
+            "primary-container": "#4f46e5",
+            "primary": "#3525cd",
+            "on-tertiary-fixed": "#0b1c30",
+            "secondary-fixed": "#dae2fd",
+            "on-secondary": "#ffffff",
+            "on-secondary-fixed": "#131b2e",
+            "on-surface-variant": "#464555",
+            "tertiary": "#3a495f",
+            "inverse-on-surface": "#eff1f3",
+            "secondary-fixed-dim": "#bec6e0",
+            "surface-tint": "#4d44e3",
+            "on-primary": "#ffffff",
+            "surface-container-highest": "#e0e3e5",
+            "on-background": "#191c1e",
+            "tertiary-fixed": "#d3e4fe",
+            "inverse-primary": "#c3c0ff",
+            "tertiary-fixed-dim": "#b7c8e1",
+            "on-error-container": "#93000a",
+            "on-tertiary-container": "#ccdcf7",
+            "error": "#ba1a1a",
+            "tertiary-container": "#516177",
+            "surface-container-lowest": "#ffffff",
+            "on-tertiary": "#ffffff",
+            "on-primary-fixed-variant": "#3323cc",
+            "surface-container-high": "#e6e8ea",
+            "surface-variant": "#e0e3e5",
+            "primary-fixed": "#e2dfff",
+            "error-container": "#ffdad6",
+            "on-secondary-fixed-variant": "#3f465c",
+            "on-primary-container": "#dad7ff",
+            "outline-variant": "#c7c4d8",
+            "surface-bright": "#f7f9fb",
+            "surface-container": "#eceef0",
+            "secondary": "#565e74",
+            "secondary-container": "#dae2fd",
+            "on-tertiary-fixed-variant": "#38485d",
+            "primary-fixed-dim": "#c3c0ff",
+            "surface-dim": "#d8dadc",
+            "surface": "#f7f9fb"
+          },
+          fontFamily: {
+            sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "SF Pro Display", "SF Pro Text", "Segoe UI", "sans-serif"]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    *, ::before, ::after {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background-color: #F2F2F7;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      line-height: 1;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .material-symbols-outlined.fill-1 {
+      font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 20;
+    }
+  </style>
+
+
+<!-- Mobile Container Wrapper -->
+<div class="w-full max-w-[420px] min-h-screen bg-[#F2F2F7] relative flex flex-col shadow-2xl border-x border-slate-200/60 pb-28">
+<!-- 1. Apple HIG iOS Status Bar & Header -->
+<header class="sticky top-0 z-40 bg-[#F2F2F7]/90 backdrop-blur-xl border-b border-black/[0.04]">
+<!-- Time + Dynamic Island + System Icons -->
+<div class="flex items-center justify-between px-6 pt-3 pb-1 h-11 w-full text-slate-900 select-none">
+<span class="text-[14px] font-semibold tracking-tight w-12 pl-0.5">9:41</span>
+<!-- Dynamic Island Pill -->
+<div class="w-28 h-6 bg-black rounded-full flex items-center justify-end px-2 space-x-1.5 shadow-sm">
+<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-[#1e293b]"></span>
+</div>
+<!-- 5G / Signal / Battery -->
+<div class="flex items-center justify-end space-x-1.5 w-12 text-slate-900">
+<span class="material-symbols-outlined text-[15px]" style="font-size: 15px;">signal_cellular_alt</span>
+<span class="text-[11px] font-bold tracking-tight">5G</span>
+<span class="material-symbols-outlined text-[19px]" style="font-size: 19px;">battery_full</span>
+</div>
+</div>
+<!-- Large Title iOS Navigation Bar with explicit clean padding -->
+
+</header>
+<!-- Main Content Stream with generous padding -->
+<main class="flex-1 px-4 pt-4 pb-28 space-y-4"><div class="flex items-center justify-between pt-1 pb-1"><div class="flex items-center space-x-3"><div class="relative flex items-center justify-center w-11 h-11 rounded-full bg-slate-900 text-white font-semibold text-[15px] shadow-sm ring-1 ring-white"><span class="tracking-tight">RK</span><span class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 ring-1 ring-white"></span></div><div class="flex flex-col"><div class="flex items-center space-x-1.5"><span class="text-[11px] font-medium text-slate-500 tracking-tight">Good morning,</span><span class="inline-flex items-center space-x-0.5 px-1.5 py-0.2 rounded-full text-[9px] font-semibold bg-indigo-50 text-indigo-600 border border-indigo-100">Private Wealth</span></div><h1 class="text-[19px] font-bold text-slate-900 tracking-tight leading-none mt-0.5">Ritesh Kumar</h1></div></div><div class="flex items-center space-x-1.5"><button class="w-9 h-9 rounded-full bg-white border border-slate-200/60 shadow-xs flex items-center justify-center text-slate-700 hover:text-slate-900 transition-transform active:scale-95"><span class="material-symbols-outlined text-[19px]" style="font-size: 19px;">visibility</span></button><button class="relative w-9 h-9 rounded-full bg-white border border-slate-200/60 shadow-xs flex items-center justify-center text-slate-700 hover:text-slate-900 transition-transform active:scale-95"><span class="material-symbols-outlined text-[19px]" style="font-size: 19px;">notifications</span><span class="absolute -top-1 -right-1 w-4 h-4 bg-[#FF3B30] text-white text-[10px] font-bold rounded-full flex items-center justify-center ring-1 ring-white shadow-xs">3</span></button></div></div><div class="flex items-center justify-between px-2 pt-0.5 pb-1 text-[11px] text-slate-500"><div class="flex items-center space-x-1.5 truncate"><span class="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span><span class="truncate">Zerodha feed synced 08:30 · <span class="text-slate-400 font-normal">Token expired</span></span></div><button class="inline-flex items-center space-x-0.5 text-indigo-600 hover:text-slate-900 font-medium text-[11px] shrink-0 transition-transform active:scale-95"><span class="material-symbols-outlined text-[13px]" style="font-size: 13px;">sync</span><span class="">Refresh</span></button></div>
+<!-- 2. Primary Net Worth Summary Card (Filled properly, non-blank) -->
+<section class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between"><div class="flex items-center justify-between pb-1"><span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">ESTIMATED NET WORTH</span><span class="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/70 shadow-2xs"><span class="material-symbols-outlined text-[13px]" style="font-size: 13px;">arrow_upward</span><span class="">+13.28%</span><span class="text-emerald-600/70 font-normal text-[10px]">All-time</span></span></div><div class="text-[32px] font-bold text-slate-900 tracking-tight leading-tight my-2">₹3,64,19,286</div><div class="flex items-center justify-between pt-2.5 mt-1 border-t border-slate-100 text-[12px]"><div class="flex items-center space-x-1.5"><span class="text-slate-400 font-medium">Invested</span><span class="font-semibold text-slate-700">₹3,21,50,000</span></div><div class="flex items-center space-x-1"><span class="text-slate-400 font-medium">Overall Gain</span><span class="font-semibold text-emerald-600">+₹42,69,286</span></div></div></section><section class="p-5 rounded-2xl bg-gradient-to-br text-white shadow-xl relative overflow-hidden border border-slate-700/50" style="background: linear-gradient(135deg, rgb(11, 19, 41) 0%, rgb(9, 21, 43) 50%, rgb(13, 30, 61) 100%);"><div class="absolute -top-12 -right-12 w-36 h-36 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none"></div><div class="absolute -bottom-10 -left-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div><div class="relative z-10"><div class="flex items-center justify-between mb-3"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Daily Performance</span></div></div><div class="mb-5"><div class="flex items-baseline gap-2"><span class="text-[32px] font-bold tracking-tight text-emerald-400 leading-none">+₹42,88,410</span><span class="text-xs font-semibold text-emerald-400/80 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">+1.19% today</span></div></div><div class="flex overflow-x-auto gap-2.5 no-scrollbar pb-1 -mx-1 px-1 snap-x snap-mandatory"><div class="min-w-[160px] min-h-[115px] flex-shrink-0 snap-start p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/50 backdrop-blur-sm flex flex-col justify-between hover:border-slate-600 transition-colors"><div class="flex items-center justify-between gap-1"><span class="text-[11px] font-medium text-slate-300 leading-none whitespace-nowrap">Indian Equities</span><span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded shrink-0 whitespace-nowrap">+0.62%</span></div><div class="my-auto py-1"><div class="text-sm font-bold text-white tracking-tight">+₹1,58,210</div></div><div class="text-[11px] text-slate-400 pt-1.5 border-t border-slate-700/40 flex justify-between items-center"><span class="text-[10px] text-slate-500">Holding</span><span class="font-medium text-slate-300">₹18.42 L</span></div></div><div class="min-w-[160px] min-h-[115px] flex-shrink-0 snap-start p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/50 backdrop-blur-sm flex flex-col justify-between hover:border-slate-600 transition-colors"><div class="flex items-center justify-between gap-1"><span class="text-[11px] font-medium text-slate-300 leading-none whitespace-nowrap">US Equities</span><span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded shrink-0 whitespace-nowrap">+0.56%</span></div><div class="my-auto py-1"><div class="text-sm font-bold text-white tracking-tight">+₹1,41,200</div></div><div class="text-[11px] text-slate-400 pt-1.5 border-t border-slate-700/40 flex justify-between items-center"><span class="text-[10px] text-slate-500">Holding</span><span class="font-medium text-slate-300">₹14.85 L</span></div></div><div class="min-w-[160px] min-h-[115px] flex-shrink-0 snap-start p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/50 backdrop-blur-sm flex flex-col justify-between hover:border-slate-600 transition-colors"><div class="flex items-center justify-between gap-1"><span class="text-[11px] font-medium text-slate-300 leading-none whitespace-nowrap">Mutual Funds</span><span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded shrink-0 whitespace-nowrap">+0.74%</span></div><div class="my-auto py-1"><div class="text-sm font-bold text-white tracking-tight">+₹11,450</div></div><div class="text-[11px] text-slate-400 pt-1.5 border-t border-slate-700/40 flex justify-between items-center"><span class="text-[10px] text-slate-500">Holding</span><span class="font-medium text-slate-300">₹3.94 L</span></div></div><div class="min-w-[160px] min-h-[115px] flex-shrink-0 snap-start p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/50 backdrop-blur-sm flex flex-col justify-between hover:border-slate-600 transition-colors"><div class="flex items-center justify-between gap-1"><span class="text-[11px] font-medium text-slate-300 leading-none whitespace-nowrap">Gold &amp; Bullion</span><span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded shrink-0 whitespace-nowrap">+0.85%</span></div><div class="my-auto py-1"><div class="text-sm font-bold text-white tracking-tight">+₹17,560</div></div><div class="text-[11px] text-slate-400 pt-1.5 border-t border-slate-700/40 flex justify-between items-center"><span class="text-[10px] text-slate-500">Holding</span><span class="font-medium text-slate-300">₹1.96 L</span></div></div></div></div></section><section class="p-5 bg-white rounded-2xl border border-black/[0.04] shadow-[0_2px_8px_rgba(0,0,0,0.04)] space-y-4"><div class="flex flex-col gap-3 mb-4"><div class="flex items-center justify-between"><div class="flex flex-col"><h2 class="text-[17px] font-bold text-slate-900 tracking-tight leading-tight">Portfolio Trajectory</h2><p class="text-[12px] text-slate-500 mt-0.5 leading-normal">+₹84.19 L over past 12 months</p></div><span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/70 shrink-0">+30.1%</span></div><div class="flex items-center p-0.5 rounded-lg bg-slate-100 border border-slate-200/60 text-[11px] font-medium shadow-2xs w-full"><button type="button" class="flex-1 py-1 text-slate-500 hover:text-slate-700 transition-colors rounded leading-tight text-center">1M</button><button type="button" class="flex-1 py-1 text-slate-500 hover:text-slate-700 transition-colors rounded leading-tight text-center">6M</button><button type="button" class="flex-1 py-1 bg-white text-slate-900 font-semibold shadow-xs rounded leading-tight text-center">1Y</button><button type="button" class="flex-1 py-1 text-slate-500 hover:text-slate-700 transition-colors rounded leading-tight text-center">ALL</button></div></div><div class="relative pt-2"><div class="relative w-full h-[140px]"><svg viewBox="0 0 340 140" class="w-full h-full overflow-visible" preserveAspectRatio="none"><defs><linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4f46e5" stop-opacity="0.24"></stop><stop offset="80%" stop-color="#4f46e5" stop-opacity="0.02"></stop><stop offset="100%" stop-color="#4f46e5" stop-opacity="0"></stop></linearGradient></defs><line x1="0" y1="20" x2="340" y2="20" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3 3"></line><text x="340" y="16" text-anchor="end" fill="#94a3b8" font-size="9" font-family="Inter, sans-serif">₹3.8 Cr</text><line x1="0" y1="65" x2="340" y2="65" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3 3"></line><text x="340" y="61" text-anchor="end" fill="#94a3b8" font-size="9" font-family="Inter, sans-serif">₹3.3 Cr</text><line x1="0" y1="110" x2="340" y2="110" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3 3"></line><text x="340" y="106" text-anchor="end" fill="#94a3b8" font-size="9" font-family="Inter, sans-serif">₹2.8 Cr</text><path d="M 0 115 C 40 112, 70 95, 105 88 C 140 81, 165 92, 205 68 C 245 44, 275 48, 305 32 C 320 24, 332 20, 340 18 L 340 135 L 0 135 Z" fill="url(#chartGrad)"></path><path d="M 0 115 C 40 112, 70 95, 105 88 C 140 81, 165 92, 205 68 C 245 44, 275 48, 305 32 C 320 24, 332 20, 340 18" fill="none" stroke="#4f46e5" stroke-width="2.5" stroke-linecap="round"></path><circle cx="340" cy="18" r="7" fill="#4f46e5" fill-opacity="0.15"></circle><circle cx="340" cy="18" r="4" fill="#4f46e5"></circle><circle cx="340" cy="18" r="1.8" fill="#ffffff"></circle></svg><div class="absolute -top-1.5 right-1 bg-slate-900 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full shadow-md pointer-events-none flex items-center space-x-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span class="">₹3.64 Cr</span></div></div><div class="flex justify-between text-[10px] text-slate-400 font-medium pt-2 border-t border-slate-100"><span class="">Nov '23</span><span class="">Feb '24</span><span class="">May '24</span><span class="">Aug '24</span><span class="text-indigo-600 font-semibold">Today</span></div></div></section><section class="p-5 bg-white rounded-2xl border border-black/[0.04] shadow-[0_2px_8px_rgba(0,0,0,0.04)] space-y-4"><div class="flex items-center justify-between pb-0.5"><div class="flex flex-col"><h2 class="text-[17px] font-bold text-slate-900 tracking-tight">Asset Allocation</h2><p class="text-[12px] text-slate-500">Diversification across 5 asset classes</p></div><div class="inline-flex items-center p-0.5 rounded-lg bg-slate-100 border border-slate-200/60 text-[11px] font-medium shadow-2xs"><button type="button" class="px-2 py-0.5 text-slate-500 hover:text-slate-700 transition-colors rounded leading-tight flex items-center justify-center" aria-label="Value"><span class="material-symbols-outlined text-[14px]" style="font-size: 14px;">currency_rupee</span></button><button type="button" class="px-2 py-0.5 bg-white text-slate-900 font-semibold shadow-xs rounded leading-tight flex items-center justify-center" aria-label="Percentage"><span class="material-symbols-outlined text-[14px]" style="font-size: 14px;">percent</span></button></div></div><div class="space-y-1.5"><div class="w-full h-3 rounded-full overflow-hidden flex bg-slate-100"><div class="h-full bg-blue-600" style="width: 34.8%;" title="Real Estate: 34.8%"></div><div class="h-full bg-emerald-500" style="width: 26.5%;" title="Indian Stocks: 26.5%"></div><div class="h-full bg-indigo-600" style="width: 20.4%;" title="US Stocks: 20.4%"></div><div class="h-full bg-amber-500" style="width: 14.0%;" title="Mutual Funds: 14.0%"></div><div class="h-full bg-slate-400" style="width: 4.3%;" title="Gold &amp; Bullion: 4.3%"></div></div><div class="flex justify-between text-[10px] text-slate-400 font-medium px-0.5"><span class="">₹3.64 Cr Net Worth</span><span class="">100% Allocated</span></div></div><div class="flex flex-col gap-2 pt-1"><div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/70 border border-slate-100"><div class="flex items-center space-x-2 min-w-0"><span class="w-2 h-2 rounded-full bg-blue-600 shrink-0"></span><span class="text-[12px] font-medium text-slate-700 truncate">Real Estate</span></div><span class="text-[12px] font-bold text-slate-900 ml-1.5 shrink-0">34.8%</span></div><div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/70 border border-slate-100"><div class="flex items-center space-x-2 min-w-0"><span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span><span class="text-[12px] font-medium text-slate-700 truncate">Indian Stocks</span></div><span class="text-[12px] font-bold text-slate-900 ml-1.5 shrink-0">26.5%</span></div><div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/70 border border-slate-100"><div class="flex items-center space-x-2 min-w-0"><span class="w-2 h-2 rounded-full bg-indigo-600 shrink-0"></span><span class="text-[12px] font-medium text-slate-700 truncate">US Stocks</span></div><span class="text-[12px] font-bold text-slate-900 ml-1.5 shrink-0">20.4%</span></div><div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/70 border border-slate-100"><div class="flex items-center space-x-2 min-w-0"><span class="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span><span class="text-[12px] font-medium text-slate-700 truncate">Mutual Funds</span></div><span class="text-[12px] font-bold text-slate-900 ml-1.5 shrink-0">14.0%</span></div><div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/70 border border-slate-100"><div class="flex items-center space-x-2 min-w-0"><span class="w-2 h-2 rounded-full bg-slate-400 shrink-0"></span><span class="text-[12px] font-medium text-slate-700 truncate">Gold &amp; Bullion</span></div><span class="text-[12px] font-bold text-slate-900 ml-1.5 shrink-0">4.3%</span></div></div></section>
+<!-- 3. Executive Navy/Black Dark Gradient Card (Liquid Performance only) -->
+
+<!-- 4. Net Worth Trajectory Chart Card -->
+
+<!-- 5. Asset Allocation Section -->
+<section class="p-5 bg-white rounded-2xl border border-black/[0.04] shadow-[0_2px_8px_rgba(0,0,0,0.04)] space-y-3.5"><div class="flex items-center justify-between pb-0.5"><div class="flex flex-col"><h2 class="text-[17px] font-bold text-slate-900 tracking-tight">Connected Accounts</h2><p class="text-[12px] text-slate-500">Auto-sync feeds &amp; portfolio integrations</p></div><span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/70"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span><span class="">3 Linked</span></span></div><div class="flex flex-col divide-y divide-slate-100 rounded-xl bg-slate-50/70 border border-slate-100 overflow-hidden"><div class="p-3.5 flex items-center justify-between gap-3 hover:bg-slate-100/50 transition-colors"><div class="flex items-center space-x-3 min-w-0"><div class="w-9 h-9 rounded-xl bg-blue-600 text-white font-bold text-[14px] flex items-center justify-center shadow-xs shrink-0">Z</div><div class="min-w-0"><div class="flex items-center space-x-1.5"><span class="text-[13px] font-semibold text-slate-900 leading-none truncate">Zerodha Kite</span><span class="inline-flex items-center space-x-1 text-[10px] font-medium text-amber-500 bg-amber-500/10 px-1.5 py-0.2 rounded-full border border-amber-500/20 whitespace-nowrap shrink-0"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span><span class="">Session Expired</span></span></div><p class="text-[11px] text-slate-500 mt-1 truncate">Indian Equities &amp; F&amp;O · Synced 08:30</p></div></div><button class="w-7 h-7 rounded-full bg-white border border-slate-200/60 text-slate-500 hover:text-slate-900 flex items-center justify-center shadow-xs shrink-0 active:scale-95 transition-transform" aria-label="Refresh Zerodha feed"><span class="material-symbols-outlined text-[14px]" style="font-size: 14px;">sync</span></button></div><div class="p-3.5 flex items-center justify-between gap-3 hover:bg-slate-100/50 transition-colors"><div class="flex items-center space-x-3 min-w-0"><div class="w-9 h-9 rounded-xl bg-white border border-slate-200/70 text-slate-700 flex items-center justify-center shadow-xs shrink-0"><span class="material-symbols-outlined text-[18px] text-slate-700" style="font-size: 18px;">mail</span></div><div class="min-w-0"><div class="flex items-center space-x-1.5"><span class="text-[13px] font-semibold text-slate-900 leading-none truncate">Email CAS Parser</span><span class="inline-flex items-center space-x-1 text-[10px] font-medium text-emerald-700 bg-emerald-500/10 px-1.5 py-0.2 rounded-full border border-emerald-500/20"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span><span class="">Synced</span></span></div><p class="text-[11px] text-slate-500 mt-1 truncate">Contract notes &amp; CAMS · 1h ago</p></div></div><button class="w-7 h-7 rounded-full bg-white border border-slate-200/60 text-slate-500 hover:text-slate-900 flex items-center justify-center shadow-xs shrink-0 active:scale-95 transition-transform"><span class="material-symbols-outlined text-[14px]" style="font-size: 14px;">sync</span></button></div><div class="p-3.5 flex items-center justify-between gap-3 hover:bg-slate-100/50 transition-colors"><div class="flex items-center space-x-3 min-w-0"><div class="w-9 h-9 rounded-xl bg-emerald-600 text-white font-bold text-[11px] tracking-tight flex items-center justify-center shadow-xs shrink-0">IND</div><div class="min-w-0"><div class="flex items-center space-x-1.5"><span class="text-[13px] font-semibold text-slate-900 leading-none truncate">INDmoney</span><span class="inline-flex items-center space-x-1 text-[10px] font-medium text-emerald-700 bg-emerald-500/10 px-1.5 py-0.2 rounded-full border border-emerald-500/20"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span><span class="">Live</span></span></div><p class="text-[11px] text-slate-500 mt-1 truncate">US Stocks &amp; Fixed Deposits · 22m ago</p></div></div><button class="w-7 h-7 rounded-full bg-white border border-slate-200/60 text-slate-500 hover:text-slate-900 flex items-center justify-center shadow-xs shrink-0 active:scale-95 transition-transform"><span class="material-symbols-outlined text-[14px]" style="font-size: 14px;">sync</span></button></div></div></section>
+<!-- 6. Holdings Section (Native iOS UITableView Inset Grouped) -->
+
+</main>
+<!-- 7. Frosted Translucent iOS Bottom Tab Bar -->
+<nav class="fixed bottom-5 left-4 right-4 z-50 flex items-center justify-between max-w-[388px] mx-auto bg-white/85 backdrop-blur-xl border border-white/60 shadow-[0_4px_16px_rgba(15,23,42,0.18)] rounded-full px-3 py-2">
+  <div class="flex items-center justify-around w-full">
+    <!-- Overview (Active) -->
+    <a class="flex flex-col items-center justify-center flex-1 text-[#007AFF] transition-transform active:scale-95" href="#overview">
+      <svg class="w-6 h-6 stroke-current" fill="currentColor" stroke-width="0" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="8" height="8" rx="2.2"></rect>
+        <rect x="13" y="3" width="8" height="8" rx="2.2"></rect>
+        <rect x="3" y="13" width="8" height="8" rx="2.2"></rect>
+        <rect x="13" y="13" width="8" height="8" rx="2.2"></rect>
+      </svg>
+      <span class="text-[10px] font-medium tracking-tight mt-0.5 text-[#007AFF]">Overview</span>
+    </a>
+    <!-- Holdings (Badge 39) -->
+    <a class="flex flex-col items-center justify-center flex-1 text-[#8E8E93] hover:text-slate-600 transition-transform active:scale-95 relative" href="#holdings">
+      <div class="relative flex items-center justify-center">
+        <svg class="w-6 h-6 stroke-current" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" viewBox="0 0 24 24">
+          <path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Z"></path>
+          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+        </svg>
+        <span class="absolute -top-1 -right-3 px-1.5 py-0.2 bg-[#FF3B30] text-white text-[9px] font-bold rounded-full leading-none min-w-[16px] h-3.5 flex items-center justify-center ring-1 ring-white shadow-xs">39</span>
+      </div>
+      <span class="text-[10px] font-normal tracking-tight mt-0.5 text-[#8E8E93]">Holdings</span>
+    </a>
+    <!-- Allocation -->
+    <a class="flex flex-col items-center justify-center flex-1 text-[#8E8E93] hover:text-slate-600 transition-transform active:scale-95" href="#allocation">
+      <svg class="w-6 h-6 stroke-current" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" viewBox="0 0 24 24">
+        <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+        <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+      </svg>
+      <span class="text-[10px] font-normal tracking-tight mt-0.5 text-[#8E8E93]">Allocation</span>
+    </a>
+    <!-- Analytics -->
+    <a class="flex flex-col items-center justify-center flex-1 text-[#8E8E93] hover:text-slate-600 transition-transform active:scale-95" href="#analytics">
+      <svg class="w-6 h-6 stroke-current" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" viewBox="0 0 24 24">
+        <path d="M3 3v18h18"></path>
+        <path d="m19 9-5 5-4-4-3 3"></path>
+      </svg>
+      <span class="text-[10px] font-normal tracking-tight mt-0.5 text-[#8E8E93]">Analytics</span>
+    </a>
+    <!-- Settings -->
+    
+  </div>
+</nav>
+<!-- iOS Home Indicator bar -->
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body></html>

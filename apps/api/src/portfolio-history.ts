@@ -84,7 +84,8 @@ export function portfolioHistoryRoutes(now=Date.now) {
    'coverage',json_extract(data,'$.coverage'),'instruments',json(json_extract(data,'$.instruments')))) AS snapshots
    FROM (SELECT day,data FROM portfolio_daily_snapshots WHERE owner_id=? AND day>=? AND day<=? ORDER BY day)`)
    .bind(auth.owner_id,from,to).first<{snapshots:string}>();
-  return c.json({timezone:'Asia/Kolkata',from,to,snapshots:JSON.parse(row?.snapshots??'[]')});
+  const first=await c.env.DB.prepare('SELECT MIN(day) AS day FROM portfolio_daily_snapshots WHERE owner_id=?').bind(auth.owner_id).first<{day:string|null}>();
+  return c.json({timezone:'Asia/Kolkata',from,to,firstRecordedDay:first?.day??null,snapshots:JSON.parse(row?.snapshots??'[]')});
  });
  app.get('/:day',async c=>{
   const auth=await appSession(c.env,c.req.header('Authorization'),now),day=c.req.param('day');

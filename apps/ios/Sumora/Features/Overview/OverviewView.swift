@@ -4,6 +4,8 @@ struct OverviewView: View {
     @Environment(PortfolioStore.self) private var store
     @Environment(AppDependencies.self) private var dependencies
 
+    @State private var history = HomeHistoryConnection()
+
     var body: some View {
         Group {
             if let snapshot = store.snapshot {
@@ -11,40 +13,45 @@ struct OverviewView: View {
                 else { dashboard(snapshot) }
             } else { PortfolioLoadingView() }
         }
-        .background(Color(.systemGroupedBackground))
+        .overlay(alignment: .topTrailing) {
+            if store.snapshot == nil || store.snapshot?.holdings.isEmpty == true {
+                NavigationLink { SettingsView().toolbar(.visible, for: .navigationBar) } label: {
+                    Image(systemName: "gearshape").frame(width: 44, height: 44).background(HomeStyle.card, in: Circle())
+                }.accessibilityLabel("Profile and settings").accessibilityIdentifier("homeSettings").padding(16)
+            }
+        }
+        .background(HomeStyle.background)
         .toolbar(.hidden, for: .navigationBar)
     }
 
-    private func dashboard(_ snapshot: PortfolioSnapshot) -> some View {
-        List {
-            Section {
-                if snapshot.coverage != .complete || snapshot.connections.contains(where: { $0.status == .attention }) && dependencies.isLivePortfolio || dependencies.demoDate.timeIntervalSince(snapshot.capturedAt) > 86400 {
-                    PortfolioStatusView().padding(.vertical, 8)
-                }
-                NetWorthCard(snapshot: snapshot).padding(.vertical, 8)
-                DailyPerformanceCard(snapshot: snapshot).padding(.vertical, 8)
-                AllocationSummary(allocations: snapshot.allocation, compact: true).portfolioCard().padding(.vertical, 8)
-            }
-            .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
-            .listRowSeparator(.hidden).listRowBackground(Color.clear)
+    private var connectionScope: String { "\(dependencies.zerodha.address):\(dependencies.zerodha.sessionToken ?? "demo"):\(dependencies.isLivePortfolio)" }
 
-            Section {
-                HStack {
-                    DemoBadge()
-                    Spacer()
-                    BalanceVisibilityButton()
-                    NavigationLink("Manage accounts") { ConnectionsView().toolbar(.visible, for: .navigationBar) }
-                        .font(.inter(.caption))
-                }.buttonStyle(.borderless).labelStyle(.titleAndIcon)
-                Text(dependencies.isLivePortfolio ? "Imported from Zerodha’s primary demat account and Coin. Secondary demat holdings and intraday positions are excluded." : "Sample portfolio · 6 Oct 2026. Illustrative values, not live prices.")
-                    .font(.inter(.caption)).foregroundStyle(DashboardStyle.secondary)
-            }.listRowBackground(Color.clear).listRowSeparator(.hidden)
-                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+    private func dashboard(_ snapshot: PortfolioSnapshot) -> some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                HomeHeader(snapshot: snapshot)
+                NetWorthCard(snapshot: snapshot)
+                DailyPerformanceCard(snapshot: snapshot)
+                HomeTrajectoryCard(history: dependencies.isLivePortfolio ? history.history : snapshot.history,
+                    referenceDate: dependencies.demoDate, currency: snapshot.reportingCurrency, errorMessage: history.errorMessage)
+                HomeAllocationCard(snapshot: snapshot)
+                HomeConnectionsCard(snapshot: snapshot)
+                DemoBadge()
+                Text(dependencies.isLivePortfolio ? "Values reflect available linked accounts and recorded assets. Some prices and statements may be delayed." : "Sample portfolio · 6 Oct 2026. Illustrative values, not live prices.")
+                    .font(.inter(.caption2, size: 10)).foregroundStyle(HomeStyle.secondary)
+                    .multilineTextAlignment(.center).frame(maxWidth: .infinity).padding(.vertical, 8)
+            }.padding(.horizontal, 16).padding(.top, 4).padding(.bottom, 20)
         }
-        .listStyle(.plain).listSectionSpacing(8)
-        .contentMargins(.top, 0)
-        .scrollContentBackground(.hidden)
-        .refreshable { await store.refresh() }
+        .refreshable { await store.refresh(); await history.refresh() }
+        .task(id: connectionScope) {
+            history.configure(address: dependencies.zerodha.address, token: dependencies.isLivePortfolio ? dependencies.zerodha.sessionToken : nil)
+            if dependencies.isLivePortfolio {
+                async let saved: () = history.refresh()
+                dependencies.gmail.configure(address: dependencies.zerodha.address, token: dependencies.zerodha.sessionToken)
+                await dependencies.gmail.refresh()
+                await saved
+            }
+        }
     }
 
     private var emptyPortfolio: some View {

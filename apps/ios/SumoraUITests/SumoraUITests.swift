@@ -59,16 +59,16 @@ final class SumoraUITests: XCTestCase {
         let app = launch()
         XCTAssertTrue(app.staticTexts["portfolioValue"].waitForExistence(timeout: 10))
         let value = app.staticTexts["portfolioValue"].label
-        app.buttons["tab-Settings"].tap()
-        app.swipeUp()
+        app.buttons["homeSettings"].tap()
         let failure = app.buttons["scenario-failure"]
-        XCTAssertTrue(failure.waitForExistence(timeout: 5))
+        for _ in 0..<10 where !failure.isHittable { app.swipeUp() }
+        XCTAssertTrue(failure.isHittable)
         failure.tap()
         let toast = app.staticTexts["refreshError"]
         XCTAssertTrue(toast.waitForExistence(timeout: 10))
         XCTAssertTrue(app.buttons["dismissRefreshError"].exists)
         app.buttons["dismissRefreshError"].tap()
-        app.buttons["tab-Overview"].tap()
+        app.navigationBars.buttons.firstMatch.tap()
         XCTAssertEqual(app.staticTexts["portfolioValue"].label, value)
         XCTAssertFalse(toast.exists)
         app.buttons["tab-Holdings"].tap()
