@@ -19,16 +19,12 @@ struct DailyPerformanceCard:View {
       .background(HomeStyle.emerald.opacity(0.10),in:Capsule()).overlay(Capsule().stroke(HomeStyle.emerald.opacity(0.20),lineWidth:1))
     } else { Text("Daily change unavailable").font(.inter(.caption2,size:11)).foregroundStyle(HomeStyle.muted).lineLimit(2) }
    }.foregroundStyle(preferences.hideBalances ? HomeStyle.muted:(total.gain?.value ?? 0)>=0 ? HomeStyle.brightGreen:.red).frame(minHeight:38).padding(.bottom,20)
-   GeometryReader { geometry in
-    ScrollView(.horizontal,showsIndicators:false) {
-     HStack(spacing:0) {
-      ForEach(classes) {asset in
-       NavigationLink { HoldingsView(assetClass:asset).toolbar(.visible,for:.navigationBar).navigationTitle(HomeStyle.title(asset)).navigationBarTitleDisplayMode(.inline) } label: { performanceTile(asset).frame(width:geometry.size.width,alignment:.leading) }
-        .buttonStyle(.plain).accessibilityIdentifier("home-instrument-\(asset.rawValue)")
-      }
-     }.scrollTargetLayout()
-    }.scrollTargetBehavior(.paging)
-   }.frame(height:119)
+   LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
+    ForEach(classes) { asset in
+     NavigationLink { HoldingsView(assetClass:asset).toolbar(.visible,for:.navigationBar).navigationTitle(HomeStyle.title(asset)).navigationBarTitleDisplayMode(.inline) } label: { performanceTile(asset) }
+      .buttonStyle(.plain).accessibilityIdentifier("home-instrument-\(asset.rawValue)")
+    }
+   }
   }.padding(20).frame(maxWidth:.infinity,alignment:.leading).foregroundStyle(.white)
    .background {
     RoundedRectangle(cornerRadius:16).fill(LinearGradient(stops:[.init(color:Color(red:11/255,green:19/255,blue:41/255),location:0),.init(color:Color(red:9/255,green:21/255,blue:43/255),location:0.5),.init(color:Color(red:13/255,green:30/255,blue:61/255),location:1)],startPoint:.topLeading,endPoint:.bottomTrailing))
@@ -59,7 +55,7 @@ struct DailyPerformanceCard:View {
     Text(preferences.hideBalances ? "••••" : metric.value.map {DisplayFormat.compactMoney($0.value,currency:snapshot.reportingCurrency)} ?? "—")
      .font(.inter(.caption2,weight:.medium,size:11)).foregroundStyle(Color(red:203/255,green:213/255,blue:225/255)).lineLimit(1).minimumScaleFactor(0.8)
    }.padding(.top,6)
-  }.padding(14).frame(width:164,height:115,alignment:.leading)
+  }.padding(12).frame(maxWidth:.infinity).frame(height:104,alignment:.leading)
    .background(Color(red:30/255,green:41/255,blue:59/255).opacity(0.6),in:RoundedRectangle(cornerRadius:12))
    .overlay(RoundedRectangle(cornerRadius:12).stroke(Color(red:51/255,green:65/255,blue:85/255).opacity(0.5),lineWidth:1))
  }

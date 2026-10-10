@@ -58,6 +58,18 @@ final class SumoraHomepageTests: XCTestCase {
 
     func testHomepageKeepsHoldingsInDedicatedTab() {
         let app = launch()
+        XCTAssertTrue(app.buttons["homeDemo"].exists)
+        XCTAssertFalse(app.staticTexts["Private Wealth"].exists)
+        let indian = app.buttons["home-instrument-indianEquity"]
+        let us = app.buttons["home-instrument-usEquity"]
+        let funds = app.buttons["home-instrument-mutualFund"]
+        let gold = app.buttons["home-instrument-gold"]
+        XCTAssertTrue(indian.exists && us.exists && funds.exists && gold.exists)
+        XCTAssertEqual(indian.frame.minY, us.frame.minY, accuracy: 1)
+        XCTAssertEqual(funds.frame.minY, gold.frame.minY, accuracy: 1)
+        XCTAssertEqual(indian.frame.minX, funds.frame.minX, accuracy: 1)
+        XCTAssertEqual(us.frame.minX, gold.frame.minX, accuracy: 1)
+        XCTAssertGreaterThan(funds.frame.minY, indian.frame.maxY)
         let top = XCTAttachment(screenshot: app.screenshot())
         top.name = "Homepage gradient and glass menu"
         top.lifetime = .keepAlways
@@ -74,6 +86,7 @@ final class SumoraHomepageTests: XCTestCase {
         XCTAssertFalse(app.buttons["Filter holdings by category"].exists)
         XCTAssertFalse(app.buttons["overview-holding-hdfc"].exists)
         XCTAssertFalse(app.staticTexts["Imported custodian balances"].exists)
+        XCTAssertFalse(app.staticTexts["Connected Accounts"].exists)
         XCTAssertFalse(app.buttons["tab-Settings"].exists)
         app.buttons["tab-Holdings"].tap()
         XCTAssertTrue(app.buttons["holding-hdfc"].waitForExistence(timeout: 5))

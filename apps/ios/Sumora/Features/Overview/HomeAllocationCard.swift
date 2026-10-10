@@ -27,7 +27,7 @@ struct HomeAllocationCard: View {
     }.clipShape(Capsule())
    }.frame(height: 12).opacity(preferences.hideBalances ? 0 : 1).accessibilityHidden(true)
    HStack {
-    Text(preferences.hideBalances ? "Net Worth ••••" : snapshot.value.map { "Net Worth " + DisplayFormat.compactMoney($0.value, currency: snapshot.reportingCurrency) } ?? "Valued assets")
+    Text(preferences.hideBalances ? "Net Worth ••••" : snapshot.value.map { DisplayFormat.compactMoney($0.value, currency: snapshot.reportingCurrency) + " Net Worth" } ?? "Valued assets")
     Spacer()
     Text(snapshot.coverage == .complete ? "100% Allocated" : "Available valuations")
    }.font(.inter(.caption2, size: 10)).foregroundStyle(HomeStyle.secondary).padding(.top, -8)
