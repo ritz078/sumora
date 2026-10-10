@@ -95,10 +95,11 @@ struct IndianStocksView: View {
     HomeSignedMoney(amount:metric.gain,currency:currency).font(.inter(.largeTitle,weight:.bold,size:32)).tracking(-0.8).foregroundStyle(.white)
     if let percent = metric.percent {
      Text(preferences.hideBalances ? "••••" : signed(percent.value)+"% today").font(.inter(.caption2,weight:.semibold,size:12))
+      .lineLimit(1).fixedSize(horizontal:true,vertical:false)
       .foregroundStyle(gainColor(metric.gain)).padding(.horizontal,8).padding(.vertical,2)
       .background(HomeStyle.emerald.opacity(0.1),in:Capsule()).overlay(Capsule().stroke(HomeStyle.emerald.opacity(0.2),lineWidth:1))
     }
-   }.frame(minHeight:38)
+   }.frame(maxWidth:.infinity,minHeight:38,alignment:.leading)
    Rectangle().fill(HomeStyle.emerald.opacity(0.2)).frame(height:1)
    HStack(spacing:6) {
     Image(systemName:"info.circle").foregroundStyle(HomeStyle.brightGreen.opacity(0.8))
