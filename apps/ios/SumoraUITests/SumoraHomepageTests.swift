@@ -13,7 +13,7 @@ final class SumoraHomepageTests: XCTestCase {
     func testIndianEquitiesHasSortableDisplayOnlyStocks() {
         let app = launch()
         app.buttons["home-instrument-indianEquity"].tap()
-        XCTAssertTrue(app.staticTexts["Indian Equities"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Indian Stocks"].waitForExistence(timeout: 5))
         XCTAssertEqual(app.staticTexts["equityValue"].label, "₹10,80,000")
         XCTAssertFalse(app.buttons["tab-Overview"].exists)
         let top = XCTAttachment(screenshot: app.screenshot())
@@ -33,7 +33,7 @@ final class SumoraHomepageTests: XCTestCase {
         add(screenshot)
         row.tap()
         XCTAssertFalse(app.staticTexts["holdingName"].exists)
-        XCTAssertTrue(app.staticTexts["Indian Equities"].exists)
+        XCTAssertTrue(app.staticTexts["Indian Stocks"].exists)
         app.buttons["equitiesBack"].tap()
         XCTAssertTrue(app.buttons["tab-Overview"].waitForExistence(timeout: 5))
     }

@@ -48,7 +48,7 @@ struct IndianStocksView: View {
    Button { dismiss() } label: { Image(systemName:"chevron.left").font(.system(size:17,weight:.semibold)).frame(width:36,height:36) }
     .foregroundStyle(HomeStyle.indigo).accessibilityLabel("Go back").accessibilityIdentifier("equitiesBack")
    Spacer()
-   Text("Indian Equities").font(.inter(.headline,weight:.bold,size:17)).tracking(-0.425)
+   Text("Indian Stocks").font(.inter(.headline,weight:.bold,size:17)).tracking(-0.425)
    Spacer()
    Color.clear.frame(width:36,height:36)
   }.padding(.horizontal,8).padding(.vertical,8).background(HomeStyle.background.opacity(0.95))
@@ -114,8 +114,8 @@ struct IndianStocksView: View {
   VStack(alignment:.leading,spacing:14) {
    HStack {
     VStack(alignment:.leading,spacing:4) {
-     HStack(spacing:8) { Circle().fill(Color.blue).frame(width:8,height:8);Text("Holdings").font(.inter(.headline,weight:.bold,size:17)).tracking(-0.425) }
-     Text("\(holdings.count) Instruments · NSE/BSE Direct").font(.inter(.caption,size:12)).foregroundStyle(HomeStyle.secondary).padding(.leading,16)
+     Text("Holdings").font(.inter(.headline,weight:.bold,size:17)).tracking(-0.425)
+     Text("\(holdings.count) Instruments · NSE/BSE Direct").font(.inter(.caption,size:12)).foregroundStyle(HomeStyle.secondary)
     }
     Spacer(minLength:4)
     Menu {
@@ -146,19 +146,19 @@ struct IndianStocksView: View {
     HStack(spacing:6) {
      Text(holding.name).font(.inter(.caption,weight:.semibold,size:13)).lineLimit(1).truncationMode(.tail)
      Text(holding.symbol).font(.inter(.caption2,weight:.medium,size:10)).foregroundStyle(HomeStyle.secondary)
-      .padding(.horizontal,6).padding(.vertical,1).background(HomeStyle.background,in:RoundedRectangle(cornerRadius:2)).lineLimit(1)
+      .padding(.horizontal,6).padding(.vertical,1).background(HomeStyle.background,in:RoundedRectangle(cornerRadius:2)).lineLimit(1).fixedSize(horizontal:true,vertical:false)
     }
     HStack(spacing:3) {
      Text("\(DisplayFormat.decimal(holding.quantity.value)) shares ·")
      MoneyText(amount:holding.quote,currency:holding.quoteCurrency)
     }.font(.inter(.caption2,size:11)).foregroundStyle(HomeStyle.secondary)
    }.frame(maxWidth:.infinity,alignment:.leading)
-   VStack(alignment:.trailing,spacing:3) {
+   VStack(alignment:.trailing,spacing:4) {
     MoneyText(amount:holding.value,currency:currency).font(.inter(.caption,weight:.bold,size:13))
     Text(preferences.hideBalances ? "••••" : holding.gainPercent.map { signed($0.value)+"%"+(holding.gain.map { " ("+($0.value >= 0 ? "+" : "−")+DisplayFormat.compactMoney(abs($0.value),currency:currency)+")" } ?? "") } ?? "Return unavailable")
-     .font(.inter(.caption2,weight:.medium,size:11)).foregroundStyle(gainColor(holding.gain)).multilineTextAlignment(.trailing)
-   }.frame(maxWidth:120,alignment:.trailing)
-  }.padding(.vertical,14).contentShape(Rectangle())
+     .font(.inter(.caption2,weight:.medium,size:11)).foregroundStyle(gainColor(holding.gain)).multilineTextAlignment(.trailing).lineLimit(1)
+   }.fixedSize(horizontal:true,vertical:false)
+  }.padding(.vertical,12).contentShape(Rectangle())
  }
  private var sortedHoldings: [Holding] {
   holdings.sorted { left,right in
