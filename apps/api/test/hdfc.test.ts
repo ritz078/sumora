@@ -32,7 +32,7 @@ test('HDFC parses multi-page FD records and reconciles withdrawable value withou
 });
 
 import {setupGold} from './helpers/database';
-import {saveHDFCSnapshot,hdfcRoutes,syncHDFC,trustedHDFCMessage} from '../src/hdfc';
+import {saveHDFCSnapshot,hdfcPortfolio,hdfcRoutes,syncHDFC,trustedHDFCMessage} from '../src/hdfc';
 import {digest,encrypt,decrypt} from '../src/zerodha';
 import {valuedSnapshot} from '../src/daily-valuation-job';
 import {zerodhaSnapshot} from '../src/zerodha-portfolio';
@@ -45,12 +45,25 @@ test('HDFC snapshots are account-isolated, idempotent, replace closed FDs and re
  const snapshot=zerodhaSnapshot('{"status":"success","data":[]}','{"status":"success","data":[]}',at);
  const result=await valuedSnapshot(env,snapshot,at,'owner');
  assert.equal(result.value,'3500');assert.equal(result.holdings.length,2);assert.equal(result.allocation[0].assetClass,'fixedDeposit');
- assert.equal(result.holdings[0].gain,null);assert.equal(result.holdings[0].value,'1200');assert.equal(result.holdings[0].quote,'1200');assert.match(result.holdings[0].priceBasis,/maturity/i);
+ assert.equal(result.holdings[0].gain,'200');assert.equal(result.holdings[0].value,'1200');assert.equal(result.holdings[0].quote,'1200');assert.match(result.holdings[0].priceBasis,/maturity/i);
  assert.ok(!JSON.stringify(result).includes('12345678901234'));
  assert.equal((await valuedSnapshot(env,snapshot,at,'other')).holdings.length,0);
  await saveHDFCSnapshot(env,'owner',{date:'2026-10-31',total:'0',deposits:[]},'closed','closed',at);
  assert.equal((await valuedSnapshot(env,result,at,'owner')).holdings.length,0);
  assert.equal(db.prepare('SELECT total FROM hdfc_snapshots').get()?.total,'0');
+});
+
+test('FD original principal contributes to portfolio invested totals while maturity remains net worth',async()=>{
+ const {env}=setupGold();
+ const parsed=parseHDFCStatement(statement.replace('INR 2500.00','INR 2000.00'),at);
+ await saveHDFCSnapshot(env,'owner',parsed,'m','h',at);
+ const empty=zerodhaSnapshot('{"status":"success","data":[]}','{"status":"success","data":[]}',at);
+ const result=await hdfcPortfolio(env,empty,'owner');
+ assert.equal(result.value,'3500');
+ assert.equal(result.invested,'3000');assert.equal(result.coveredInvested,'3000');
+ assert.equal(result.gain,'500');assert.ok(Number(result.gainPercent)>16.66 && Number(result.gainPercent)<16.67);
+ assert.equal(result.holdings[1].invested,'2000');assert.equal(result.holdings[1].costBasisKnown,true);
+ assert.equal(result.holdings[1].gain,'300');assert.equal(result.holdings[1].gainPercent,'15');
 });
 
 import {readFileSync} from 'node:fs';
