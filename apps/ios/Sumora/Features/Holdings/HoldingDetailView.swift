@@ -24,13 +24,13 @@ struct HoldingDetailView: View {
                             }
                         }
                         VStack(alignment: .leading, spacing: 12) {
-                            Text(holding.assetClass == .fixedDeposit ? "MATURITY AMOUNT" : holding.assetClass == .bond ? "STATEMENT VALUE" : "CURRENT VALUE").font(.caption.weight(.semibold)).tracking(1).foregroundStyle(.secondary)
+                            Text(holding.assetClass == .fixedDeposit ? "MATURITY AMOUNT" : holding.assetClass == .bond ? (holding.bondTerms?.valuationBasis == "projectedMaturity" ? "PROJECTED MATURITY VALUE" : "CAS PURCHASE VALUE") : "CURRENT VALUE").font(.caption.weight(.semibold)).tracking(1).foregroundStyle(.secondary)
                             MoneyText(amount: holding.value, currency: snapshot.reportingCurrency)
                                 .font(.largeTitle.bold()).minimumScaleFactor(0.7).lineLimit(1)
                             if holding.assetClass == .fixedDeposit {
                                 Text("Includes future interest · counted toward net worth").font(.caption).foregroundStyle(.secondary)
                             } else if holding.assetClass == .bond {
-                                Text("As of the latest CAS · return unavailable").font(.caption).foregroundStyle(.secondary)
+                                Text(holding.bondTerms?.valuationBasis == "projectedMaturity" ? "Includes projected future returns · counted toward net worth" : "CAS purchase value used · maturity projection unavailable").font(.caption).foregroundStyle(.secondary)
                             } else {
                                 GainLossLabel(gain: holding.gain, percent: holding.gainPercent, currency: snapshot.reportingCurrency)
                                 Text("Unrealized return").font(.caption).foregroundStyle(.secondary)
@@ -53,7 +53,7 @@ struct HoldingDetailView: View {
                             }
                             if holding.assetClass != .fixedDeposit {
                                 Divider()
-                                detailRow("Unit price") { MoneyText(amount: holding.quote, currency: holding.quoteCurrency, fractionDigits: 2) }
+                                detailRow(holding.assetClass == .bond ? "CAS unit value" : "Unit price") { MoneyText(amount: holding.quote, currency: holding.quoteCurrency, fractionDigits: 2) }
                             }
                             if holding.quoteCurrency != snapshot.reportingCurrency {
                                 Text("Price quoted in \(holding.quoteCurrency); portfolio value reported in \(snapshot.reportingCurrency).")
@@ -71,10 +71,11 @@ struct HoldingDetailView: View {
                         }
                         if let terms = holding.bondTerms {
                             VStack(alignment: .leading, spacing: 18) {
+                                if let statement = terms.statementValue { detailRow("CAS purchase value") { MoneyText(amount:statement,fractionDigits:2) } }
                                 if let coupon = terms.coupon { detailRow("Stated coupon") { Text("\(DisplayFormat.decimal(coupon.value))%") } }
                                 if let maturity = terms.maturesOn { detailRow("Stated maturity") { Text(maturity) } }
                                 if terms.redemptionCheck {
-                                    Label("Maturity passed. Verify redemption; this value is from the last CAS.",systemImage:"exclamationmark.circle").font(.footnote).foregroundStyle(.orange)
+                                    Label("Maturity passed. Verify redemption; the holding remains until repayment is confirmed.",systemImage:"exclamationmark.circle").font(.footnote).foregroundStyle(.orange)
                                 }
                                 if let quoted = terms.quotedCoupon, quoted.value != terms.coupon?.value {
                                     detailRow("Wint quoted rate") { Text("\(DisplayFormat.decimal(quoted.value))%") }
@@ -83,7 +84,7 @@ struct HoldingDetailView: View {
                                 if let projected = terms.projectedMaturityValue {
                                     detailRow("Projected value at maturity") { MoneyText(amount:projected,fractionDigits:2) }
                                     if terms.projectionUsesOrderDate == true { Text("Uses the order date where a confirmed settlement date is unavailable.").font(.caption).foregroundStyle(.secondary) }
-                                    Text("Estimated from invested cash and purchase YTM, from the investment date to maturity. Assumes all payouts are reinvested at the same rate, with annual compounding and actual days / 365, before tax. This is separate from today’s net worth and the final bond payment.").font(.caption).foregroundStyle(.secondary)
+                                    Text("Estimated from invested cash and purchase YTM, from the investment date to maturity. Assumes all payouts are reinvested at the same rate, with annual compounding and actual days / 365, before tax. Counted toward net worth. This is projected wealth, rather than the final bond payment.").font(.caption).foregroundStyle(.secondary)
                                 }
                                 if let frequency = terms.frequency { detailRow("Interest frequency") { Text(frequency) } }
                                 if let repayment = terms.repayment { detailRow("Principal repayment") { Text(repayment) } }
@@ -97,7 +98,7 @@ struct HoldingDetailView: View {
                                     Text("Some reported payouts differ slightly from gross interest less TDS. The email amounts are preserved.").font(.caption).foregroundStyle(.orange)
                                 }
                                 if let note = terms.reconciliationNote { Text(note).font(.caption).foregroundStyle(.orange) }
-                                Text("Cash flows come from matched Wint emails. Imported totals may be incomplete. They are shown separately from the CAS value; accrued interest is not estimated.").font(.caption).foregroundStyle(.secondary)
+                                Text("Cash flows come from matched Wint emails. Imported totals may be incomplete. They are shown separately from the valuation; accrued interest is not estimated.").font(.caption).foregroundStyle(.secondary)
                             }.portfolioCard()
                         }
                         if holding.assetClass != .fixedDeposit && holding.assetClass != .bond {

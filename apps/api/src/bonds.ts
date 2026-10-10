@@ -52,7 +52,7 @@ export async function bondsPortfolio(env:Pick<KiteEnvironment,'DB'>,snapshot:Por
  const result=await recordedBonds(env,owner,at);
  if(!result.statementDate)return snapshot;
  const attention=result.holdings.some(h=>h.bondTerms?.redemptionCheck || h.bondTerms?.reconciliationNote);
- return portfolioTotals({...snapshot,holdings:[...snapshot.holdings.filter(h=>!h.id.startsWith('bonds:')),...result.holdings],connections:[...snapshot.connections.filter(c=>c.id!=='bonds'),{id:'bonds',name:'Bonds · CDSL CAS',symbol:'B',status:attention?'attention':'connected',lastSyncAt:result.statementDate+'T00:00:00Z',description:attention?'CAS balances as of '+result.statementDate+'. Some bonds need reconciliation.':'CAS holdings as of '+result.statementDate+'; matched Wint purchases and payouts.'}]});
+ return portfolioTotals({...snapshot,holdings:[...snapshot.holdings.filter(h=>!h.id.startsWith('bonds:')),...result.holdings],connections:[...snapshot.connections.filter(c=>c.id!=='bonds'),{id:'bonds',name:'Bonds · CDSL CAS',symbol:'B',status:attention?'attention':'connected',lastSyncAt:result.statementDate+'T00:00:00Z',description:attention?'CAS holdings as of '+result.statementDate+'. Maturity projections used where available; some bonds need reconciliation.':'CAS holdings as of '+result.statementDate+'; maturity projections used where available, otherwise statement value.'}]});
 }
 export async function syncBonds(env:GmailEnvironment,owner:string,fetcher:typeof fetch=fetch,at=new Date()):Promise<{imported:number;status?:string;skipped?:boolean}> {
  const lease=at.getTime()+120000;

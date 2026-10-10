@@ -52,7 +52,7 @@ test('CAS defines current holdings while purchases enrich matching lots and neve
  const accountHash=await digest('owner:bonds:'+cas.accountID);
  let result=reconcileBonds(cas,accountHash,await readWintEvents(env,'owner'),at);
  let b=result.holdings.find(h=>h.symbol==='INE14H407116')!;
- assert.equal(b.bondTerms?.investedAmount,'49964.61');assert.equal(b.bondTerms?.interestGross,'370');assert.equal(b.bondTerms?.interestNet,'333');assert.equal(b.bondTerms?.tds,'37');assert.equal(b.value,'50000');assert.equal(b.gain,null);
+ assert.equal(b.bondTerms?.investedAmount,'49964.61');assert.equal(b.bondTerms?.interestGross,'370');assert.equal(b.bondTerms?.interestNet,'333');assert.equal(b.bondTerms?.tds,'37');assert.equal(b.value,b.bondTerms?.projectedMaturityValue);assert.equal(b.gain,null);
  await saveWintEvent(env,'owner',{...p,key:'purchase:new',isin:'INE734I07115',date:'2026-09-02',orderDate:'2026-08-28'},'new',at);
  result=reconcileBonds(cas,accountHash,await readWintEvents(env,'owner'),at);
  assert.equal(result.holdings.length,9);assert.ok(!result.holdings.some(h=>h.symbol==='INE734I07115'));
@@ -79,7 +79,7 @@ test('confirmed full repayment after CAS removes a holding without creating cash
  assert.equal(result.holdings.length,8);assert.ok(!result.holdings.some(h=>h.symbol===p.isin));assert.equal(result.redeemed.length,1);assert.equal(result.redeemed[0].principal,'50000');
  const partial={...red,kind:'principal',key:'principal:partial',principal:'10000'} as any;
  const other=reconcileBonds(cas,hash,[{accountHash:hash,event:p},{accountHash:null,event:partial}],at);
- assert.equal(other.holdings.find(h=>h.symbol===p.isin)?.value,'50000');assert.equal(other.holdings.find(h=>h.symbol===p.isin)?.bondTerms?.principalReceived,'10000');
+ assert.equal(other.holdings.find(h=>h.symbol===p.isin)?.value,other.holdings.find(h=>h.symbol===p.isin)?.bondTerms?.projectedMaturityValue);assert.equal(other.holdings.find(h=>h.symbol===p.isin)?.bondTerms?.principalReceived,'10000');
 });
 
 test('minor reported payout differences are preserved explicitly rather than inventing net interest',()=>{
@@ -117,7 +117,7 @@ test('principal and interest before the matched ownership window cannot redeem t
  const prior={kind:'principal',key:'old',isin:p.isin,date:'2026-06-01',principal:'40000',gross:'500',tds:'50',net:'450',nextPayout:null,reconciliationDifference:'0'} as const;
  const partial={...prior,kind:'redemption',key:'new',date:'2026-09-01',principal:'10000',gross:'100',tds:'10',net:'90'} as const;
  const result=reconcileBonds(cas,hash,[{accountHash:hash,event:p},{accountHash:null,event:prior},{accountHash:null,event:partial}],at);
- assert.equal(result.holdings.find(h=>h.symbol===p.isin)?.value,'50000');
+ assert.equal(result.holdings.find(h=>h.symbol===p.isin)?.value,result.holdings.find(h=>h.symbol===p.isin)?.bondTerms?.projectedMaturityValue);
  assert.equal(result.holdings.find(h=>h.symbol===p.isin)?.bondTerms?.principalReceived,'10000');
  assert.equal(result.holdings.find(h=>h.symbol===p.isin)?.bondTerms?.interestNet,'90');
  assert.equal(result.redeemed.length,0);
@@ -159,17 +159,22 @@ test('YTM is extracted separately from coupon and invalid or ambiguous yields re
  for(const raw of [purchase.replace('11.75%','-1%'),purchase.replace('11.75%','NaN%'),purchase.replace('11.75%','101%'),purchase+' YTM RATE (YTM AFTER BROKERAGE) 12%'])assert.throws(()=>parseWintEmail('Investment Successful for Example Finance',raw,at));
  const legacy=parseWintEmail('Investment Successful for Example Finance',purchase.replace('YTM RATE (YTM AFTER BROKERAGE) 11.75% ',''),at);assert.equal(legacy.kind==='purchase' && legacy.ytm,null);
 });
-test('projection compounds matched settled lots separately without changing CAS value or counting coupons twice',async()=>{
+test('projection compounds matched lots separately and values holdings at maturity without counting coupons twice',async()=>{
  const hash=await digest('owner:bonds:'+cas.accountID);
  const p=parseWintEmail('Investment Successful for Example Finance',purchase,at);if(p.kind!=='purchase')throw Error();
  const lot={...p,quantity:'5',invested:'10000',date:'2026-08-03',maturesOn:'2028-08-02',ytm:'10'};
  const result=reconcileBonds(cas,hash,[{accountHash:hash,event:lot}],at);
  const h=result.holdings.find(h=>h.symbol===p.isin)!;
- assert.equal(h.bondTerms?.projectedMaturityValue,'12100');assert.equal(h.bondTerms?.ytm,'10');assert.equal(h.value,'50000');assert.equal(h.gain,null);
+ assert.equal(h.bondTerms?.projectedMaturityValue,'12100');assert.equal(h.bondTerms?.ytm,'10');assert.equal(h.value,'12100');assert.equal(h.bondTerms?.valuationBasis,'projectedMaturity');assert.equal(h.gain,null);
+ const {env}=setupGold();await saveBondSnapshot(env,'owner',cas,'cas','cas',at);await saveWintEvent(env,'owner',lot,'lot',at);
+ const snapshot=zerodhaSnapshot('{"status":"success","data":[]}','{"status":"success","data":[]}',at);
+ const portfolio=await bondsPortfolio(env,snapshot,'owner',at);
+ assert.equal(portfolio.value,'410945');assert.equal(portfolio.allocation.find(a=>a.assetClass==='bond')?.value,'410945');
  const lots=[{...lot,quantity:'2',invested:'10000'},{...lot,key:'other',quantity:'3',invested:'20000',ytm:'20'}];
  const combined=reconcileBonds(cas,hash,lots.map(event=>({accountHash:hash,event})),at).holdings.find(h=>h.symbol===p.isin)!;
  assert.equal(combined.bondTerms?.projectedMaturityValue,'40900');assert.equal(combined.bondTerms?.ytm,null);
- for(const event of [{...lot,ytm:null}])assert.equal(reconcileBonds(cas,hash,[{accountHash:hash,event}],at).holdings.find(h=>h.symbol===p.isin)?.bondTerms?.projectedMaturityValue,null);
+ const fallback=reconcileBonds(cas,hash,[{accountHash:hash,event:{...lot,ytm:null}}],at).holdings.find(h=>h.symbol===p.isin)!;
+ assert.equal(fallback.bondTerms?.projectedMaturityValue,null);assert.equal(fallback.value,'50000');assert.equal(fallback.bondTerms?.valuationBasis,'statement');
 });
 test('YTM backfill upgrades legacy events atomically without regressing confirmed settlement or accepting conflicting yields',async()=>{
  const {env,db}=setupGold();const p=parseWintEmail('Investment Successful for Example Finance',purchase,at);if(p.kind!=='purchase')throw Error();
@@ -195,6 +200,6 @@ test('CAS-corroborated receipt projections use order date and switch to confirme
  assert.equal(holding(lot).bondTerms?.projectionUsesOrderDate,true);
  const settled=holding({...lot,confirmed:true,date:'2026-08-03'});
  assert.equal(settled.bondTerms?.projectedMaturityValue,'12100');assert.equal(settled.bondTerms?.projectionUsesOrderDate,false);
- assert.equal(settled.value,'50000');
+ assert.equal(settled.value,'12100');
  assert.equal(holding({...lot,quantity:'4'}).bondTerms?.projectedMaturityValue,null);
 });

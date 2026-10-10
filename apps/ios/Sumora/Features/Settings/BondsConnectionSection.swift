@@ -13,11 +13,11 @@ struct BondsConnectionSection: View {
     Text("Sign in to Sumora and connect Gmail to import bond statements.").font(.footnote).foregroundStyle(.secondary)
    } else {
     if let balance = bonds.status?.balance {
-     LabeledContent("Bond holdings value") { MoneyText(amount:balance.total,currency:"INR",fractionDigits:2) }
-     Text("\(balance.count) bonds · valued as of \(balance.statement_date)").font(.caption).foregroundStyle(.secondary)
+     LabeledContent("Bond value in net worth") { MoneyText(amount:balance.total,currency:"INR",fractionDigits:2) }
+     Text("\(balance.count) bonds · CAS holdings as of \(balance.statement_date)").font(.caption).foregroundStyle(.secondary)
      if let matched = balance.matchedPurchases { Text("Purchase cost matched for \(matched) of \(balance.count) holdings").font(.caption).foregroundStyle(.secondary) }
      if balance.redemptionChecks > 0 {
-      Label("Maturity passed for \(balance.redemptionChecks) bond(s). Verify redemption; the last statement balance is retained.",systemImage:"exclamationmark.circle").font(.footnote).foregroundStyle(.orange)
+      Label("Maturity passed for \(balance.redemptionChecks) bond(s). Verify redemption; the recorded holding is retained.",systemImage:"exclamationmark.circle").font(.footnote).foregroundStyle(.orange)
      }
     }
     if let redeemed = bonds.status?.redeemed, !redeemed.isEmpty {
@@ -49,7 +49,7 @@ struct BondsConnectionSection: View {
    if let message = bonds.message { Text(message).font(.footnote).foregroundStyle(.secondary) }
    if let error = bonds.errorMessage ?? bonds.status?.error { Text(error).font(.footnote).foregroundStyle(.orange) }
   } header: { Text("Bonds · CDSL CAS") } footer: {
-   Text("Imports NSDL bond closing balances from CDSL CAS emails. Your PAN is encrypted on the server and used only for decryption. Tap Sync Gmail documents after saving. Values use the statement’s price or face value, not live quotes. Wint purchase and payout emails are matched by ISIN and order ID for invested amounts, interest and TDS. Confirmed full repayments can close an older CAS holding. Emails do not introduce new holdings. Returns are not estimated. Failed imports retain previous data.")
+   Text("Imports NSDL bond closing balances from CDSL CAS emails. Your PAN is encrypted on the server and used only for decryption. Tap Sync Gmail documents after saving. Net worth uses projected maturity wealth where available, otherwise CAS purchase value. Projections assume payouts are reinvested at the email YTM before tax. Wint purchase and payout emails are matched by ISIN and order ID for invested amounts, interest and TDS. Confirmed full repayments can close an older CAS holding. Emails do not introduce new holdings. Failed imports retain previous data.")
   }
   .disabled(bonds.isBusy || dependencies.gmail.isBusy)
   .task(id:scope) {
