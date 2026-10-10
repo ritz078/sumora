@@ -10,7 +10,7 @@ final class SumoraHomepageTests: XCTestCase {
         return app
     }
 
-    func testIndianEquitiesHasDedicatedPageAndStockDetails() {
+    func testIndianEquitiesHasSortableDisplayOnlyStocks() {
         let app = launch()
         app.buttons["home-instrument-indianEquity"].tap()
         XCTAssertTrue(app.staticTexts["Indian Equities"].waitForExistence(timeout: 5))
@@ -24,16 +24,16 @@ final class SumoraHomepageTests: XCTestCase {
         for _ in 0..<3 where !sort.isHittable { app.swipeUp() }
         sort.tap()
         app.buttons["Value: Low to High"].tap()
-        let row = app.buttons["equity-holding-hdfc"]
+        let row = app.descendants(matching: .any)["equity-holding-hdfc"].firstMatch
         XCTAssertTrue(row.exists)
-        XCTAssertLessThan(row.frame.minY, app.buttons["equity-holding-reliance"].frame.minY)
+        XCTAssertLessThan(row.frame.minY, app.descendants(matching: .any)["equity-holding-reliance"].firstMatch.frame.minY)
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = "Indian stocks holdings"
         screenshot.lifetime = .keepAlways
         add(screenshot)
         row.tap()
-        XCTAssertTrue(app.navigationBars.buttons.firstMatch.exists)
-        app.navigationBars.buttons.firstMatch.tap()
+        XCTAssertFalse(app.staticTexts["holdingName"].exists)
+        XCTAssertTrue(app.staticTexts["Indian Equities"].exists)
         app.buttons["equitiesBack"].tap()
         XCTAssertTrue(app.buttons["tab-Overview"].waitForExistence(timeout: 5))
     }
@@ -117,7 +117,7 @@ final class SumoraHomepageTests: XCTestCase {
         XCTAssertFalse(app.staticTexts["Connected Accounts"].exists)
         XCTAssertFalse(app.buttons["tab-Settings"].exists)
         app.buttons["tab-Holdings"].tap()
-        XCTAssertTrue(app.buttons["holding-hdfc"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)["holding-hdfc"].firstMatch.waitForExistence(timeout: 5))
     }
 
     func testAllocationAndProfileNavigation() {

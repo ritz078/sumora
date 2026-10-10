@@ -9,19 +9,19 @@ final class SumoraUITests: XCTestCase {
         return app
     }
 
-    func testOverviewHoldingsAndDetailNavigation() {
+    func testOverviewStockRowsStayInHoldings() {
         let app = launch()
         XCTAssertTrue(app.staticTexts["portfolioValue"].waitForExistence(timeout: 10))
         app.buttons["tab-Holdings"].tap()
-        let reliance = app.buttons["holding-reliance"]
+        let reliance = app.descendants(matching: .any)["holding-reliance"].firstMatch
         XCTAssertTrue(reliance.waitForExistence(timeout: 5))
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = "Stitch Holdings tab"
         screenshot.lifetime = .keepAlways
         add(screenshot)
         reliance.tap()
-        XCTAssertTrue(app.staticTexts["holdingName"].waitForExistence(timeout: 5))
-        XCTAssertEqual(app.staticTexts["holdingName"].label, "Reliance Industries")
+        XCTAssertFalse(app.staticTexts["holdingName"].exists)
+        XCTAssertTrue(app.textFields["holdingsSearch"].exists)
     }
 
     func testPrivacyHidesAmountsAndRemovesChartAccessibility() {
@@ -49,8 +49,8 @@ final class SumoraUITests: XCTestCase {
         XCTAssertTrue(search.waitForExistence(timeout: 5))
         search.tap()
         search.typeText("HDFC\n")
-        XCTAssertTrue(app.buttons["holding-hdfc"].waitForExistence(timeout: 5))
-        XCTAssertFalse(app.buttons["holding-reliance"].exists)
+        XCTAssertTrue(app.descendants(matching: .any)["holding-hdfc"].firstMatch.waitForExistence(timeout: 5))
+        XCTAssertFalse(app.descendants(matching: .any)["holding-reliance"].firstMatch.exists)
         app.buttons["US stocks"].tap()
         XCTAssertTrue(app.staticTexts["No matching holdings"].waitForExistence(timeout: 5))
     }
@@ -72,10 +72,11 @@ final class SumoraUITests: XCTestCase {
         XCTAssertEqual(app.staticTexts["portfolioValue"].label, value)
         XCTAssertFalse(toast.exists)
         app.buttons["tab-Holdings"].tap()
-        let reliance = app.buttons["holding-reliance"]
+        let reliance = app.descendants(matching: .any)["holding-reliance"].firstMatch
         XCTAssertTrue(reliance.waitForExistence(timeout: 5))
         reliance.tap()
-        XCTAssertTrue(app.staticTexts["holdingName"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["holdingName"].exists)
+        XCTAssertTrue(app.textFields["holdingsSearch"].exists)
     }
 
     func testEmptyPortfolioOffersSampleRecovery() {

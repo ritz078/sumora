@@ -23,7 +23,11 @@ struct AnalyticsView: View {
                     }
                     Section("Holdings by unrealized gain") {
                         ForEach(HoldingsQuery(sort: .gain).apply(to: snapshot.holdings)) { holding in
-                            NavigationLink(value: holding.id) { HoldingRow(holding: holding, currency: snapshot.reportingCurrency, compact: true) }
+                            if holding.assetClass == .indianEquity || holding.assetClass == .usEquity {
+                                HoldingRow(holding: holding, currency: snapshot.reportingCurrency, compact: true)
+                            } else {
+                                NavigationLink(value: holding.id) { HoldingRow(holding: holding, currency: snapshot.reportingCurrency, compact: true) }
+                            }
                         }
                     }
                 }.refreshable { await store.refresh() }

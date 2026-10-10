@@ -133,8 +133,7 @@ struct IndianStocksView: View {
    VStack(spacing:0) {
     Rectangle().fill(HomeStyle.border).frame(height:1)
     ForEach(sortedHoldings) { holding in
-     NavigationLink { HoldingDetailView(holdingID:holding.id).toolbar(.visible,for:.navigationBar) } label: { row(holding) }
-      .buttonStyle(.plain).accessibilityIdentifier("equity-holding-\(holding.id)")
+     row(holding).accessibilityElement(children:.combine).accessibilityIdentifier("equity-holding-\(holding.id)")
      if holding.id != sortedHoldings.last?.id { Rectangle().fill(HomeStyle.border).frame(height:1) }
     }
     if holdings.isEmpty { Text("No Indian stocks recorded yet").font(.inter(.caption,size:12)).foregroundStyle(HomeStyle.secondary).padding(.vertical,24) }

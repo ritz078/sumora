@@ -141,9 +141,14 @@ struct HoldingsView: View {
                 .padding(.horizontal, 4).padding(.top, 4)
             VStack(spacing: 0) {
                 ForEach(items) { holding in
+                    if holding.assetClass == .indianEquity || holding.assetClass == .usEquity {
+                        HoldingsPositionRow(holding: holding, currency: currency).padding(14)
+                            .accessibilityElement(children: .combine).accessibilityIdentifier("holding-\(holding.id)")
+                    } else {
                     Button { searchFocused = false; selectedHolding = holding.id } label: {
                         HoldingsPositionRow(holding: holding, currency: currency).padding(14).contentShape(Rectangle())
                     }.buttonStyle(.plain).accessibilityIdentifier("holding-\(holding.id)")
+                    }
                     if holding.id != items.last?.id { Divider().overlay(HoldingsStyle.fill).padding(.horizontal, 14) }
                 }
             }.holdingsSurface()
