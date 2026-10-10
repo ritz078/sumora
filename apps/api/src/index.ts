@@ -1,3 +1,4 @@
+import {portfolioHistoryRoutes,scheduledPortfolioSnapshots} from './portfolio-history';
 import {propertiesRoutes} from './properties';
 import {bondsRoutes} from './bonds';
 import {npsRoutes} from './nps';
@@ -32,6 +33,7 @@ app.route('/v1/hdfc', hdfcRoutes());
 app.route('/v1/nps', npsRoutes());
 app.route('/v1/bonds', bondsRoutes());
 app.route('/v1/properties', propertiesRoutes());
+app.route('/v1/portfolio/history',portfolioHistoryRoutes());
 app.route('/v1/indmoney', indmoneyRoutes());
 app.get('/v1/demo/portfolio', (c) => {
   const scenario = c.req.query('scenario') ?? 'complete';
@@ -48,7 +50,13 @@ app.onError((_error, c) => c.json({ error: { code: 'INTERNAL_ERROR', message: 'U
 export default {
   fetch: app.fetch,
   async scheduled(event: {cron?:string}, env: GmailEnvironment) {
-    if(event.cron==='*/15 * * * *') { await scheduledINDmoney(env); return; }
+    if(event.cron==='*/15 * * * *') {
+      try { await scheduledINDmoney(env); } finally {
+        const result=await scheduledPortfolioSnapshots(env);
+        console.log(JSON.stringify({event:'portfolio-snapshots',...result}));
+      }
+      return;
+    }
     const gold = await refreshGoldPrice(env);
     console.log(JSON.stringify({ event: 'gold-prices', ...gold }));
     await scheduledStatements(env);

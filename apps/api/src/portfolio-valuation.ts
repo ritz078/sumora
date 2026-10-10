@@ -4,7 +4,7 @@ import { priceTime, type MarketPrice } from './daily-prices';
 import type { zerodhaSnapshot } from './zerodha-portfolio';
 
 type BrokerPortfolio = ReturnType<typeof zerodhaSnapshot>;
-export type Portfolio = Omit<BrokerPortfolio, 'holdings' | 'connections'> & { connections: (Omit<BrokerPortfolio['connections'][number], 'lastSyncAt'> & {lastSyncAt:string|null})[]; holdings: (BrokerPortfolio['holdings'][number] & { costBasisKnown?: boolean; propertyTerms?:PropertyEntry; bondTerms?: {coupon:string|null;maturesOn:string|null;redemptionCheck:boolean;investedAmount?:string|null;accruedAtPurchase?:string|null;interestGross?:string;interestNet?:string;tds?:string;principalReceived?:string;nextPayout?:string|null;frequency?:string|null;repayment?:string|null;quotedCoupon?:string|null;ytm?:string|null;projectedMaturityValue?:string|null;projectionUsesOrderDate?:boolean;statementValue?:string;valuationBasis?:string;reconciliationNote?:string|null;payoutDifference?:string}; depositTerms?: {originalPrincipal:string;currentAmount:string;maturityAmount:string;rate:string;openedOn:string;maturesOn:string;lien:string} })[] };
+export type Portfolio = Omit<BrokerPortfolio, 'holdings' | 'connections'> & { connections: (Omit<BrokerPortfolio['connections'][number], 'lastSyncAt'> & {lastSyncAt:string|null})[]; holdings: (BrokerPortfolio['holdings'][number] & { costBasisKnown?: boolean; quoteTimestampIsRetrieval?:boolean; propertyTerms?:PropertyEntry; bondTerms?: {coupon:string|null;maturesOn:string|null;redemptionCheck:boolean;investedAmount?:string|null;accruedAtPurchase?:string|null;interestGross?:string;interestNet?:string;tds?:string;principalReceived?:string;nextPayout?:string|null;frequency?:string|null;repayment?:string|null;quotedCoupon?:string|null;ytm?:string|null;projectedMaturityValue?:string|null;projectionUsesOrderDate?:boolean;statementValue?:string;valuationBasis?:string;reconciliationNote?:string|null;payoutDifference?:string}; depositTerms?: {originalPrincipal:string;currentAmount:string;maturityAmount:string;rate:string;openedOn:string;maturesOn:string;lien:string} })[] };
 const Money = Decimal.clone({ precision: 50 });
 export function holdingISIN(h: Portfolio['holdings'][number]) {
   if (h.assetClass === 'fixedDeposit' || h.assetClass === 'bond' || h.assetClass === 'realEstate') return null;
@@ -23,7 +23,7 @@ export function revalue(original: Portfolio, prices: MarketPrice[]): Portfolio {
     }
     const value = new Money(h.quantity).times(p.price), invested = new Money(h.invested), gain = value.minus(invested);
     changed = true;
-    return { ...h, quote: p.price, quoteAt: new Date(priceTime(p)).toISOString().replace('.000Z', 'Z'), value: value.toFixed(), gain: h.costBasisKnown === false ? null : gain.toFixed(),
+    return { ...h, quoteTimestampIsRetrieval: false, quote: p.price, quoteAt: new Date(priceTime(p)).toISOString().replace('.000Z', 'Z'), value: value.toFixed(), gain: h.costBasisKnown === false ? null : gain.toFixed(),
       gainPercent: h.costBasisKnown !== false && invested.gt(0) ? gain.div(invested).times(100).toFixed() : null, source: p.source,
       priceBasis: h.assetClass === 'gold' ? `${h.priceBasis} Price date ${p.date}.` : `Closing valuation for ${p.date}; recorded quantities last synced ${original.holdingsSyncAt}.` };
   });

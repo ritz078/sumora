@@ -56,6 +56,9 @@ async function captureBaselines(env: Environment, at: Date) {
     WHERE excluded.price_date > daily_price_baselines.price_date`).bind(day, day).run();
 }
 export async function valuedSnapshot(env: Environment, snapshot: Portfolio, at = new Date(), owner?: string) {
+  // Bind undated broker quotes to their original retrieval before other sources
+  // advance the aggregate timestamp. A fresh US snapshot must not age an old stock quote forward.
+  snapshot = {...snapshot, holdings: snapshot.holdings.map(h => ({...h, quoteTimestampIsRetrieval: h.quoteTimestampIsRetrieval || (h.quoteAt == null && h.quote !== null), quoteAt: h.quoteAt ?? (h.quote !== null ? snapshot.capturedAt : null)}))};
   if (owner) { snapshot = await propertiesPortfolio(env,snapshot,owner); snapshot = await bondsPortfolio(env,snapshot,owner,at); snapshot = await npsPortfolio(env, snapshot, owner); snapshot = await goldPortfolio(env, snapshot, owner); snapshot = await hdfcPortfolio(env, snapshot, owner); snapshot = await indmoneyPortfolio(env, snapshot, owner, at); }
   await captureBaselines(env, at);
   const row = await env.DB.prepare("SELECT json_group_array(json_object('isin', isin, 'kind', kind, 'price', price, 'date', price_date, 'source', source)) AS prices FROM daily_price_baselines WHERE day = ?").bind(istDate(at)).first<{ prices: string }>();
