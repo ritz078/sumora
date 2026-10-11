@@ -1,3 +1,4 @@
+import {authRoutes} from './auth';
 import {portfolioHistoryRoutes,scheduledPortfolioSnapshots} from './portfolio-history';
 import {propertiesRoutes} from './properties';
 import {bondsRoutes} from './bonds';
@@ -26,6 +27,7 @@ app.use('*', async (c, next) => {
   await next();
 });
 app.get('/health', (c) => c.json({ status: 'ok', service: 'sumora-api' }));
+app.route('/v1/auth', authRoutes());
 app.route('/v1/zerodha', zerodhaRoutes());
 app.route('/v1/gmail', gmailRoutes());
 app.route('/v1/gold', gullakRoutes());

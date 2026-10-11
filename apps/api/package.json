@@ -12,6 +12,7 @@
     "decimal.js": "^10.6.0",
     "fflate": "^0.8.3",
     "hono": "^4.0.0",
+    "jose": "^6.2.12",
     "lossless-json": "^4.3.1",
     "unpdf": "^1.8.1"
   },

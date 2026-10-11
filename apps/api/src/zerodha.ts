@@ -10,11 +10,12 @@ export interface Statement {
 }
 export interface KiteEnvironment {
   DB: { prepare(sql: string): Statement };
+  GOOGLE_REDIRECT_URI?: string;
   KITE_API_KEY: string;
   KITE_API_SECRET: string;
   KITE_ENCRYPTION_KEY: string;
 }
-type Attempt = { id: string; challenge: string; expires_at: number; encrypted_token: string; provider_expires_at: number; owner_id: string };
+type Attempt = { app_owner_id?: string; id: string; challenge: string; expires_at: number; encrypted_token: string; provider_expires_at: number; owner_id: string };
 type Session = { token_hash: string; encrypted_token: string; provider_expires_at: number; owner_id: string; expires_at: number };
 type Snapshot = Portfolio;
 export class APIError extends Error {
@@ -53,11 +54,17 @@ async function jsonBody(request: Request): Promise<Record<string, unknown>> {
     return result;
   } catch { throw new APIError(400, 'INVALID_REQUEST', 'Expected a JSON object.'); }
 }
-export async function appSession(env: Pick<KiteEnvironment, 'DB'>, authorization: string | undefined, now = Date.now) {
-  if (!authorization?.match(/^Bearer [a-f0-9]{64}$/)) throw new APIError(401, 'SIGN_IN_REQUIRED', 'Connect Zerodha to sign in to Sumora.');
+export async function appSession(env: Pick<KiteEnvironment, 'DB' | 'GOOGLE_REDIRECT_URI'>, authorization: string | undefined, now = Date.now) {
+  if (!authorization?.match(/^Bearer [a-f0-9]{64}$/)) throw new APIError(401, 'SIGN_IN_REQUIRED', 'Sign in to Sumora to continue.');
+  const hash=await digest(authorization.slice(7));
+  // Transitional compatibility is used only by deployments without Google login configured.
+  if(env.GOOGLE_REDIRECT_URI) {
+    const result=await env.DB.prepare('SELECT s.token_hash,s.expires_at,a.data_owner_id AS owner_id FROM app_sessions s JOIN app_accounts a ON a.id=s.account_id WHERE s.token_hash=? AND s.expires_at>?').bind(hash,now()).first<Session>();
+    if(result?.owner_id)return result;
+  }
   const result = await env.DB.prepare('SELECT * FROM zerodha_sessions WHERE token_hash = ? AND expires_at > ?')
-    .bind(await digest(authorization.slice(7)), now()).first<Session>();
-  if (!result?.owner_id) throw new APIError(401, 'SIGN_IN_REQUIRED', 'Reconnect Zerodha to sign in to Sumora.');
+    .bind(hash, now()).first<Session>();
+  if (!result?.owner_id) throw new APIError(401, 'SIGN_IN_REQUIRED', 'Sign in to Sumora to continue.');
   return result;
 }
 export function zerodhaRoutes(fetcher: typeof fetch = fetch, now = Date.now) {
@@ -76,13 +83,11 @@ export function zerodhaRoutes(fetcher: typeof fetch = fetch, now = Date.now) {
       throw new APIError(503, 'ZERODHA_NOT_CONFIGURED', 'The Zerodha connection is not configured on the server yet.');
     }
   }
-  async function session(env: KiteEnvironment, authorization?: string) {
-    if (!authorization?.match(/^Bearer [a-f0-9]{64}$/)) throw new APIError(401, 'SIGN_IN_REQUIRED', 'Connect Zerodha to view your portfolio.');
-    configured(env);
-    const hash = await digest(authorization.slice(7));
-    const result = await env.DB.prepare('SELECT * FROM zerodha_sessions WHERE token_hash = ? AND expires_at > ?').bind(hash, now()).first<Session>();
-    if (!result || !result.owner_id) throw new APIError(401, 'SIGN_IN_REQUIRED', 'Reconnect your Zerodha account.');
-    return result;
+  async function session(env: KiteEnvironment, authorization?: string): Promise<Session> {
+    const auth=await appSession(env,authorization,now);
+    if(!env.GOOGLE_REDIRECT_URI)return auth;
+    const connection=await env.DB.prepare('SELECT * FROM zerodha_connections WHERE owner_id=?').bind(auth.owner_id).first<{encrypted_token:string;provider_expires_at:number}>();
+    return {...auth,encrypted_token:connection?.encrypted_token??'',provider_expires_at:connection?.provider_expires_at??0};
   }
   async function kite(env: KiteEnvironment, path: string, token: string, method = 'GET') {
     const url = new URL(`https://api.kite.trade${path}`);
@@ -98,6 +103,7 @@ export function zerodhaRoutes(fetcher: typeof fetch = fetch, now = Date.now) {
   }
   app.post('/start', async (c) => {
     configured(c.env);
+    const owner=c.env.GOOGLE_REDIRECT_URI?(await appSession(c.env,c.req.header('Authorization'),now)).owner_id:null;
     const { challenge } = await jsonBody(c.req.raw);
     if (typeof challenge !== 'string' || !/^[a-f0-9]{64}$/.test(challenge)) throw new APIError(400, 'INVALID_CHALLENGE', 'Invalid login challenge.');
     await c.env.DB.prepare('DELETE FROM zerodha_attempts WHERE expires_at <= ?').bind(now()).run();
@@ -105,7 +111,8 @@ export function zerodhaRoutes(fetcher: typeof fetch = fetch, now = Date.now) {
     const count = await c.env.DB.prepare('SELECT count(*) AS total FROM zerodha_attempts').first<{ total: number }>();
     if ((count?.total ?? 0) >= 50) throw new APIError(429, 'LOGIN_BUSY', 'Too many login attempts. Try again in a few minutes.');
     const state = randomToken();
-    await c.env.DB.prepare('INSERT INTO zerodha_attempts (id, challenge, expires_at) VALUES (?, ?, ?)').bind(state, challenge, now() + 600000).run();
+    if(c.env.GOOGLE_REDIRECT_URI)await c.env.DB.prepare('INSERT INTO zerodha_attempts (id,challenge,expires_at,app_owner_id) VALUES (?,?,?,?)').bind(state,challenge,now()+600000,owner).run();
+    else await c.env.DB.prepare('INSERT INTO zerodha_attempts (id, challenge, expires_at) VALUES (?, ?, ?)').bind(state, challenge, now() + 600000).run();
     const url = new URL('https://kite.zerodha.com/connect/login');
     url.search = new URLSearchParams({ v: '3', api_key: c.env.KITE_API_KEY, redirect_params: new URLSearchParams({ state }).toString() }).toString();
     return c.json({ state, loginURL: url.toString() });
@@ -144,13 +151,24 @@ export function zerodhaRoutes(fetcher: typeof fetch = fetch, now = Date.now) {
   });
   app.post('/claim', async (c) => {
     configured(c.env);
+    const owner=c.env.GOOGLE_REDIRECT_URI?(await appSession(c.env,c.req.header('Authorization'),now)).owner_id:null;
     const { code, verifier } = await jsonBody(c.req.raw);
     if (typeof code !== 'string' || !/^[a-f0-9]{64}$/.test(code) || typeof verifier !== 'string' || !/^[a-zA-Z0-9_-]{43,128}$/.test(verifier)) {
       throw new APIError(401, 'INVALID_LOGIN', 'Login expired. Try connecting again.');
     }
-    const attempt = await c.env.DB.prepare('DELETE FROM zerodha_attempts WHERE result_hash = ? AND challenge = ? AND expires_at > ? AND encrypted_token IS NOT NULL RETURNING *')
-      .bind(await digest(code), await digest(verifier), now()).first<Attempt>();
+    const sql='DELETE FROM zerodha_attempts WHERE result_hash=? AND challenge=? AND expires_at>? AND encrypted_token IS NOT NULL'+(owner?' AND app_owner_id=?':'')+' RETURNING *';
+    const statement=c.env.DB.prepare(sql);
+    const values=[await digest(code),await digest(verifier),now()];
+    const attempt=await statement.bind(...values,...(owner?[owner]:[])).first<Attempt>();
     if (!attempt || !attempt.owner_id) throw new APIError(401, 'INVALID_LOGIN', 'Login expired. Try connecting again.');
+    if(owner){
+      const existing=await c.env.DB.prepare('SELECT owner_id FROM zerodha_connections WHERE client_id=?').bind(attempt.owner_id).first<{owner_id:string}>();
+      if(existing&&existing.owner_id!==owner)throw new APIError(409,'ACCOUNT_ALREADY_LINKED','This Zerodha account is already linked to another app account.');
+      const current=await c.env.DB.prepare('SELECT client_id FROM zerodha_connections WHERE owner_id=?').bind(owner).first<{client_id:string}>();
+      if(current&&current.client_id!==attempt.owner_id)throw new APIError(409,'ACCOUNT_SWITCH_REQUIRES_DISCONNECT','Disconnect the current Zerodha account before switching accounts.');
+      await c.env.DB.prepare('INSERT INTO zerodha_connections VALUES (?,?,?,?) ON CONFLICT(owner_id) DO UPDATE SET encrypted_token=excluded.encrypted_token,provider_expires_at=excluded.provider_expires_at').bind(owner,attempt.owner_id,attempt.encrypted_token,attempt.provider_expires_at).run();
+      return c.json({connected:true,userID:attempt.owner_id});
+    }
     const token = randomToken();
     await c.env.DB.prepare('INSERT INTO zerodha_sessions (token_hash, encrypted_token, owner_id, expires_at, provider_expires_at) VALUES (?, ?, ?, ?, ?)')
       .bind(await digest(token), attempt.encrypted_token, attempt.owner_id, now() + 30 * 86400000, attempt.provider_expires_at).run();
@@ -160,6 +178,13 @@ export function zerodhaRoutes(fetcher: typeof fetch = fetch, now = Date.now) {
     const auth = await session(c.env, c.req.header('Authorization'));
     const cached = await c.env.DB.prepare('SELECT * FROM zerodha_snapshots WHERE owner_id = ?').bind(auth.owner_id).first<{ snapshot: string; synced_at: number }>();
     const stale = async () => {
+      if(!cached&&c.env.GOOGLE_REDIRECT_URI){
+        const snapshot=zerodhaSnapshot('{"status":"success","data":[]}','{"status":"success","data":[]}',new Date(now())) as Snapshot;
+        snapshot.connections[0].status=auth.encrypted_token?'attention':'disconnected';
+        snapshot.connections[0].lastSyncAt=null;
+        snapshot.connections[0].description=auth.encrypted_token?'Reconnect Zerodha to import holdings.':'Connect Zerodha to import Indian stocks and mutual funds.';
+        return c.json(await valuedSnapshot(c.env,snapshot,new Date(now()),auth.owner_id));
+      }
       if (!cached) throw new APIError(409, 'ZERODHA_RECONNECT_REQUIRED', 'Your Kite session expired. Reconnect Zerodha.');
       const snapshot = JSON.parse(cached.snapshot) as Snapshot;
       snapshot.connections[0].status = 'attention';
@@ -179,16 +204,22 @@ export function zerodhaRoutes(fetcher: typeof fetch = fetch, now = Date.now) {
       return c.json(await valuedSnapshot(c.env, snapshot, new Date(now()), auth.owner_id));
     } catch (error) {
       if (error instanceof APIError && error.code === 'ZERODHA_RECONNECT_REQUIRED') {
-        await c.env.DB.prepare('UPDATE zerodha_sessions SET provider_expires_at = 0 WHERE token_hash = ?').bind(auth.token_hash).run();
+        if(c.env.GOOGLE_REDIRECT_URI)await c.env.DB.prepare('UPDATE zerodha_connections SET provider_expires_at=0 WHERE owner_id=?').bind(auth.owner_id).run();
+        else await c.env.DB.prepare('UPDATE zerodha_sessions SET provider_expires_at = 0 WHERE token_hash = ?').bind(auth.token_hash).run();
         return stale();
       }
       throw error;
     }
   });
+  app.get('/connection',async c=>{
+    const auth=await session(c.env,c.req.header('Authorization'));
+    return c.json({connected:!!auth.encrypted_token,status:!auth.encrypted_token?'disconnected':auth.provider_expires_at<=now()?'reconnect':'connected'});
+  });
   app.delete('/connection', async (c) => {
     const auth = await session(c.env, c.req.header('Authorization'));
     try { await kite(c.env, '/session/token', await decrypt(auth.encrypted_token, c.env.KITE_ENCRYPTION_KEY), 'DELETE'); } catch { /* Local access is removed even if Kite is unavailable. */ }
-    await c.env.DB.prepare('DELETE FROM zerodha_sessions WHERE owner_id = ?').bind(auth.owner_id).run();
+    if(c.env.GOOGLE_REDIRECT_URI)await c.env.DB.prepare('DELETE FROM zerodha_connections WHERE owner_id=?').bind(auth.owner_id).run();
+    else await c.env.DB.prepare('DELETE FROM zerodha_sessions WHERE owner_id = ?').bind(auth.owner_id).run();
     await c.env.DB.prepare('DELETE FROM zerodha_snapshots WHERE owner_id = ?').bind(auth.owner_id).run();
     return c.json({ disconnected: true });
   });
