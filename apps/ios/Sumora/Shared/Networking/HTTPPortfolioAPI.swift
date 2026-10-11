@@ -42,6 +42,12 @@ enum HTTPPortfolioError: LocalizedError {
 enum APIConfiguration {
     static func savedAddress(in defaults: UserDefaults) -> String {
         let saved = defaults.string(forKey: "apiAddress")
+        // Repair the authentication test host accidentally persisted by an earlier build.
+        if saved == "https://login-tests.example.com" {
+            defaults.removeObject(forKey: "apiAddress")
+            defaults.removeObject(forKey: "apiAddressConfigured")
+            return defaultAddress
+        }
         // Early integration builds accidentally saved the test server in the normal app domain.
         if saved == "http://localhost:8787", !defaults.bool(forKey: "apiAddressConfigured") {
             defaults.removeObject(forKey: "apiAddress")

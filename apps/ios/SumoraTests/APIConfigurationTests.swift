@@ -11,6 +11,15 @@ struct APIConfigurationTests {
         }
     }
 
+    @Test func authenticationTestHostCannotRemainAsSavedProductionAddress() throws {
+        try withDefaults { defaults in
+            defaults.set("https://login-tests.example.com", forKey: "apiAddress")
+            defaults.set(true, forKey: "apiAddressConfigured")
+            #expect(APIConfiguration.savedAddress(in: defaults) == APIConfiguration.defaultAddress)
+            #expect(defaults.string(forKey: "apiAddress") == nil)
+        }
+    }
+
     @Test func explicitlyConfiguredLocalServerIsPreserved() throws {
         try withDefaults { defaults in
             defaults.set("http://localhost:8787", forKey: "apiAddress")
