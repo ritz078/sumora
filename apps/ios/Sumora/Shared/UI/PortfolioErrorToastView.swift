@@ -9,7 +9,7 @@ struct PortfolioErrorToastView: View {
             Image(systemName: "exclamationmark.circle.fill")
                 .foregroundStyle(.orange).accessibilityHidden(true)
             Text(message)
-                .font(.inter(.subheadline, size: 13))
+                .font(.appFont(.subheadline, size: 13))
                 .foregroundStyle(.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .accessibilityIdentifier("refreshError")

@@ -38,34 +38,9 @@ enum DashboardStyle {
 }
 
 extension Font {
-    static func inter(_ style: Font.TextStyle, weight: Font.Weight = .regular, size: CGFloat? = nil) -> Font {
-        let base: CGFloat
-        switch style {
-        case .largeTitle: base = 32
-        case .title: base = 28
-        case .title2: base = 22
-        case .title3: base = 20
-        case .headline: base = 16
-        case .subheadline: base = 14.5
-        case .callout: base = 16
-        case .footnote: base = 13
-        case .caption: base = 12
-        case .caption2: base = 11
-        default: base = 17
-        }
-        let name: String
-        switch weight {
-        case .ultraLight: name = "Inter-Regular_Thin"
-        case .thin: name = "Inter-Regular_ExtraLight"
-        case .light: name = "Inter-Regular_Light"
-        case .medium: name = "Inter-Regular_Medium"
-        case .semibold: name = "Inter-Regular_SemiBold"
-        case .bold: name = "Inter-Regular_Bold"
-        case .heavy: name = "Inter-Regular_ExtraBold"
-        case .black: name = "Inter-Regular_Black"
-        default: name = "Inter-Regular"
-        }
-        return .custom(name, size: size ?? base, relativeTo: style)
+    static func appFont(_ style: Font.TextStyle, weight: Font.Weight = .regular, size: CGFloat? = nil) -> Font {
+        if let size { return .system(size: size, weight: weight, design: .default) }
+        return .system(style, design: .default).weight(weight)
     }
 }
 

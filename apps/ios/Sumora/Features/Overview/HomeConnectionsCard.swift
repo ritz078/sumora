@@ -20,11 +20,11 @@ struct HomeConnectionsCard: View {
   VStack(alignment: .leading, spacing: 16) {
    HStack(alignment: .top) {
     VStack(alignment: .leading, spacing: 3) {
-     Text("Connected Accounts").font(.inter(.headline, weight: .bold, size: 17)).tracking(-0.425)
-     Text("Auto-sync feeds & portfolio integrations").font(.inter(.caption, size: 12)).foregroundStyle(HomeStyle.secondary)
+     Text("Connected Accounts").font(.appFont(.headline, weight: .bold, size: 17)).tracking(-0.425)
+     Text("Auto-sync feeds & portfolio integrations").font(.appFont(.caption, size: 12)).foregroundStyle(HomeStyle.secondary)
     }
     Spacer(minLength: 4)
-    Text("\(rows.filter { $0.status != .disconnected }.count) Linked").font(.inter(.caption2, weight: .semibold, size: 11)).foregroundStyle(HomeStyle.emerald)
+    Text("\(rows.filter { $0.status != .disconnected }.count) Linked").font(.appFont(.caption2, weight: .semibold, size: 11)).foregroundStyle(HomeStyle.emerald)
      .padding(.horizontal, 8).padding(.vertical, 4).background(HomeStyle.emerald.opacity(0.08), in: Capsule()).fixedSize()
    }
    VStack(spacing: 0) {
@@ -35,12 +35,12 @@ struct HomeConnectionsCard: View {
         providerIcon(connection)
         VStack(alignment: .leading, spacing: 4) {
          HStack(spacing: 6) {
-          Text(connection.name).font(.inter(.caption, weight: .semibold, size: 13)).lineLimit(1).truncationMode(.tail)
+          Text(connection.name).font(.appFont(.caption, weight: .semibold, size: 13)).lineLimit(1).truncationMode(.tail)
           Text(connection.status == .connected ? "Active" : connection.status == .attention ? "Action needed" : "Not linked")
-           .font(.inter(.caption2, weight: .medium, size: 9)).foregroundStyle(color(connection)).padding(.horizontal, 5).padding(.vertical, 2)
+           .font(.appFont(.caption2, weight: .medium, size: 9)).foregroundStyle(color(connection)).padding(.horizontal, 5).padding(.vertical, 2)
            .background(color(connection).opacity(0.08), in: RoundedRectangle(cornerRadius: 4)).fixedSize()
          }
-         Text(connection.description).font(.inter(.caption2, size: 11)).foregroundStyle(HomeStyle.secondary).lineLimit(1).truncationMode(.tail)
+         Text(connection.description).font(.appFont(.caption2, size: 11)).foregroundStyle(HomeStyle.secondary).lineLimit(1).truncationMode(.tail)
         }.frame(maxWidth: .infinity, alignment: .leading)
        }
       }.buttonStyle(.plain)
@@ -58,7 +58,7 @@ struct HomeConnectionsCard: View {
  }
  @ViewBuilder private func providerIcon(_ connection: Connection) -> some View {
   if connection.id == "zerodha" || connection.id == "indmoney" {
-   Text(connection.id == "zerodha" ? "Z" : "IND").font(.inter(.subheadline, weight: .bold, size: connection.id == "zerodha" ? 14 : 11))
+   Text(connection.id == "zerodha" ? "Z" : "IND").font(.appFont(.subheadline, weight: .bold, size: connection.id == "zerodha" ? 14 : 11))
     .foregroundStyle(.white).frame(width: 36, height: 36)
     .background(connection.id == "zerodha" ? Color(red: 37/255, green: 99/255, blue: 235/255) : Color(red: 5/255, green: 150/255, blue: 105/255), in: RoundedRectangle(cornerRadius: 12))
   } else {

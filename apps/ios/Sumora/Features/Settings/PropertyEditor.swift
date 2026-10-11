@@ -47,8 +47,8 @@ struct PropertyEditor: View {
    VStack(alignment:.leading,spacing:20) {
     HStack(alignment:.top,spacing:8) {
      VStack(alignment:.leading,spacing:4) {
-      Text(property == nil ? "Add Real Estate Property" : "Edit Real Estate Property").font(.inter(.title2,weight:.bold,size:22)).tracking(-0.5).accessibilityIdentifier("property-editor-title")
-      Text("Manual asset appraisal entry").font(.inter(.caption,size:13)).foregroundStyle(HomeStyle.secondary)
+      Text(property == nil ? "Add Real Estate Property" : "Edit Real Estate Property").font(.appFont(.title2,weight:.bold,size:22)).tracking(-0.5).accessibilityIdentifier("property-editor-title")
+      Text("Manual asset appraisal entry").font(.appFont(.caption,size:13)).foregroundStyle(HomeStyle.secondary)
      }
      Spacer(minLength:0)
      Button { dismiss() } label: { Image(systemName:"xmark").font(.system(size:16,weight:.semibold)).frame(width:32,height:32).background(HomeStyle.fill,in:RoundedRectangle(cornerRadius:12)) }.foregroundStyle(HomeStyle.secondary).accessibilityLabel("Close property editor")
@@ -71,10 +71,10 @@ struct PropertyEditor: View {
      VStack(alignment:.leading,spacing:16) { valuationDate;locationField }
     }
     projectedGain
-    if !authorized { Text("Switch to your connected portfolio to save properties.").font(.inter(.caption,size:12)).foregroundStyle(HomeStyle.secondary) }
-    if let error=dependencies.properties.errorMessage { Text(error).font(.inter(.caption,size:12)).foregroundStyle(.orange).accessibilityIdentifier("property-error") }
+    if !authorized { Text("Switch to your connected portfolio to save properties.").font(.appFont(.caption,size:12)).foregroundStyle(HomeStyle.secondary) }
+    if let error=dependencies.properties.errorMessage { Text(error).font(.appFont(.caption,size:12)).foregroundStyle(.orange).accessibilityIdentifier("property-error") }
     if property != nil {
-     Button("Remove Property",role:.destructive) { confirmRemove = true }.font(.inter(.caption,weight:.semibold,size:13)).disabled(!authorized).accessibilityIdentifier("remove-property")
+     Button("Remove Property",role:.destructive) { confirmRemove = true }.font(.appFont(.caption,weight:.semibold,size:13)).disabled(!authorized).accessibilityIdentifier("remove-property")
     }
    }.padding(16).padding(.top,16)
   }.background(HomeStyle.card).foregroundStyle(HomeStyle.ink)
@@ -85,10 +85,10 @@ struct PropertyEditor: View {
     Button("Remove property",role:.destructive) { Task { if await dependencies.properties.remove(id:id) { await dependencies.portfolio.refresh();dismiss() } } }
    } message: { Text("Removing a property does not create cash proceeds.") }
  }
- private func label(_ text:String) -> some View { Text(text).font(.inter(.caption,weight:.medium,size:13)) }
+ private func label(_ text:String) -> some View { Text(text).font(.appFont(.caption,weight:.medium,size:13)) }
  private func classificationButton(_ key:String,_ title:String,_ symbol:String) -> some View {
   Button { classification=key } label: {
-   Label(title,systemImage:symbol).font(.inter(.caption,weight:.medium,size:13)).lineLimit(1).truncationMode(.tail).frame(maxWidth:.infinity,alignment:.leading).padding(12)
+   Label(title,systemImage:symbol).font(.appFont(.caption,weight:.medium,size:13)).lineLimit(1).truncationMode(.tail).frame(maxWidth:.infinity,alignment:.leading).padding(12)
     .background(classification == key ? HomeStyle.indigo.opacity(0.04) : HomeStyle.card,in:RoundedRectangle(cornerRadius:8))
     .overlay(RoundedRectangle(cornerRadius:8).stroke(classification == key ? HomeStyle.indigo : Color.primary.opacity(0.12),lineWidth:1))
   }.foregroundStyle(classification == key ? HomeStyle.indigo : HomeStyle.secondary).accessibilityAddTraits(classification == key ? .isSelected : []).accessibilityIdentifier("property-class-\(key)")
@@ -96,7 +96,7 @@ struct PropertyEditor: View {
  private func input(_ title:String,placeholder:String,text:Binding<String>,identifier:String,numeric:Bool=false) -> some View {
   VStack(alignment:.leading,spacing:8) {
    label(title)
-   TextField(placeholder,text:text).font(.inter(.caption,size:14)).keyboardType(numeric ? .decimalPad : .default).padding(12).background(HomeStyle.card,in:RoundedRectangle(cornerRadius:8)).overlay(RoundedRectangle(cornerRadius:8).stroke(Color.primary.opacity(0.12),lineWidth:1)).accessibilityIdentifier(identifier)
+   TextField(placeholder,text:text).font(.appFont(.caption,size:14)).keyboardType(numeric ? .decimalPad : .default).padding(12).background(HomeStyle.card,in:RoundedRectangle(cornerRadius:8)).overlay(RoundedRectangle(cornerRadius:8).stroke(Color.primary.opacity(0.12),lineWidth:1)).accessibilityIdentifier(identifier)
   }
  }
  private func moneyInput(_ title:String,text:Binding<String>,identifier:String,help:String) -> some View {
@@ -104,14 +104,14 @@ struct PropertyEditor: View {
    HStack {
     label(title);Spacer(minLength:4)
     if let amount=PropertyInput.amount(text.wrappedValue),!preferences.hideBalances {
-     Text(DisplayFormat.compactMoney(amount,currency:"INR")).font(.inter(.caption2,size:11)).foregroundStyle(HomeStyle.indigo).padding(.horizontal,8).padding(.vertical,2).background(HomeStyle.indigo.opacity(0.04),in:Capsule())
+     Text(DisplayFormat.compactMoney(amount,currency:"INR")).font(.appFont(.caption2,size:11)).foregroundStyle(HomeStyle.indigo).padding(.horizontal,8).padding(.vertical,2).background(HomeStyle.indigo.opacity(0.04),in:Capsule())
     }
    }
    HStack {
     Text("₹").foregroundStyle(HomeStyle.secondary)
     TextField("0",text:text).keyboardType(.decimalPad).multilineTextAlignment(.trailing).accessibilityIdentifier(identifier)
-   }.font(.inter(.caption,size:14)).padding(12).overlay(RoundedRectangle(cornerRadius:8).stroke(Color.primary.opacity(0.12),lineWidth:1))
-   Text(help).font(.inter(.caption2,size:12)).foregroundStyle(HomeStyle.secondary)
+   }.font(.appFont(.caption,size:14)).padding(12).overlay(RoundedRectangle(cornerRadius:8).stroke(Color.primary.opacity(0.12),lineWidth:1))
+   Text(help).font(.appFont(.caption2,size:12)).foregroundStyle(HomeStyle.secondary)
   }
  }
  private var valuationDate: some View {
@@ -124,9 +124,9 @@ struct PropertyEditor: View {
  private var projectedGain: some View {
   VStack(alignment:.leading,spacing:10) {
    HStack {
-    Label("PROJECTED GAIN",systemImage:"chart.line.uptrend.xyaxis").font(.inter(.caption2,weight:.semibold,size:11)).tracking(0.5)
+    Label("PROJECTED GAIN",systemImage:"chart.line.uptrend.xyaxis").font(.appFont(.caption2,weight:.semibold,size:11)).tracking(0.5)
     Spacer(minLength:4)
-    HomeSignedMoney(amount:metrics?.gain).font(.inter(.caption,weight:.semibold,size:13)).foregroundStyle(metrics?.gain.map { $0.value < 0 ? Color.red : DashboardStyle.positive } ?? HomeStyle.secondary)
+    HomeSignedMoney(amount:metrics?.gain).font(.appFont(.caption,weight:.semibold,size:13)).foregroundStyle(metrics?.gain.map { $0.value < 0 ? Color.red : DashboardStyle.positive } ?? HomeStyle.secondary)
    }
    if let metrics,metrics.value.value > 0,metrics.costKnown {
     GeometryReader { geometry in
@@ -135,18 +135,18 @@ struct PropertyEditor: View {
       Rectangle().fill(HomeStyle.indigo)
      }.clipShape(Capsule())
     }.frame(height:8)
-    HStack { Text("Basis: \(preferences.hideBalances ? "••••" : DisplayFormat.compactMoney(metrics.cost.value,currency:"INR"))");Spacer();Text("Unrealized: \(preferences.hideBalances ? "••••" : DisplayFormat.compactMoney(metrics.gain!.value,currency:"INR"))").foregroundStyle(HomeStyle.indigo) }.font(.inter(.caption2,weight:.medium,size:11))
+    HStack { Text("Basis: \(preferences.hideBalances ? "••••" : DisplayFormat.compactMoney(metrics.cost.value,currency:"INR"))");Spacer();Text("Unrealized: \(preferences.hideBalances ? "••••" : DisplayFormat.compactMoney(metrics.gain!.value,currency:"INR"))").foregroundStyle(HomeStyle.indigo) }.font(.appFont(.caption2,weight:.medium,size:11))
    }
    Rectangle().fill(HomeStyle.border).frame(height:1)
-   Label("Values remain unchanged until the next manual update.",systemImage:"info.circle").font(.inter(.caption2,size:12)).foregroundStyle(HomeStyle.secondary)
+   Label("Values remain unchanged until the next manual update.",systemImage:"info.circle").font(.appFont(.caption2,size:12)).foregroundStyle(HomeStyle.secondary)
   }.padding(12).background(HomeStyle.fill,in:RoundedRectangle(cornerRadius:16)).overlay(RoundedRectangle(cornerRadius:16).stroke(Color.primary.opacity(0.08),lineWidth:1))
  }
  private var footer: some View {
   VStack(spacing:12) {
    Button { Task { await save() } } label: {
-    HStack { if dependencies.properties.isBusy { ProgressView() };Label(property == nil ? "Save Property to Portfolio" : "Save Property Changes",systemImage:"plus.circle") }.font(.inter(.headline,weight:.semibold,size:16)).frame(maxWidth:.infinity).padding(.vertical,16).background(HomeStyle.indigo,in:RoundedRectangle(cornerRadius:8)).foregroundStyle(.white)
+    HStack { if dependencies.properties.isBusy { ProgressView() };Label(property == nil ? "Save Property to Portfolio" : "Save Property Changes",systemImage:"plus.circle") }.font(.appFont(.headline,weight:.semibold,size:16)).frame(maxWidth:.infinity).padding(.vertical,16).background(HomeStyle.indigo,in:RoundedRectangle(cornerRadius:8)).foregroundStyle(.white)
    }.disabled(!canSave || !authorized).opacity(canSave && authorized ? 1 : 0.5).accessibilityIdentifier("save-property")
-   Button("Discard") { dismiss() }.font(.inter(.caption,size:14)).foregroundStyle(HomeStyle.secondary).accessibilityIdentifier("discard-property")
+   Button("Discard") { dismiss() }.font(.appFont(.caption,size:14)).foregroundStyle(HomeStyle.secondary).accessibilityIdentifier("discard-property")
   }.padding(16).background(HomeStyle.card).overlay(alignment:.top) { Rectangle().fill(HomeStyle.border).frame(height:1) }
  }
  private func save() async {

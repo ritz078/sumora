@@ -36,7 +36,7 @@ struct PortfolioTabBar: View {
                         Image(item.2).renderingMode(.template)
                             .overlay(alignment: .topTrailing) {
                                 if item.0 == .holdings && holdingsCount > 0 {
-                                    Text("\(holdingsCount)").font(.inter(.caption2, weight: .bold, size: 9))
+                                    Text("\(holdingsCount)").font(.appFont(.caption2, weight: .bold, size: 9))
                                         .foregroundStyle(.white).padding(.horizontal, 4)
                                         .frame(minWidth: 16, minHeight: 14)
                                         .background(Color(red: 1, green: 0.23, blue: 0.19), in: Capsule())
@@ -44,7 +44,7 @@ struct PortfolioTabBar: View {
                                         .offset(x: 9, y: -4)
                                 }
                             }
-                        Text(item.1).font(.inter(.caption2, weight: selection == item.0 ? .medium : .regular, size: 10))
+                        Text(item.1).font(.appFont(.caption2, weight: selection == item.0 ? .medium : .regular, size: 10))
                             .tracking(-0.25).lineLimit(1)
                     }
                     .frame(maxWidth: .infinity, minHeight: 41)

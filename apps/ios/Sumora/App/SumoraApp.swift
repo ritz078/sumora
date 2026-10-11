@@ -9,7 +9,7 @@ struct SumoraApp: App {
                 .environment(dependencies)
                 .environment(dependencies.portfolio)
                 .environment(dependencies.preferences)
-                .font(.inter(.body))
+                .font(.appFont(.body))
                 .foregroundStyle(DashboardStyle.ink)
                 .tint(.accentColor)
                 .preferredColorScheme(dependencies.preferences.appearance.colorScheme)

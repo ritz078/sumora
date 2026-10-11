@@ -43,7 +43,7 @@ struct HoldingsView: View {
                         }
                         DemoBadge()
                         Text(dependencies.isLivePortfolio ? "Imported from Zerodha’s primary demat account and Coin. Secondary demat holdings are excluded." : "Sample portfolio · Illustrative values, not live prices.")
-                            .font(.inter(.caption2)).foregroundStyle(HoldingsStyle.secondary)
+                            .font(.appFont(.caption2)).foregroundStyle(HoldingsStyle.secondary)
                             .multilineTextAlignment(.center).frame(maxWidth: .infinity).padding(.vertical, 12)
                     }.padding(16)
                 }
@@ -63,7 +63,7 @@ struct HoldingsView: View {
     private func header(_ snapshot: PortfolioSnapshot) -> some View {
         VStack(spacing: 10) {
             HStack {
-                Text("Holdings").font(.inter(.title2, weight: .semibold, size: 24)).tracking(-0.6)
+                Text("Holdings").font(.appFont(.title2, weight: .semibold, size: 24)).tracking(-0.6)
                 Spacer()
                 BalanceVisibilityButton()
                 Button { Task { await store.refresh() } } label: {
@@ -73,7 +73,7 @@ struct HoldingsView: View {
             HStack(spacing: 8) {
                 Image("SearchIcon").renderingMode(.template).resizable().frame(width: 18, height: 18).accessibilityHidden(true)
                 TextField("Search positions", text: $query.search, prompt: Text("Search \(snapshot.holdings.count) positions across custodians…").foregroundStyle(HoldingsStyle.secondary))
-                    .font(.inter(.caption)).textInputAutocapitalization(.never).autocorrectionDisabled()
+                    .font(.appFont(.caption)).textInputAutocapitalization(.never).autocorrectionDisabled()
                     .focused($searchFocused).submitLabel(.search).onSubmit { searchFocused = false }
                     .accessibilityIdentifier("holdingsSearch")
                 if !query.search.isEmpty {
@@ -98,16 +98,16 @@ struct HoldingsView: View {
     private func summary(_ snapshot: PortfolioSnapshot) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .firstTextBaseline) {
-                Text("TOTAL NET ASSETS").font(.inter(.caption2, weight: .medium)).tracking(0.55).foregroundStyle(HoldingsStyle.secondary)
+                Text("TOTAL NET ASSETS").font(.appFont(.caption2, weight: .medium)).tracking(0.55).foregroundStyle(HoldingsStyle.secondary)
                 Spacer(minLength: 8)
                 if let gain = snapshot.gainPercent, !preferences.hideBalances {
                     Text("\(gain.value >= 0 ? "+" : "")\(DisplayFormat.decimal(gain.value, digits: 1))% All-time")
-                        .font(.inter(.caption2, weight: .semibold)).monospacedDigit()
+                        .font(.appFont(.caption2, weight: .semibold)).monospacedDigit()
                         .foregroundStyle(gain.value >= 0 ? DashboardStyle.positive : .red)
                 }
             }
             MoneyText(amount: snapshot.value, currency: snapshot.reportingCurrency)
-                .font(.inter(.largeTitle, weight: .semibold)).tracking(-0.8).monospacedDigit()
+                .font(.appFont(.largeTitle, weight: .semibold)).tracking(-0.8).monospacedDigit()
                 .accessibilityIdentifier("holdingsTotalValue")
         }.padding(16).frame(maxWidth: .infinity, alignment: .leading).holdingsSurface()
     }
@@ -126,7 +126,7 @@ struct HoldingsView: View {
 
     private func filterButton(_ title: String, count: Int, asset: AssetClass?) -> some View {
         Button { query.assetClass = asset } label: {
-            Text("\(asset == nil ? "All" : title) (\(count))").font(.inter(.footnote, weight: .medium)).fixedSize()
+            Text("\(asset == nil ? "All" : title) (\(count))").font(.appFont(.footnote, weight: .medium)).fixedSize()
                 .padding(.horizontal, 12).padding(.vertical, 6)
                 .foregroundStyle(query.assetClass == asset ? .white : HoldingsStyle.secondary)
                 .background(query.assetClass == asset ? HoldingsStyle.primary : HoldingsStyle.fill, in: RoundedRectangle(cornerRadius: 12))
@@ -137,7 +137,7 @@ struct HoldingsView: View {
     private func holdingGroup(_ asset: AssetClass, items: [Holding], currency: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("\(asset.title.uppercased()) (\(items.count))")
-                .font(.inter(.caption2, weight: .semibold)).tracking(0.55).foregroundStyle(HoldingsStyle.secondary)
+                .font(.appFont(.caption2, weight: .semibold)).tracking(0.55).foregroundStyle(HoldingsStyle.secondary)
                 .padding(.horizontal, 4).padding(.top, 4)
             VStack(spacing: 0) {
                 ForEach(items) { holding in
@@ -177,21 +177,21 @@ private struct HoldingsPositionRow: View {
 
     private var identity: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(holding.name).font(.inter(.headline, weight: .medium)).lineLimit(1).truncationMode(.tail)
+            Text(holding.name).font(.appFont(.headline, weight: .medium)).lineLimit(1).truncationMode(.tail)
             Text("\(DisplayFormat.decimal(holding.quantity.value)) \(holding.unit)\(holding.assetClass == .usEquity ? " · \(holding.symbol)" : "")")
-                .font(.inter(.caption)).foregroundStyle(HoldingsStyle.secondary)
+                .font(.appFont(.caption)).foregroundStyle(HoldingsStyle.secondary)
         }
     }
 
     private var valuation: some View {
         VStack(alignment: .trailing, spacing: 2) {
-            MoneyText(amount: holding.value, currency: currency).font(.inter(.subheadline, weight: .semibold, size: 14)).monospacedDigit()
+            MoneyText(amount: holding.value, currency: currency).font(.appFont(.subheadline, weight: .semibold, size: 14)).monospacedDigit()
             if let gain = holding.gainPercent, holding.value != nil {
                 Text(preferences.hideBalances ? "••••" : "\(gain.value >= 0 ? "+" : "")\(DisplayFormat.decimal(gain.value, digits: 1))%")
-                    .font(.inter(.caption2, weight: .medium)).tracking(0.44).monospacedDigit()
+                    .font(.appFont(.caption2, weight: .medium)).tracking(0.44).monospacedDigit()
                     .foregroundStyle(preferences.hideBalances ? HoldingsStyle.secondary : gain.value >= 0 ? DashboardStyle.positive : .red)
             } else {
-                Text(holding.value == nil ? "Price unavailable" : "Return unavailable").font(.inter(.caption2)).foregroundStyle(HoldingsStyle.secondary)
+                Text(holding.value == nil ? "Price unavailable" : "Return unavailable").font(.appFont(.caption2)).foregroundStyle(HoldingsStyle.secondary)
             }
         }
     }

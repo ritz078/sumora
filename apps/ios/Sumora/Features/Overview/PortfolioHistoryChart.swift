@@ -21,17 +21,17 @@ struct PortfolioHistoryChart: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .center, spacing: 8) {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(title).font(.inter(.headline, weight: .bold, size: 17)).tracking(-0.425)
+                    Text(title).font(.appFont(.headline, weight: .bold, size: 17)).tracking(-0.425)
                     if !preferences.hideBalances, let first = points.first, let last = points.last, points.count > 1 {
                         Text("Starting Base \(DisplayFormat.compactMoney(first.value.value, currency: currency)) → \(DisplayFormat.compactMoney(last.value.value, currency: currency))")
-                            .font(.inter(.caption)).foregroundStyle(DashboardStyle.secondary)
+                            .font(.appFont(.caption)).foregroundStyle(DashboardStyle.secondary)
                     }
                 }
                 Spacer(minLength: 0)
                 if !preferences.hideBalances, let first = points.first, let last = points.last, first.value.value > 0, points.count > 1 {
                     let change = (last.value.value - first.value.value) / first.value.value * 100
                     Text("\(change >= 0 ? "+" : "")\(DisplayFormat.decimal(change, digits: 1))%")
-                        .font(.inter(.caption, weight: .bold)).foregroundStyle(DashboardStyle.chart)
+                        .font(.appFont(.caption, weight: .bold)).foregroundStyle(DashboardStyle.chart)
                         .padding(.horizontal, 10).padding(.vertical, 4)
                         .background(DashboardStyle.badge, in: Capsule())
                         .accessibilityLabel("Valuation change \(DisplayFormat.decimal(change, digits: 1)) percent")
@@ -43,7 +43,7 @@ struct PortfolioHistoryChart: View {
                 HStack(spacing: 0) {
                     ForEach(displayPeriods) { item in
                         Button { period = item } label: {
-                            Text(item.rawValue).font(.inter(.caption, weight: period == item ? .semibold : .medium))
+                            Text(item.rawValue).font(.appFont(.caption, weight: period == item ? .semibold : .medium))
                                 .foregroundStyle(period == item ? DashboardStyle.ink : DashboardStyle.secondary)
                                 .frame(maxWidth: .infinity, minHeight: 26)
                                 .background(period == item ? Color(.secondarySystemGroupedBackground) : Color.clear, in: RoundedRectangle(cornerRadius: 6))
@@ -62,7 +62,7 @@ struct PortfolioHistoryChart: View {
                         Text(selected.date, format: .dateTime.day().month(.abbreviated))
                         Spacer()
                         MoneyText(amount: selected.value, currency: currency).fontWeight(.semibold)
-                    }.font(.inter(.caption)).foregroundStyle(DashboardStyle.secondary)
+                    }.font(.appFont(.caption)).foregroundStyle(DashboardStyle.secondary)
                 }
                 Chart(points) { point in
                     AreaMark(x: .value("Date", point.date), yStart: .value("Baseline", lowerBound), yEnd: .value("Value", number(point.value)))
@@ -77,7 +77,7 @@ struct PortfolioHistoryChart: View {
                             .symbolSize(12).foregroundStyle(DashboardStyle.chart)
                             .annotation(position: .top, alignment: .trailing) {
                                 Text(DisplayFormat.compactMoney(point.value.value, currency: currency) + (point.value.value == points.map { $0.value.value }.max() ? " · High" : ""))
-                                    .font(.inter(.caption2, weight: .semibold, size: 9)).foregroundStyle(.white)
+                                    .font(.appFont(.caption2, weight: .semibold, size: 9)).foregroundStyle(.white)
                                     .padding(.horizontal, 6).padding(.vertical, 4)
                                     .background(Color(red: 15/255, green: 23/255, blue: 42/255), in: RoundedRectangle(cornerRadius: 5))
                             }
@@ -90,9 +90,9 @@ struct PortfolioHistoryChart: View {
                         AxisValueLabel(anchor: value.as(Date.self) == points.last?.date ? .topTrailing : value.as(Date.self) == points.first?.date ? .topLeading : .top) {
                             if let date = value.as(Date.self) {
                                 if date == points.last?.date {
-                                    Text("Latest").font(.inter(.caption2, weight: .semibold)).foregroundStyle(DashboardStyle.chart)
+                                    Text("Latest").font(.appFont(.caption2, weight: .semibold)).foregroundStyle(DashboardStyle.chart)
                                 } else {
-                                    Text(date, format: .dateTime.month(.abbreviated).year(.twoDigits)).font(.inter(.caption2)).foregroundStyle(DashboardStyle.secondary)
+                                    Text(date, format: .dateTime.month(.abbreviated).year(.twoDigits)).font(.appFont(.caption2)).foregroundStyle(DashboardStyle.secondary)
                                 }
                             }
                         }
@@ -100,7 +100,7 @@ struct PortfolioHistoryChart: View {
                 }
                 .frame(height: 144).accessibilityLabel(title).accessibilityIdentifier("portfolioHistory")
             }
-            Text("Valuation changes include deposits and withdrawals.").font(.inter(.caption2)).foregroundStyle(DashboardStyle.secondary)
+            Text("Valuation changes include deposits and withdrawals.").font(.appFont(.caption2)).foregroundStyle(DashboardStyle.secondary)
         }
         .onChange(of: period) { _, _ in selectedDate = nil }
         .onChange(of: history.last?.date) { _, _ in selectedDate = nil }

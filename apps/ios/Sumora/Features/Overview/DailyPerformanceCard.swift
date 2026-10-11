@@ -8,16 +8,16 @@ struct DailyPerformanceCard:View {
   VStack(alignment:.leading,spacing:0) {
    HStack(spacing:8) {
     Circle().fill(HomeStyle.brightGreen).frame(width:8,height:8)
-    Text("DAILY PERFORMANCE").font(.inter(.caption2,weight:.semibold,size:11)).tracking(0.8).foregroundStyle(HomeStyle.muted)
+    Text("DAILY PERFORMANCE").font(.appFont(.caption2,weight:.semibold,size:11)).tracking(0.8).foregroundStyle(HomeStyle.muted)
    }.frame(height:14).padding(.bottom,12)
    let total=HomeDailyMetrics(snapshot:snapshot)
    HStack(alignment:.firstTextBaseline,spacing:8) {
-    HomeSignedMoney(amount:total.gain,currency:snapshot.reportingCurrency).font(.inter(.largeTitle,weight:.bold,size:32)).tracking(-0.8)
+    HomeSignedMoney(amount:total.gain,currency:snapshot.reportingCurrency).font(.appFont(.largeTitle,weight:.bold,size:32)).tracking(-0.8)
     if let percent=total.percent {
      Text(preferences.hideBalances ? "••••" : "\(percent.value>=0 ? "+":"")\(DisplayFormat.decimal(percent.value))% today")
-      .font(.inter(.caption2,weight:.semibold,size:12)).padding(.horizontal,8).padding(.vertical,2)
+      .font(.appFont(.caption2,weight:.semibold,size:12)).padding(.horizontal,8).padding(.vertical,2)
       .background(HomeStyle.emerald.opacity(0.10),in:Capsule()).overlay(Capsule().stroke(HomeStyle.emerald.opacity(0.20),lineWidth:1))
-    } else { Text("Daily change unavailable").font(.inter(.caption2,size:11)).foregroundStyle(HomeStyle.muted).lineLimit(2) }
+    } else { Text("Daily change unavailable").font(.appFont(.caption2,size:11)).foregroundStyle(HomeStyle.muted).lineLimit(2) }
    }.foregroundStyle(preferences.hideBalances ? HomeStyle.muted:(total.gain?.value ?? 0)>=0 ? HomeStyle.brightGreen:.red).frame(minHeight:38).padding(.bottom,20)
    LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
     ForEach(classes) { asset in
@@ -39,21 +39,21 @@ struct DailyPerformanceCard:View {
   let metric=HomeDailyMetrics(snapshot:snapshot,asset:asset)
   return VStack(alignment:.leading,spacing:0) {
    HStack(spacing:4) {
-    Text(asset == .indianEquity ? "Indian Equities" : asset == .usEquity ? "US Equities" : HomeStyle.title(asset)).font(.inter(.caption2,weight:.medium,size:11)).foregroundStyle(Color(red:203/255,green:213/255,blue:225/255)).lineLimit(1)
+    Text(asset == .indianEquity ? "Indian Equities" : asset == .usEquity ? "US Equities" : HomeStyle.title(asset)).font(.appFont(.caption2,weight:.medium,size:11)).foregroundStyle(Color(red:203/255,green:213/255,blue:225/255)).lineLimit(1)
     Spacer(minLength:0)
     Text(preferences.hideBalances ? "••••" : metric.percent.map {($0.value>=0 ? "+":"")+DisplayFormat.decimal($0.value)+"%"} ?? "—")
-     .font(.inter(.caption2,weight:.bold,size:10)).padding(.horizontal,6).padding(.vertical,2).background(HomeStyle.emerald.opacity(0.10),in:RoundedRectangle(cornerRadius:4))
+     .font(.appFont(.caption2,weight:.bold,size:10)).padding(.horizontal,6).padding(.vertical,2).background(HomeStyle.emerald.opacity(0.10),in:RoundedRectangle(cornerRadius:4))
      .foregroundStyle(preferences.hideBalances ? HomeStyle.muted:(metric.gain?.value ?? 0)>=0 ? HomeStyle.brightGreen:.red).fixedSize()
    }
    Spacer(minLength:8)
-   HomeSignedMoney(amount:metric.gain,currency:snapshot.reportingCurrency).font(.inter(.subheadline,weight:.bold,size:14)).tracking(-0.35)
+   HomeSignedMoney(amount:metric.gain,currency:snapshot.reportingCurrency).font(.appFont(.subheadline,weight:.bold,size:14)).tracking(-0.35)
    Spacer(minLength:8)
    Rectangle().fill(Color(red:51/255,green:65/255,blue:85/255).opacity(0.4)).frame(height:1)
    HStack {
-    Text("Holding").font(.inter(.caption2,size:10)).foregroundStyle(HomeStyle.secondary)
+    Text("Holding").font(.appFont(.caption2,size:10)).foregroundStyle(HomeStyle.secondary)
     Spacer(minLength:2)
     Text(preferences.hideBalances ? "••••" : metric.value.map {DisplayFormat.compactMoney($0.value,currency:snapshot.reportingCurrency)} ?? "—")
-     .font(.inter(.caption2,weight:.medium,size:11)).foregroundStyle(Color(red:203/255,green:213/255,blue:225/255)).lineLimit(1).minimumScaleFactor(0.8)
+     .font(.appFont(.caption2,weight:.medium,size:11)).foregroundStyle(Color(red:203/255,green:213/255,blue:225/255)).lineLimit(1).minimumScaleFactor(0.8)
    }.padding(.top,6)
   }.padding(12).frame(maxWidth:.infinity).frame(height:104,alignment:.leading)
    .background(Color(red:30/255,green:41/255,blue:59/255).opacity(0.6),in:RoundedRectangle(cornerRadius:12))

@@ -18,9 +18,5 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
-	<key>UIAppFonts</key>
-	<array>
-		<string>Inter.ttf</string>
-	</array>
 </dict>
 </plist>

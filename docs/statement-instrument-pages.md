@@ -1,6 +1,6 @@
 # NPS and Fixed Deposit instrument pages
 
-Homepage allocation opens dedicated NPS and Fixed Deposit pages using the Indian Stocks page layout: valuation summary, saved instrument trajectory, and value-sorted holdings. Both pages omit daily performance. They retain the shared Inter typography, back navigation, pull to refresh, balance masking, and retained-data behavior on refresh errors.
+Homepage allocation opens dedicated NPS and Fixed Deposit pages using the Indian Stocks page layout: valuation summary, saved instrument trajectory, and value-sorted holdings. Both pages omit daily performance. They retain the shared native iOS system typography, back navigation, pull to refresh, balance masking, and retained-data behavior on refresh errors.
 
 NPS displays recorded scheme units, tier/code, and statement NAV. Contributions and gains remain unavailable when acquisition cost is unknown. It does not invent a live NAV feed.
 

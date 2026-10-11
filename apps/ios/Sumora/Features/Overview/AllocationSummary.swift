@@ -11,12 +11,12 @@ struct AllocationSummary: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 8) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Asset Allocation").font(.inter(.headline, weight: .bold, size: 17)).tracking(-0.425)
-                    Text("Diversification across \(allocations.count) classes").font(.inter(.caption)).foregroundStyle(DashboardStyle.secondary)
+                    Text("Asset Allocation").font(.appFont(.headline, weight: .bold, size: 17)).tracking(-0.425)
+                    Text("Diversification across \(allocations.count) classes").font(.appFont(.caption)).foregroundStyle(DashboardStyle.secondary)
                 }
                 if compact {
                     Spacer(minLength: 0)
-                    Text("Current mix").font(.inter(.caption, weight: .semibold))
+                    Text("Current mix").font(.appFont(.caption, weight: .semibold))
                         .foregroundStyle(DashboardStyle.chart).padding(.horizontal, 8).padding(.vertical, 3)
                         .background(DashboardStyle.badge, in: Capsule())
                 }
@@ -41,8 +41,8 @@ struct AllocationSummary: View {
                             Text(item.assetClass.title).lineLimit(2)
                             Spacer(minLength: 0)
                             Text("\(DisplayFormat.decimal(item.percent.value, digits: 1))%")
-                                .font(.inter(.caption, weight: .bold)).fixedSize()
-                        }.font(.inter(.caption)).padding(10)
+                                .font(.appFont(.caption, weight: .bold)).fixedSize()
+                        }.font(.appFont(.caption)).padding(10)
                             .background(Color(.tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
                     }
                 }
@@ -57,18 +57,18 @@ struct AllocationSummary: View {
                 .chartBackground { _ in
                     if !typeSize.isAccessibilitySize {
                         VStack(spacing: 2) {
-                            Text("\(allocations.count)").font(.inter(.title, weight: .bold))
-                            Text("asset classes").font(.inter(.caption)).foregroundStyle(DashboardStyle.secondary)
+                            Text("\(allocations.count)").font(.appFont(.title, weight: .bold))
+                            Text("asset classes").font(.appFont(.caption)).foregroundStyle(DashboardStyle.secondary)
                         }
                     }
                 }
                 ForEach(allocations) { item in
                     HStack(spacing: 10) {
                         Circle().fill(item.assetClass.color).frame(width: 8, height: 8)
-                        Text(item.assetClass.title).font(.inter(.subheadline))
+                        Text(item.assetClass.title).font(.appFont(.subheadline))
                         Spacer()
                         Text("\(DisplayFormat.decimal(item.percent.value, digits: 1))%")
-                            .font(.inter(.subheadline, weight: .semibold)).monospacedDigit().fixedSize(horizontal: true, vertical: false)
+                            .font(.appFont(.subheadline, weight: .semibold)).monospacedDigit().fixedSize(horizontal: true, vertical: false)
                     }
                 }
             }

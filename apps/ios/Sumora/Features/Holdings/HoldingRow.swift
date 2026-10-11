@@ -37,22 +37,22 @@ struct HoldingRow: View {
 
     private var compactIdentity: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(holding.name).font(.inter(.subheadline, weight: .semibold, size: 14)).lineLimit(1).truncationMode(.tail)
+            Text(holding.name).font(.appFont(.subheadline, weight: .semibold, size: 14)).lineLimit(1).truncationMode(.tail)
             Text("\(holding.assetClass.title) · \(DisplayFormat.decimal(holding.quantity.value)) \(holding.unit)")
-                .font(.inter(.caption2)).foregroundStyle(DashboardStyle.secondary).fixedSize(horizontal: false, vertical: true)
+                .font(.appFont(.caption2)).foregroundStyle(DashboardStyle.secondary).fixedSize(horizontal: false, vertical: true)
         }
     }
 
     private var compactValuation: some View {
         VStack(alignment: .trailing, spacing: 2) {
-            MoneyText(amount: holding.value, currency: currency).font(.inter(.subheadline, weight: .bold, size: 14))
-            if holding.value == nil { Text("Price unavailable").font(.inter(.caption2)).foregroundStyle(DashboardStyle.secondary) }
-            else if holding.bondTerms?.redemptionCheck == true { Text("Verify redemption").font(.inter(.caption2)).foregroundStyle(.orange) }
-            else if (holding.assetClass == .nps || holding.assetClass == .bond), let date = holding.quoteAt { Text("As of \(date.formatted(.dateTime.day().month(.abbreviated)))").font(.inter(.caption2)).foregroundStyle(DashboardStyle.secondary) }
-            else if holding.assetClass == .fixedDeposit { Text("Maturity amount").font(.inter(.caption2)).foregroundStyle(DashboardStyle.secondary) }
+            MoneyText(amount: holding.value, currency: currency).font(.appFont(.subheadline, weight: .bold, size: 14))
+            if holding.value == nil { Text("Price unavailable").font(.appFont(.caption2)).foregroundStyle(DashboardStyle.secondary) }
+            else if holding.bondTerms?.redemptionCheck == true { Text("Verify redemption").font(.appFont(.caption2)).foregroundStyle(.orange) }
+            else if (holding.assetClass == .nps || holding.assetClass == .bond), let date = holding.quoteAt { Text("As of \(date.formatted(.dateTime.day().month(.abbreviated)))").font(.appFont(.caption2)).foregroundStyle(DashboardStyle.secondary) }
+            else if holding.assetClass == .fixedDeposit { Text("Maturity amount").font(.appFont(.caption2)).foregroundStyle(DashboardStyle.secondary) }
             else if let percent = holding.gainPercent {
                 Text(preferences.hideBalances ? "••••" : "\(percent.value >= 0 ? "+" : "")\(DisplayFormat.decimal(percent.value, digits: 1))%")
-                    .font(.inter(.caption2, weight: .semibold))
+                    .font(.appFont(.caption2, weight: .semibold))
                     .foregroundStyle(preferences.hideBalances ? Color.secondary : percent.value >= 0 ? DashboardStyle.positive : .red)
             }
         }
@@ -78,13 +78,13 @@ struct HoldingRow: View {
     private var identity: some View {
         HStack(spacing: 12) {
             Image(systemName: holding.assetClass.symbol)
-                .font(.inter(.body, weight: .semibold)).foregroundStyle(holding.assetClass.color)
+                .font(.appFont(.body, weight: .semibold)).foregroundStyle(holding.assetClass.color)
                 .frame(width: 42, height: 42)
                 .background(holding.assetClass.color.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 5) {
-                Text(holding.name).font(.inter(.subheadline, weight: .semibold)).lineLimit(2)
-                Text("\(holding.symbol) · \(holding.assetClass.title)").font(.inter(.caption)).foregroundStyle(DashboardStyle.secondary)
+                Text(holding.name).font(.appFont(.subheadline, weight: .semibold)).lineLimit(2)
+                Text("\(holding.symbol) · \(holding.assetClass.title)").font(.appFont(.caption)).foregroundStyle(DashboardStyle.secondary)
                 FreshnessBadge(quoteAt: holding.quoteAt)
             }
         }
@@ -92,13 +92,13 @@ struct HoldingRow: View {
 
     private var valuation: some View {
         VStack(alignment: typeSize.isAccessibilitySize ? .leading : .trailing, spacing: 5) {
-            MoneyText(amount: holding.value, currency: currency).font(.inter(.subheadline, weight: .semibold))
+            MoneyText(amount: holding.value, currency: currency).font(.appFont(.subheadline, weight: .semibold))
             if holding.value == nil {
-                Text("Price unavailable").font(.inter(.caption)).foregroundStyle(.orange)
+                Text("Price unavailable").font(.appFont(.caption)).foregroundStyle(.orange)
             } else if holding.assetClass == .fixedDeposit {
-                Text("Maturity amount").font(.inter(.caption)).foregroundStyle(DashboardStyle.secondary)
+                Text("Maturity amount").font(.appFont(.caption)).foregroundStyle(DashboardStyle.secondary)
             } else {
-                GainLossLabel(gain: holding.gain, percent: nil, currency: currency).font(.inter(.caption))
+                GainLossLabel(gain: holding.gain, percent: nil, currency: currency).font(.appFont(.caption))
             }
         }
     }

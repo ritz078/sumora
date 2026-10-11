@@ -36,7 +36,7 @@ struct OverviewView: View {
                     referenceDate: dependencies.demoDate, currency: snapshot.reportingCurrency, errorMessage: history.errorMessage)
                 HomeAllocationCard(snapshot: snapshot)
                 Text(dependencies.isLivePortfolio ? "Values reflect available linked accounts and recorded assets. Some prices and statements may be delayed." : "Sample portfolio · 6 Oct 2026. Illustrative values, not live prices.")
-                    .font(.inter(.caption2, size: 10)).foregroundStyle(HomeStyle.secondary)
+                    .font(.appFont(.caption2, size: 10)).foregroundStyle(HomeStyle.secondary)
                     .multilineTextAlignment(.center).frame(maxWidth: .infinity).padding(.vertical, 8)
             }.padding(.horizontal, 16).padding(.top, 4).padding(.bottom, 20)
         }

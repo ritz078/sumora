@@ -19,7 +19,7 @@ struct AnalyticsView: View {
                             MoneyText(amount: snapshot.coveredInvested, currency: snapshot.reportingCurrency)
                         }
                         Text("Returns exclude realized gains. Valuation history includes deposits and withdrawals.")
-                            .font(.inter(.caption)).foregroundStyle(DashboardStyle.secondary)
+                            .font(.appFont(.caption)).foregroundStyle(DashboardStyle.secondary)
                     }
                     Section("Holdings by unrealized gain") {
                         ForEach(HoldingsQuery(sort: .gain).apply(to: snapshot.holdings)) { holding in

@@ -39,9 +39,9 @@ struct StocksView: View {
     positions
     VStack(spacing:4) {
      Text(isFund ? "Sync baseline: Units remain unchanged while NAV updates daily · \(syncTime) IST" : "Sync baseline: Quantities remain unchanged while prices update · \(syncTime) IST")
-      .font(.inter(.caption2,weight:.medium,size:11))
+      .font(.appFont(.caption2,weight:.medium,size:11))
      Text(isUS && usesUSD ? "Recorded USD values · History starts when USD snapshots are saved" : dependencies.isLivePortfolio ? (isUS ? "Recorded US holdings · Prices and exchange rates may be delayed" : (isFund ? "Recorded fund units · AMFI daily NAV" : "Recorded Zerodha holdings · Prices may be delayed")) : "Sample portfolio · Illustrative values, not live prices")
-      .font(.inter(.caption2,size:10))
+      .font(.appFont(.caption2,size:10))
     }.foregroundStyle(HomeStyle.muted).multilineTextAlignment(.center).padding(.horizontal,8).padding(.vertical,4)
    }.padding(16).padding(.bottom,24)
   }.background(HomeStyle.background).foregroundStyle(HomeStyle.ink)
@@ -59,11 +59,11 @@ struct StocksView: View {
    Button { dismiss() } label: { Image(systemName:"chevron.left").font(.system(size:17,weight:.semibold)).frame(width:36,height:36) }
     .foregroundStyle(HomeStyle.indigo).accessibilityLabel("Go back").accessibilityIdentifier("equitiesBack")
    Spacer()
-   Text(title).font(.inter(.headline,weight:.bold,size:17)).tracking(-0.425)
+   Text(title).font(.appFont(.headline,weight:.bold,size:17)).tracking(-0.425)
    Spacer()
    if isUS {
     Button { usesUSD.toggle() } label: {
-     Text(usesUSD ? "$" : "₹").font(.inter(.headline,weight:.semibold,size:17)).frame(width:36,height:36)
+     Text(usesUSD ? "$" : "₹").font(.appFont(.headline,weight:.semibold,size:17)).frame(width:36,height:36)
       .background(HomeStyle.card,in:Circle()).overlay(Circle().stroke(HomeStyle.border,lineWidth:1))
     }.foregroundStyle(HomeStyle.indigo).accessibilityIdentifier("stockCurrencyToggle")
      .accessibilityLabel(usesUSD ? "Switch to Indian rupees" : "Switch to US dollars")
@@ -74,18 +74,18 @@ struct StocksView: View {
  private var valuation: some View {
   VStack(alignment:.leading,spacing:0) {
    HStack {
-    Text("VALUATION").font(.inter(.caption2,weight:.semibold,size:11)).tracking(0.8).foregroundStyle(HomeStyle.muted)
+    Text("VALUATION").font(.appFont(.caption2,weight:.semibold,size:11)).tracking(0.8).foregroundStyle(HomeStyle.muted)
     Spacer(minLength:4)
     ReturnBadge(percent:percent,label:"All-time")
    }.frame(minHeight:18)
-   MoneyText(amount:value,currency:currency).font(.inter(.largeTitle,weight:.bold,size:32)).tracking(-0.8).padding(.vertical,8).accessibilityIdentifier("equityValue")
+   MoneyText(amount:value,currency:currency).font(.appFont(.largeTitle,weight:.bold,size:32)).tracking(-0.8).padding(.vertical,8).accessibilityIdentifier("equityValue")
    Rectangle().fill(HomeStyle.border).frame(height:1)
    ViewThatFits(in:.horizontal) {
     HStack { investedLabel; Spacer(minLength:8); gainLabel }
     VStack(alignment:.leading,spacing:8) { investedLabel; gainLabel }
    }.padding(.top,8)
    if value == nil && !holdings.isEmpty {
-    Text("Some prices are unavailable. Recorded holdings are retained.").font(.inter(.caption2,size:10)).foregroundStyle(.orange).padding(.top,8)
+    Text("Some prices are unavailable. Recorded holdings are retained.").font(.appFont(.caption2,size:10)).foregroundStyle(.orange).padding(.top,8)
    }
   }.homeCard()
  }
@@ -93,25 +93,25 @@ struct StocksView: View {
   HStack(spacing:6) {
    Text(costKnown ? "Invested:" : "Known invested:").foregroundStyle(HomeStyle.muted)
    MoneyText(amount:invested,currency:currency).fontWeight(.semibold)
-  }.font(.inter(.caption,size:12))
+  }.font(.appFont(.caption,size:12))
  }
  private var gainLabel: some View {
   HStack(spacing:4) {
    Text("Gain:").foregroundStyle(HomeStyle.muted)
    HomeSignedMoney(amount:gain,currency:currency).fontWeight(.semibold).foregroundStyle(gainColor(gain))
-  }.font(.inter(.caption,size:12))
+  }.font(.appFont(.caption,size:12))
  }
  private func daily(_ snapshot: PortfolioSnapshot) -> some View {
   let metric = HomeDailyMetrics(snapshot:snapshot,asset:assetClass)
   return VStack(alignment:.leading,spacing:12) {
    HStack(spacing:8) {
     Circle().fill(isFund ? HomeStyle.allocationColor(.mutualFund) : Color.blue).frame(width:8,height:8)
-    Text("DAILY PERFORMANCE").font(.inter(.caption2,weight:.semibold,size:11)).tracking(0.8).foregroundStyle(HomeStyle.brightGreen)
+    Text("DAILY PERFORMANCE").font(.appFont(.caption2,weight:.semibold,size:11)).tracking(0.8).foregroundStyle(HomeStyle.brightGreen)
    }
    HStack(alignment:.firstTextBaseline,spacing:8) {
-    HomeSignedMoney(amount:presentation.amount(metric.gain),currency:currency).font(.inter(.largeTitle,weight:.bold,size:32)).tracking(-0.8).foregroundStyle(.white)
+    HomeSignedMoney(amount:presentation.amount(metric.gain),currency:currency).font(.appFont(.largeTitle,weight:.bold,size:32)).tracking(-0.8).foregroundStyle(.white)
     if let percent = metric.percent {
-     Text(preferences.hideBalances ? "••••" : signed(percent.value)+"% today").font(.inter(.caption2,weight:.semibold,size:12))
+     Text(preferences.hideBalances ? "••••" : signed(percent.value)+"% today").font(.appFont(.caption2,weight:.semibold,size:12))
       .lineLimit(1).fixedSize(horizontal:true,vertical:false)
       .foregroundStyle(gainColor(metric.gain)).padding(.horizontal,8).padding(.vertical,2)
       .background(HomeStyle.emerald.opacity(0.1),in:Capsule()).overlay(Capsule().stroke(HomeStyle.emerald.opacity(0.2),lineWidth:1))
@@ -121,7 +121,7 @@ struct StocksView: View {
    HStack(spacing:6) {
     Image(systemName:"info.circle").foregroundStyle(HomeStyle.brightGreen.opacity(0.8))
     Text(metric.gain == nil ? (isFund ? "Daily baseline unavailable for recorded units" : "Daily baseline unavailable for recorded shares") : isFund ? "Price movement on recorded units based on AMFI daily NAV" : "Price movement on recorded shares")
-   }.font(.inter(.caption2,size:11)).foregroundStyle(Color(red:203/255,green:213/255,blue:225/255))
+   }.font(.appFont(.caption2,size:11)).foregroundStyle(Color(red:203/255,green:213/255,blue:225/255))
   }.padding(20).frame(maxWidth:.infinity,alignment:.leading)
    .background(LinearGradient(colors:[Color(red:2/255,green:6/255,blue:23/255),Color(red:15/255,green:23/255,blue:42/255),Color(red:30/255,green:27/255,blue:75/255)],startPoint:.topLeading,endPoint:.bottomTrailing),in:RoundedRectangle(cornerRadius:16))
    .overlay(RoundedRectangle(cornerRadius:16).stroke(.white.opacity(0.6),lineWidth:1))
@@ -131,8 +131,8 @@ struct StocksView: View {
   VStack(alignment:.leading,spacing:14) {
    HStack {
     VStack(alignment:.leading,spacing:4) {
-     Text("Holdings").font(.inter(.headline,weight:.bold,size:17)).tracking(-0.425)
-     Text("\(holdings.count) Instruments · \(isFund ? "Recorded fund units" : isUS ? "US Markets" : "NSE/BSE Direct")").font(.inter(.caption,size:12)).foregroundStyle(HomeStyle.secondary)
+     Text("Holdings").font(.appFont(.headline,weight:.bold,size:17)).tracking(-0.425)
+     Text("\(holdings.count) Instruments · \(isFund ? "Recorded fund units" : isUS ? "US Markets" : "NSE/BSE Direct")").font(.appFont(.caption,size:12)).foregroundStyle(HomeStyle.secondary)
     }
     Spacer(minLength:4)
     Menu {
@@ -142,7 +142,7 @@ struct StocksView: View {
       Text("Sort:").foregroundStyle(HomeStyle.muted)
       Text(sort.isValue ? "Value" : "Profit").fontWeight(.semibold)
       Image(systemName:"chevron.down").font(.system(size:10)).foregroundStyle(HomeStyle.muted)
-     }.font(.inter(.caption2,size:11)).padding(.horizontal,10).padding(.vertical,5)
+     }.font(.appFont(.caption2,size:11)).padding(.horizontal,10).padding(.vertical,5)
       .background(Color(.tertiarySystemGroupedBackground),in:RoundedRectangle(cornerRadius:8))
       .overlay(RoundedRectangle(cornerRadius:8).stroke(HomeStyle.border,lineWidth:1))
     }.accessibilityLabel(sortLabel)
@@ -153,7 +153,7 @@ struct StocksView: View {
      Group { if isFund { fundRow(holding) } else { row(holding) } }.accessibilityElement(children:.combine).accessibilityIdentifier("equity-holding-\(holding.id)")
      if holding.id != sortedHoldings.last?.id { Rectangle().fill(HomeStyle.border).frame(height:1) }
     }
-    if holdings.isEmpty { Text(isFund ? "No mutual funds recorded yet" : isUS ? "No US stocks recorded yet" : "No Indian stocks recorded yet").font(.inter(.caption,size:12)).foregroundStyle(HomeStyle.secondary).padding(.vertical,24) }
+    if holdings.isEmpty { Text(isFund ? "No mutual funds recorded yet" : isUS ? "No US stocks recorded yet" : "No Indian stocks recorded yet").font(.appFont(.caption,size:12)).foregroundStyle(HomeStyle.secondary).padding(.vertical,24) }
    }
   }.homeCard()
  }
@@ -161,36 +161,36 @@ struct StocksView: View {
   HStack(spacing:12) {
    VStack(alignment:.leading,spacing:4) {
     HStack(spacing:6) {
-     Text(holding.name).font(.inter(.caption,weight:.semibold,size:13)).lineLimit(1).truncationMode(.tail)
-     Text(holding.symbol).font(.inter(.caption2,weight:.medium,size:10)).foregroundStyle(HomeStyle.secondary)
+     Text(holding.name).font(.appFont(.caption,weight:.semibold,size:13)).lineLimit(1).truncationMode(.tail)
+     Text(holding.symbol).font(.appFont(.caption2,weight:.medium,size:10)).foregroundStyle(HomeStyle.secondary)
       .padding(.horizontal,6).padding(.vertical,1).background(HomeStyle.background,in:RoundedRectangle(cornerRadius:2)).lineLimit(1).fixedSize(horizontal:true,vertical:false)
     }
     HStack(spacing:3) {
      Text("\(DisplayFormat.decimal(holding.quantity.value)) shares ·")
      MoneyText(amount:quoteAmount(holding),currency:isUS ? currency : holding.quoteCurrency)
-    }.font(.inter(.caption2,size:11)).foregroundStyle(HomeStyle.secondary)
+    }.font(.appFont(.caption2,size:11)).foregroundStyle(HomeStyle.secondary)
    }.frame(maxWidth:.infinity,alignment:.leading)
    VStack(alignment:.trailing,spacing:4) {
-    MoneyText(amount:selectedValue(holding),currency:currency).font(.inter(.caption,weight:.bold,size:13))
+    MoneyText(amount:selectedValue(holding),currency:currency).font(.appFont(.caption,weight:.bold,size:13))
     Text(preferences.hideBalances ? "••••" : (usesUSD ? holding.gainPercentUSD : holding.gainPercent).map { signed($0.value)+"%"+((usesUSD ? holding.gainUSD : holding.gain).map { " ("+($0.value >= 0 ? "+" : "−")+DisplayFormat.compactMoney(abs($0.value),currency:currency)+")" } ?? "") } ?? "Return unavailable")
-     .font(.inter(.caption2,weight:.medium,size:11)).foregroundStyle(gainColor(usesUSD ? holding.gainUSD : holding.gain)).multilineTextAlignment(.trailing).lineLimit(1)
+     .font(.appFont(.caption2,weight:.medium,size:11)).foregroundStyle(gainColor(usesUSD ? holding.gainUSD : holding.gain)).multilineTextAlignment(.trailing).lineLimit(1)
    }.fixedSize(horizontal:true,vertical:false)
   }.padding(.vertical,12).contentShape(Rectangle())
  }
  private func fundRow(_ holding: Holding) -> some View {
   VStack(alignment:.leading,spacing:6) {
-   Text(holding.name).font(.inter(.caption,weight:.semibold,size:14)).lineLimit(1).truncationMode(.tail)
+   Text(holding.name).font(.appFont(.caption,weight:.semibold,size:14)).lineLimit(1).truncationMode(.tail)
    HStack(alignment:.bottom,spacing:8) {
     HStack(spacing:4) {
      Text("\(DisplayFormat.decimal(holding.quantity.value,digits:2)) units ·")
      Text("NAV").foregroundStyle(HomeStyle.muted)
      MoneyText(amount:holding.quote,currency:holding.quoteCurrency,fractionDigits:2)
-    }.font(.inter(.caption2,size:11)).foregroundStyle(HomeStyle.secondary).lineLimit(1).minimumScaleFactor(0.8)
+    }.font(.appFont(.caption2,size:11)).foregroundStyle(HomeStyle.secondary).lineLimit(1).minimumScaleFactor(0.8)
     Spacer(minLength:0)
     VStack(alignment:.trailing,spacing:2) {
-     MoneyText(amount:holding.value,currency:currency).font(.inter(.caption,weight:.bold,size:14))
+     MoneyText(amount:holding.value,currency:currency).font(.appFont(.caption,weight:.bold,size:14))
      Text(preferences.hideBalances ? "••••" : holding.gainPercent.map { signed($0.value)+"%"+(holding.gain.map { " ("+($0.value >= 0 ? "+" : "−")+DisplayFormat.money(abs($0.value),currency:currency)+")" } ?? "") } ?? "Return unavailable")
-      .font(.inter(.caption2,weight:.semibold,size:11)).foregroundStyle(gainColor(holding.gain)).lineLimit(1)
+      .font(.appFont(.caption2,weight:.semibold,size:11)).foregroundStyle(gainColor(holding.gain)).lineLimit(1)
     }.fixedSize(horizontal:true,vertical:false)
    }
   }.padding(.vertical,14)

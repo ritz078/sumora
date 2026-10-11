@@ -53,7 +53,7 @@ struct GoldView: View {
    Spacer(minLength:8)
    HStack(spacing:8) {
     Circle().fill(GoldStyle.amber).frame(width:8,height:8).overlay(Circle().stroke(GoldStyle.amber.opacity(0.2),lineWidth:4))
-    Text("Gold & Bullion").font(.inter(.headline,weight:.semibold,size:16)).tracking(-0.3)
+    Text("Gold & Bullion").font(.appFont(.headline,weight:.semibold,size:16)).tracking(-0.3)
    }.foregroundStyle(GoldStyle.ink)
    Spacer(minLength:8)
    Button { Task { await refresh() } } label: {
@@ -65,10 +65,10 @@ struct GoldView: View {
  private var valuation: some View {
   VStack(alignment:.leading,spacing:8) {
    HStack {
-    Text("VALUATION").font(.inter(.caption2,weight:.semibold,size:11)).tracking(0.8).foregroundStyle(GoldStyle.secondary)
+    Text("VALUATION").font(.appFont(.caption2,weight:.semibold,size:11)).tracking(0.8).foregroundStyle(GoldStyle.secondary)
     Spacer(minLength:4);ReturnBadge(percent:percent,label:"All-time")
    }
-   MoneyText(amount:value,currency:currency).font(.inter(.largeTitle,weight:.bold,size:32)).tracking(-0.6).accessibilityIdentifier("goldValue")
+   MoneyText(amount:value,currency:currency).font(.appFont(.largeTitle,weight:.bold,size:32)).tracking(-0.6).accessibilityIdentifier("goldValue")
    Rectangle().fill(GoldStyle.border).frame(height:1).padding(.top,4)
    HStack(alignment:.top,spacing:8) {
     VStack(alignment:.leading,spacing:2) {
@@ -79,8 +79,8 @@ struct GoldView: View {
      Text("Gain").foregroundStyle(GoldStyle.secondary)
      HomeSignedMoney(amount:gain,currency:currency).fontWeight(.semibold).foregroundStyle(gainColor(gain))
     }.frame(maxWidth:.infinity,alignment:.leading)
-   }.font(.inter(.caption,size:13)).padding(.top,4)
-   if value == nil && !holdings.isEmpty { Text("Some prices are unavailable. Recorded holdings are retained.").font(.inter(.caption2,size:11)).foregroundStyle(GoldStyle.secondary) }
+   }.font(.appFont(.caption,size:13)).padding(.top,4)
+   if value == nil && !holdings.isEmpty { Text("Some prices are unavailable. Recorded holdings are retained.").font(.appFont(.caption2,size:11)).foregroundStyle(GoldStyle.secondary) }
   }.goldCard()
  }
  private func daily(_ snapshot:PortfolioSnapshot) -> some View {
@@ -88,17 +88,17 @@ struct GoldView: View {
   return VStack(alignment:.leading,spacing:6) {
    HStack(spacing:6) {
     Circle().fill(HomeStyle.brightGreen).frame(width:6,height:6)
-    Text("DAILY PERFORMANCE").font(.inter(.caption2,weight:.semibold,size:11)).tracking(0.6).foregroundStyle(Color.white.opacity(0.8))
+    Text("DAILY PERFORMANCE").font(.appFont(.caption2,weight:.semibold,size:11)).tracking(0.6).foregroundStyle(Color.white.opacity(0.8))
     Spacer(minLength:4)
     if let percent = metric.percent {
-     Text(preferences.hideBalances ? "••••" : signed(percent.value)+"% today").font(.inter(.caption2,weight:.semibold,size:11)).lineLimit(1).fixedSize()
+     Text(preferences.hideBalances ? "••••" : signed(percent.value)+"% today").font(.appFont(.caption2,weight:.semibold,size:11)).lineLimit(1).fixedSize()
       .foregroundStyle(preferences.hideBalances || (metric.gain?.value ?? 0) >= 0 ? HomeStyle.brightGreen : Color.red)
       .padding(.horizontal,8).padding(.vertical,2).background(HomeStyle.emerald.opacity(0.15),in:Capsule()).overlay(Capsule().stroke(HomeStyle.emerald.opacity(0.3),lineWidth:1))
     }
    }
-   HomeSignedMoney(amount:metric.gain,currency:currency).font(.inter(.title,weight:.bold,size:26)).tracking(-0.5).foregroundStyle(.white).accessibilityIdentifier("goldDailyGain")
+   HomeSignedMoney(amount:metric.gain,currency:currency).font(.appFont(.title,weight:.bold,size:26)).tracking(-0.5).foregroundStyle(.white).accessibilityIdentifier("goldDailyGain")
    Label(metric.gain == nil ? "Daily baseline unavailable for recorded gold" : "Price movement on recorded gold holdings",systemImage:"info.circle")
-    .font(.inter(.caption2,size:11)).foregroundStyle(HomeStyle.muted).padding(.top,4)
+    .font(.appFont(.caption2,size:11)).foregroundStyle(HomeStyle.muted).padding(.top,4)
   }.padding(16).frame(maxWidth:.infinity,alignment:.leading)
    .background {
     GeometryReader { geometry in
@@ -113,15 +113,15 @@ struct GoldView: View {
   VStack(spacing:0) {
    HStack {
     VStack(alignment:.leading,spacing:3) {
-     Text("Holdings").font(.inter(.headline,weight:.semibold,size:16))
-     Text("\(holdings.count) Instruments · Recorded gold holdings").font(.inter(.caption2,size:11.5)).foregroundStyle(GoldStyle.secondary)
+     Text("Holdings").font(.appFont(.headline,weight:.semibold,size:16))
+     Text("\(holdings.count) Instruments · Recorded gold holdings").font(.appFont(.caption2,size:11.5)).foregroundStyle(GoldStyle.secondary)
     }
     Spacer(minLength:4)
     Menu {
      Button("Value: High to Low") { ascending = false }
      Button("Value: Low to High") { ascending = true }
     } label: {
-     HStack(spacing:4) { Text("Sort: Value");Image(systemName:"chevron.down").font(.system(size:10)) }.font(.inter(.caption2,weight:.medium,size:11)).padding(.horizontal,8).padding(.vertical,4).background(GoldStyle.fill,in:RoundedRectangle(cornerRadius:4)).overlay(RoundedRectangle(cornerRadius:4).stroke(GoldStyle.border,lineWidth:1))
+     HStack(spacing:4) { Text("Sort: Value");Image(systemName:"chevron.down").font(.system(size:10)) }.font(.appFont(.caption2,weight:.medium,size:11)).padding(.horizontal,8).padding(.vertical,4).background(GoldStyle.fill,in:RoundedRectangle(cornerRadius:4)).overlay(RoundedRectangle(cornerRadius:4).stroke(GoldStyle.border,lineWidth:1))
     }.foregroundStyle(GoldStyle.secondary).accessibilityLabel("Sort gold holdings")
    }.padding(.horizontal,16).padding(.vertical,12)
    Rectangle().fill(GoldStyle.border).frame(height:1)
@@ -129,7 +129,7 @@ struct GoldView: View {
     row(holding).accessibilityElement(children:.combine).accessibilityIdentifier("gold-holding-\(holding.id)")
     if holding.id != sorted.last?.id { Rectangle().fill(GoldStyle.border).frame(height:1) }
    }
-   if holdings.isEmpty { Text("No gold holdings recorded yet").font(.inter(.caption,size:13)).foregroundStyle(GoldStyle.secondary).frame(maxWidth:.infinity).padding(24) }
+   if holdings.isEmpty { Text("No gold holdings recorded yet").font(.appFont(.caption,size:13)).foregroundStyle(GoldStyle.secondary).frame(maxWidth:.infinity).padding(24) }
   }.background(HomeStyle.card,in:RoundedRectangle(cornerRadius:8)).overlay(RoundedRectangle(cornerRadius:8).stroke(GoldStyle.border,lineWidth:1)).shadow(color:.black.opacity(0.04),radius:1,y:1)
  }
  private func row(_ holding:Holding) -> some View {
@@ -140,8 +140,8 @@ struct GoldView: View {
   return HStack(spacing:8) {
    VStack(alignment:.leading,spacing:4) {
     HStack(spacing:6) {
-     Text(holding.name).font(.inter(.caption,weight:.semibold,size:13.5)).lineLimit(1).truncationMode(.tail)
-     Text(tag).font(.inter(.caption2,weight:.semibold,size:9.5)).lineLimit(1).truncationMode(.tail).padding(.horizontal,4).padding(.vertical,1)
+     Text(holding.name).font(.appFont(.caption,weight:.semibold,size:13.5)).lineLimit(1).truncationMode(.tail)
+     Text(tag).font(.appFont(.caption2,weight:.semibold,size:9.5)).lineLimit(1).truncationMode(.tail).padding(.horizontal,4).padding(.vertical,1)
       .foregroundStyle(isSGB ? Color(red:120/255,green:53/255,blue:15/255) : GoldStyle.secondary)
       .background(isSGB ? GoldStyle.amber.opacity(0.14) : GoldStyle.fill,in:RoundedRectangle(cornerRadius:2)).overlay(RoundedRectangle(cornerRadius:2).stroke(isSGB ? GoldStyle.amber.opacity(0.3) : GoldStyle.border,lineWidth:1)).layoutPriority(1)
     }
@@ -149,11 +149,11 @@ struct GoldView: View {
      Text("\(DisplayFormat.decimal(holding.quantity.value)) \(holding.unit) ·")
      MoneyText(amount:holding.quote,currency:holding.quoteCurrency)
      if grams { Text("/g").padding(.leading,-3) }
-    }.font(.inter(.caption2,size:11.5)).foregroundStyle(GoldStyle.secondary).lineLimit(1).minimumScaleFactor(0.85)
+    }.font(.appFont(.caption2,size:11.5)).foregroundStyle(GoldStyle.secondary).lineLimit(1).minimumScaleFactor(0.85)
    }.frame(maxWidth:.infinity,alignment:.leading)
    VStack(alignment:.trailing,spacing:3) {
-    MoneyText(amount:holding.value,currency:currency).font(.inter(.caption,weight:.semibold,size:14))
-    Text(returnLabel(holding)).font(.inter(.caption2,weight:.semibold,size:11)).foregroundStyle(gainColor(holding.costBasisKnown == false ? nil : holding.gain)).lineLimit(1)
+    MoneyText(amount:holding.value,currency:currency).font(.appFont(.caption,weight:.semibold,size:14))
+    Text(returnLabel(holding)).font(.appFont(.caption2,weight:.semibold,size:11)).foregroundStyle(gainColor(holding.costBasisKnown == false ? nil : holding.gain)).lineLimit(1)
    }.fixedSize(horizontal:true,vertical:false)
   }.padding(14)
  }
@@ -166,7 +166,7 @@ struct GoldView: View {
   VStack(alignment:.leading,spacing:6) {
    Label("Sync baseline: Recorded quantities remain unchanged while available gold prices update daily.",systemImage:"checkmark.shield")
    Label(dependencies.isLivePortfolio ? "Recorded account balances · Bullion uses the IBJA daily benchmark via Snapdata, not a redemption quote." : "Sample portfolio · Illustrative values, not live prices.",systemImage:"building.columns")
-  }.font(.inter(.caption2,size:10.5)).foregroundStyle(GoldStyle.secondary.opacity(0.8)).lineSpacing(3).padding(.horizontal,4).padding(.top,8)
+  }.font(.appFont(.caption2,size:10.5)).foregroundStyle(GoldStyle.secondary.opacity(0.8)).lineSpacing(3).padding(.horizontal,4).padding(.top,8)
  }
  private var demoHistory:[HistoryPoint] {
   guard let first=holdings.first else { return [] }

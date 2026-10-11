@@ -15,7 +15,7 @@ struct AllocationView: View {
                                     .foregroundStyle(allocation.assetClass.color)
                                 Spacer()
                                 MoneyText(amount: allocation.value, currency: snapshot.reportingCurrency)
-                            }.font(.inter(.subheadline))
+                            }.font(.appFont(.subheadline))
                         }
                     }
                 }.refreshable { await store.refresh() }

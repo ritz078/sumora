@@ -12,8 +12,8 @@ struct HomeAllocationCard: View {
   VStack(alignment: .leading, spacing: 16) {
    HStack(alignment: .top) {
     VStack(alignment: .leading, spacing: 3) {
-     Text("Asset Allocation").font(.inter(.headline, weight: .bold, size: 17)).tracking(-0.425)
-     Text("Diversification across \(allocations.count) asset classes").font(.inter(.caption, size: 12)).foregroundStyle(HomeStyle.secondary)
+     Text("Asset Allocation").font(.appFont(.headline, weight: .bold, size: 17)).tracking(-0.425)
+     Text("Diversification across \(allocations.count) asset classes").font(.appFont(.caption, size: 12)).foregroundStyle(HomeStyle.secondary)
     }
     Spacer(minLength: 4)
     HStack(spacing: 2) {
@@ -33,7 +33,7 @@ struct HomeAllocationCard: View {
     Text(preferences.hideBalances ? "Net Worth ••••" : snapshot.value.map { DisplayFormat.compactMoney($0.value, currency: snapshot.reportingCurrency) + " Net Worth" } ?? "Valued assets")
     Spacer()
     Text(snapshot.coverage == .complete ? "100% Allocated" : "Available valuations")
-   }.font(.inter(.caption2, size: 10)).foregroundStyle(HomeStyle.secondary).padding(.top, -8)
+   }.font(.appFont(.caption2, size: 10)).foregroundStyle(HomeStyle.secondary).padding(.top, -8)
    VStack(spacing: 8) {
     ForEach(allocationRows) { allocation in
      NavigationLink {
@@ -41,10 +41,10 @@ struct HomeAllocationCard: View {
      } label: {
       HStack(spacing: 8) {
        Circle().fill(HomeStyle.allocationColor(allocation.assetClass)).frame(width: 8, height: 8)
-       Text(HomeStyle.title(allocation.assetClass)).font(.inter(.caption, weight: .medium, size: 12)).lineLimit(1).truncationMode(.tail)
+       Text(HomeStyle.title(allocation.assetClass)).font(.appFont(.caption, weight: .medium, size: 12)).lineLimit(1).truncationMode(.tail)
        Spacer(minLength: 4)
        Text(preferences.hideBalances ? "••••" : showMoney ? DisplayFormat.compactMoney(allocation.value.value, currency: snapshot.reportingCurrency) : DisplayFormat.decimal(allocation.percent.value, digits: 1) + "%")
-        .font(.inter(.caption, weight: .bold, size: 12)).monospacedDigit()
+        .font(.appFont(.caption, weight: .bold, size: 12)).monospacedDigit()
       }.padding(10).frame(minHeight: 39).background(HomeStyle.fill, in: RoundedRectangle(cornerRadius: 12))
        .overlay(RoundedRectangle(cornerRadius: 12).stroke(HomeStyle.border, lineWidth: 1))
      }.buttonStyle(.plain).accessibilityIdentifier("allocation-\(allocation.assetClass.rawValue)")
@@ -54,7 +54,7 @@ struct HomeAllocationCard: View {
  }
  private func toggle(_ title: String, money: Bool) -> some View {
   Button { showMoney = money } label: {
-   Text(title).font(.inter(.caption2, weight: .semibold, size: 11)).frame(width: 26, height: 22)
+   Text(title).font(.appFont(.caption2, weight: .semibold, size: 11)).frame(width: 26, height: 22)
     .background(showMoney == money ? HomeStyle.card : .clear, in: RoundedRectangle(cornerRadius: 5))
     .foregroundStyle(showMoney == money ? HomeStyle.ink : HomeStyle.secondary)
   }.buttonStyle(.plain).accessibilityLabel(money ? "Allocation amounts" : "Allocation percentages").accessibilityAddTraits(showMoney == money ? .isSelected : [])

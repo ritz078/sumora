@@ -24,13 +24,13 @@ struct HomeTrajectoryCard: View {
   VStack(alignment: .leading, spacing: 0) {
    HStack {
     VStack(alignment: .leading, spacing: 3) {
-     Text(title).font(.inter(.headline, weight: .bold, size: instrumentStyle ? 15 : 17)).tracking(-0.425)
-     Text(subtitle).font(.inter(.caption, size: instrumentStyle ? 11 : 12)).foregroundStyle(HomeStyle.secondary)
+     Text(title).font(.appFont(.headline, weight: .bold, size: instrumentStyle ? 15 : 17)).tracking(-0.425)
+     Text(subtitle).font(.appFont(.caption, size: instrumentStyle ? 11 : 12)).foregroundStyle(HomeStyle.secondary)
     }
     Spacer(minLength: 4)
     if let change, !preferences.hideBalances {
      Text("\(change >= 0 ? "+" : "")\(DisplayFormat.decimal(change, digits: 1))%")
-      .font(.inter(.caption2, weight: .semibold, size: 10)).foregroundStyle(change >= 0 ? DashboardStyle.positive : .red)
+      .font(.appFont(.caption2, weight: .semibold, size: 10)).foregroundStyle(change >= 0 ? DashboardStyle.positive : .red)
       .padding(.horizontal, 8).padding(.vertical, 2)
       .background(HomeStyle.emerald.opacity(0.08), in: RoundedRectangle(cornerRadius: instrumentStyle && !goldStyle ? 99 : 4))
       .overlay(RoundedRectangle(cornerRadius: instrumentStyle && !goldStyle ? 99 : 4).stroke(HomeStyle.emerald.opacity(0.2), lineWidth: 1))
@@ -39,7 +39,7 @@ struct HomeTrajectoryCard: View {
    if showsPeriodSelector { HStack(spacing: 0) {
     ForEach([HistoryPeriod.month, .halfYear, .year, .all]) { item in
      Button { period = item } label: {
-      Text(item == .all ? "ALL" : item.rawValue).font(.inter(.caption2, weight: period == item ? .semibold : .medium, size: 11))
+      Text(item == .all ? "ALL" : item.rawValue).font(.appFont(.caption2, weight: period == item ? .semibold : .medium, size: 11))
        .foregroundStyle(period == item ? HomeStyle.ink : HomeStyle.secondary)
        .frame(maxWidth: .infinity, minHeight: goldStyle ? 26 : 22)
        .background(period == item ? HomeStyle.card : .clear, in: RoundedRectangle(cornerRadius: 6))
@@ -49,16 +49,16 @@ struct HomeTrajectoryCard: View {
    }.padding(2).background(Color(.tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
     .overlay(RoundedRectangle(cornerRadius: 8).stroke(HomeStyle.border, lineWidth: 1)).padding(.bottom, 16) }
    if preferences.hideBalances {
-    Text("History hidden").font(.inter(.caption)).foregroundStyle(HomeStyle.secondary).frame(maxWidth: .infinity, minHeight: 158)
+    Text("History hidden").font(.appFont(.caption)).foregroundStyle(HomeStyle.secondary).frame(maxWidth: .infinity, minHeight: 158)
    } else if points.count < 2 {
     VStack(spacing: 12) {
      Image(systemName: "chart.xyaxis.line").font(.system(size: 28)).foregroundStyle(HomeStyle.indigo.opacity(0.4))
      Text(points.isEmpty ? "Daily snapshots will appear here" : "History starts today")
-      .font(.inter(.caption, size: 12)).foregroundStyle(HomeStyle.secondary)
+      .font(.appFont(.caption, size: 12)).foregroundStyle(HomeStyle.secondary)
     }.frame(maxWidth: .infinity, minHeight: 158)
    } else { chart.accessibilityElement(children: .contain).accessibilityLabel("Portfolio history").accessibilityIdentifier("portfolioHistory") }
    if let errorMessage {
-    Text(errorMessage).font(.inter(.caption2, size: 10)).foregroundStyle(HomeStyle.secondary).lineLimit(2).padding(.top, 8)
+    Text(errorMessage).font(.appFont(.caption2, size: 10)).foregroundStyle(HomeStyle.secondary).lineLimit(2).padding(.top, 8)
    }
   }.homeCard(padding:goldStyle ? 16 : 20,cornerRadius:goldStyle ? 8 : 16).foregroundStyle(HomeStyle.ink)
    .accessibilityHint("Valuation changes include deposits and withdrawals.")
@@ -111,7 +111,7 @@ struct HomeTrajectoryCard: View {
       let y = 20.0 + Double(index) * 45
       let value = upper - (upper - lower) * y / 140
       Text(axisLabel(value))
-       .font(.inter(.caption2, size: 9)).foregroundStyle(HomeStyle.muted)
+       .font(.appFont(.caption2, size: 9)).foregroundStyle(HomeStyle.muted)
        .frame(maxWidth: .infinity, alignment: .trailing).offset(y: y - 15)
        .accessibilityIdentifier("home-y-label-\(index)")
      }
@@ -120,7 +120,7 @@ struct HomeTrajectoryCard: View {
       HStack(spacing: 4) {
        if !goldStyle && (!instrumentStyle || roundedInstrumentCallout) { Circle().fill(HomeStyle.emerald).frame(width: 6, height: 6) }
        Text(DisplayFormat.compactMoney(last.value.value, currency: currency))
-        .font(.inter(.caption2, weight: .semibold, size: 10))
+        .font(.appFont(.caption2, weight: .semibold, size: 10))
       }.foregroundStyle(.white).padding(.horizontal, 8).padding(.vertical, 3)
        .background(calloutColor, in: RoundedRectangle(cornerRadius: instrumentStyle && !roundedInstrumentCallout ? 2 : 99))
        .overlay(alignment: .bottom) {
@@ -165,7 +165,7 @@ struct HomeTrajectoryCard: View {
     let latest = index == dates.count - 1
     let x = index == 0 ? width / 2 : latest ? geometry.size.width - width / 2 : geometry.size.width * CGFloat(date.timeIntervalSince(dates[0]) / dates.last!.timeIntervalSince(dates[0]))
     Text(dateLabel(date, latest: latest))
-     .font(.inter(.caption2, weight: latest ? .semibold : .medium, size: 10))
+     .font(.appFont(.caption2, weight: latest ? .semibold : .medium, size: 10))
      .foregroundStyle(latest ? (goldStyle ? HomeStyle.ink : HomeStyle.indigo) : HomeStyle.muted)
      .frame(width: width, alignment: index == 0 ? .leading : latest ? .trailing : .center)
      .position(x: x, y: 14)

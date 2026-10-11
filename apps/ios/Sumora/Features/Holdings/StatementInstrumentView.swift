@@ -49,9 +49,9 @@ struct StatementInstrumentView: View {
      positions
      VStack(spacing:4) {
       Text(isFD ? "Sync baseline: Statement maturity values include future interest." : "Sync baseline: Recorded units and NAV update when a new NPS statement arrives.")
-       .font(.inter(.caption2,weight:.medium,size:11))
+       .font(.appFont(.caption2,weight:.medium,size:11))
       Text(dependencies.isLivePortfolio ? (isFD ? "Bank statement maturity amounts · Not a current withdrawal value" : "NPS statement valuation · No live NAV estimate") : "Sample portfolio · Illustrative statement values")
-       .font(.inter(.caption2,size:10))
+       .font(.appFont(.caption2,size:10))
      }.foregroundStyle(HomeStyle.muted).multilineTextAlignment(.center).padding(.horizontal,8).padding(.vertical,4)
     }
    }.padding(16).padding(.bottom,24)
@@ -68,7 +68,7 @@ struct StatementInstrumentView: View {
   HStack {
    Button { dismiss() } label: { Image(systemName:"chevron.left").font(.system(size:17,weight:.semibold)).frame(width:36,height:36) }.foregroundStyle(HomeStyle.indigo).accessibilityLabel("Go back").accessibilityIdentifier("statementBack")
    Spacer()
-   Text(title).font(.inter(.headline,weight:.bold,size:17)).tracking(-0.425)
+   Text(title).font(.appFont(.headline,weight:.bold,size:17)).tracking(-0.425)
    Spacer()
    Color.clear.frame(width:36,height:36)
   }.padding(.horizontal,8).padding(.vertical,8).background(HomeStyle.background.opacity(0.95)).overlay(alignment:.bottom) { Rectangle().fill(HomeStyle.border).frame(height:1) }
@@ -76,11 +76,11 @@ struct StatementInstrumentView: View {
  private var valuation:some View {
   VStack(alignment:.leading,spacing:0) {
    HStack {
-    Text(isFD ? "MATURITY VALUE" : "VALUATION").font(.inter(.caption2,weight:.semibold,size:11)).tracking(0.8).foregroundStyle(HomeStyle.muted)
+    Text(isFD ? "MATURITY VALUE" : "VALUATION").font(.appFont(.caption2,weight:.semibold,size:11)).tracking(0.8).foregroundStyle(HomeStyle.muted)
     Spacer(minLength:4)
     if !isFD { ReturnBadge(percent:percent,label:"All-time") }
    }.frame(minHeight:18)
-   MoneyText(amount:value,currency:currency).font(.inter(.largeTitle,weight:.bold,size:32)).tracking(-0.8).padding(.vertical,8).accessibilityIdentifier("statementValue")
+   MoneyText(amount:value,currency:currency).font(.appFont(.largeTitle,weight:.bold,size:32)).tracking(-0.8).padding(.vertical,8).accessibilityIdentifier("statementValue")
    if !isFD {
     Rectangle().fill(HomeStyle.border).frame(height:1)
     ViewThatFits(in:.horizontal) {
@@ -88,35 +88,35 @@ struct StatementInstrumentView: View {
      VStack(alignment:.leading,spacing:8) { investedLabel;gainLabel }
     }.padding(.top,8)
    }
-   if isFD { Text("Statement maturity amount · counted toward net worth").font(.inter(.caption2,size:10)).foregroundStyle(HomeStyle.secondary).padding(.top,4) }
-   if value == nil && !holdings.isEmpty { Text("Some statement valuations are unavailable. Recorded holdings are retained.").font(.inter(.caption2,size:10)).foregroundStyle(.orange).padding(.top,8) }
+   if isFD { Text("Statement maturity amount · counted toward net worth").font(.appFont(.caption2,size:10)).foregroundStyle(HomeStyle.secondary).padding(.top,4) }
+   if value == nil && !holdings.isEmpty { Text("Some statement valuations are unavailable. Recorded holdings are retained.").font(.appFont(.caption2,size:10)).foregroundStyle(.orange).padding(.top,8) }
   }.homeCard()
  }
  private var investedLabel:some View {
   HStack(spacing:6) {
    Text("Invested:").foregroundStyle(HomeStyle.muted)
    MoneyText(amount:invested,currency:currency).fontWeight(.semibold).accessibilityIdentifier("statementPrincipal")
-  }.font(.inter(.caption,size:12))
+  }.font(.appFont(.caption,size:12))
  }
  private var gainLabel:some View {
   HStack(spacing:4) {
    Text("Gain:").foregroundStyle(HomeStyle.muted)
    HomeSignedMoney(amount:gain,currency:currency).fontWeight(.semibold).foregroundStyle(gainColor(gain)).accessibilityIdentifier("statementGain")
-  }.font(.inter(.caption,size:12))
+  }.font(.appFont(.caption,size:12))
  }
  private var positions:some View {
   VStack(alignment:.leading,spacing:14) {
    HStack {
     VStack(alignment:.leading,spacing:4) {
-     Text("Holdings").font(.inter(.headline,weight:.bold,size:17)).tracking(-0.425)
-     Text("\(holdings.count) \(isFD ? "Deposits · Maturity values" : "Schemes · Statement NAV")").font(.inter(.caption,size:12)).foregroundStyle(HomeStyle.secondary)
+     Text("Holdings").font(.appFont(.headline,weight:.bold,size:17)).tracking(-0.425)
+     Text("\(holdings.count) \(isFD ? "Deposits · Maturity values" : "Schemes · Statement NAV")").font(.appFont(.caption,size:12)).foregroundStyle(HomeStyle.secondary)
     }
     Spacer(minLength:4)
     Menu {
      Button("Value: High to Low") { ascending=false }
      Button("Value: Low to High") { ascending=true }
     } label: {
-     HStack(spacing:6) { Text("Sort:").foregroundStyle(HomeStyle.muted);Text("Value").fontWeight(.semibold);Image(systemName:"chevron.down").font(.system(size:10)).foregroundStyle(HomeStyle.muted) }.font(.inter(.caption2,size:11)).padding(.horizontal,10).padding(.vertical,5).background(Color(.tertiarySystemGroupedBackground),in:RoundedRectangle(cornerRadius:8)).overlay(RoundedRectangle(cornerRadius:8).stroke(HomeStyle.border,lineWidth:1))
+     HStack(spacing:6) { Text("Sort:").foregroundStyle(HomeStyle.muted);Text("Value").fontWeight(.semibold);Image(systemName:"chevron.down").font(.system(size:10)).foregroundStyle(HomeStyle.muted) }.font(.appFont(.caption2,size:11)).padding(.horizontal,10).padding(.vertical,5).background(Color(.tertiarySystemGroupedBackground),in:RoundedRectangle(cornerRadius:8)).overlay(RoundedRectangle(cornerRadius:8).stroke(HomeStyle.border,lineWidth:1))
     }.accessibilityLabel(isFD ? "Sort fixed deposits" : "Sort NPS holdings")
    }
    VStack(spacing:0) {
@@ -125,36 +125,36 @@ struct StatementInstrumentView: View {
      Group { if isFD { depositRow(holding) } else { npsRow(holding) } }.accessibilityElement(children:.combine).accessibilityIdentifier("statement-holding-\(holding.id)")
      if holding.id != sorted.last?.id { Rectangle().fill(HomeStyle.border).frame(height:1) }
     }
-    if holdings.isEmpty { Text(isFD ? "No fixed deposits recorded yet" : "No NPS schemes recorded yet").font(.inter(.caption,size:12)).foregroundStyle(HomeStyle.secondary).padding(.vertical,24) }
+    if holdings.isEmpty { Text(isFD ? "No fixed deposits recorded yet" : "No NPS schemes recorded yet").font(.appFont(.caption,size:12)).foregroundStyle(HomeStyle.secondary).padding(.vertical,24) }
    }
   }.homeCard()
  }
  private func npsRow(_ holding:Holding) -> some View {
   HStack(spacing:12) {
    VStack(alignment:.leading,spacing:4) {
-    Text(holding.name).font(.inter(.caption,weight:.semibold,size:13)).lineLimit(1).truncationMode(.tail)
-    Text(holding.symbol).font(.inter(.caption2,weight:.medium,size:10)).foregroundStyle(HomeStyle.secondary).lineLimit(1)
+    Text(holding.name).font(.appFont(.caption,weight:.semibold,size:13)).lineLimit(1).truncationMode(.tail)
+    Text(holding.symbol).font(.appFont(.caption2,weight:.medium,size:10)).foregroundStyle(HomeStyle.secondary).lineLimit(1)
     HStack(spacing:3) {
      Text("\(DisplayFormat.decimal(holding.quantity.value,digits:4)) \(holding.unit) · NAV")
      MoneyText(amount:holding.quote,currency:holding.quoteCurrency,fractionDigits:2)
-    }.font(.inter(.caption2,size:11)).foregroundStyle(HomeStyle.secondary).lineLimit(1).minimumScaleFactor(0.8)
+    }.font(.appFont(.caption2,size:11)).foregroundStyle(HomeStyle.secondary).lineLimit(1).minimumScaleFactor(0.8)
    }.frame(maxWidth:.infinity,alignment:.leading)
    VStack(alignment:.trailing,spacing:4) {
-    MoneyText(amount:holding.value,currency:currency).font(.inter(.caption,weight:.bold,size:13))
-    Text(npsReturn(holding)).font(.inter(.caption2,weight:.medium,size:11)).foregroundStyle(gainColor(holding.costBasisKnown == false ? nil : holding.gain)).lineLimit(1)
+    MoneyText(amount:holding.value,currency:currency).font(.appFont(.caption,weight:.bold,size:13))
+    Text(npsReturn(holding)).font(.appFont(.caption2,weight:.medium,size:11)).foregroundStyle(gainColor(holding.costBasisKnown == false ? nil : holding.gain)).lineLimit(1)
    }.fixedSize(horizontal:true,vertical:false)
   }.padding(.vertical,12)
  }
  private func depositRow(_ holding:Holding) -> some View {
   VStack(alignment:.leading,spacing:6) {
    HStack(spacing:8) {
-    Text(holding.name).font(.inter(.caption,weight:.semibold,size:13)).lineLimit(1).truncationMode(.tail)
+    Text(holding.name).font(.appFont(.caption,weight:.semibold,size:13)).lineLimit(1).truncationMode(.tail)
     Spacer(minLength:0)
-    MoneyText(amount:amount(holding),currency:currency).font(.inter(.caption,weight:.bold,size:13))
+    MoneyText(amount:amount(holding),currency:currency).font(.appFont(.caption,weight:.bold,size:13))
    }
    if let terms=holding.depositTerms {
-    Text("\(DisplayFormat.decimal(terms.rate.value))% p.a. · Matures \(dateLabel(terms.maturesOn))").font(.inter(.caption2,size:11)).foregroundStyle(HomeStyle.secondary)
-   } else { Text("Deposit terms unavailable").font(.inter(.caption2,size:11)).foregroundStyle(HomeStyle.secondary) }
+    Text("\(DisplayFormat.decimal(terms.rate.value))% p.a. · Matures \(dateLabel(terms.maturesOn))").font(.appFont(.caption2,size:11)).foregroundStyle(HomeStyle.secondary)
+   } else { Text("Deposit terms unavailable").font(.appFont(.caption2,size:11)).foregroundStyle(HomeStyle.secondary) }
   }.padding(.vertical,12)
  }
  private func npsReturn(_ holding:Holding) -> String {
