@@ -5,11 +5,11 @@ struct NPSConnectionSection: View {
  @Environment(PortfolioStore.self) private var store
  @State private var password = ""
  @State private var confirmRemove = false
- private var scope: String { "\(dependencies.zerodha.address):\(dependencies.zerodha.sessionToken ?? "signed-out")" }
+ private var scope: String { "\(dependencies.zerodha.address):\(dependencies.auth.sessionToken ?? "signed-out")" }
  var body: some View {
   @Bindable var nps = dependencies.nps
   Section {
-   if dependencies.zerodha.sessionToken == nil {
+   if dependencies.auth.sessionToken == nil {
     Text("Sign in to Sumora and connect Gmail to import NPS statements.").font(.footnote).foregroundStyle(.secondary)
    } else {
     if let balance = nps.status?.balance {
@@ -45,7 +45,7 @@ struct NPSConnectionSection: View {
   .disabled(nps.isBusy || dependencies.gmail.isBusy)
   .task(id:scope) {
    password = ""
-   nps.configure(address:dependencies.zerodha.address,token:dependencies.zerodha.sessionToken)
+   nps.configure(address:dependencies.zerodha.address,token:dependencies.auth.sessionToken)
    await nps.refresh()
   }
   .confirmationDialog("Stop NPS imports?",isPresented:$confirmRemove,titleVisibility:.visible) {

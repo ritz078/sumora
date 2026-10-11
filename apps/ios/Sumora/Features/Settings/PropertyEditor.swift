@@ -37,7 +37,7 @@ struct PropertyEditor: View {
  private var canSave:Bool {
   !name.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty && name.count <= 80 && !name.unicodeScalars.contains { $0.value < 32 } && location.count <= 100 && !location.unicodeScalars.contains { $0.value < 32 } && PropertyInput.amount(value) != nil && (PropertyInput.clean(cost).isEmpty || PropertyInput.amount(cost) != nil)
  }
- private var authorized:Bool { dependencies.isLivePortfolio && dependencies.zerodha.sessionToken != nil }
+ private var authorized:Bool { dependencies.isLivePortfolio && dependencies.auth.sessionToken != nil }
  private var metrics:PropertyValuation? {
   guard let amount=PropertyInput.amount(value) else { return nil }
   return PropertyValuation(properties:[PropertyEntry(id:id,name:name,estimatedValue:DecimalValue(amount),valuationDate:PropertyInput.dateFormatter.string(from:date),purchaseCost:PropertyInput.amount(cost).map { DecimalValue($0) },updatedAt:0)])
@@ -150,8 +150,8 @@ struct PropertyEditor: View {
   }.padding(16).background(HomeStyle.card).overlay(alignment:.top) { Rectangle().fill(HomeStyle.border).frame(height:1) }
  }
  private func save() async {
-  guard canSave,authorized,scope == "\(dependencies.zerodha.address):\(dependencies.zerodha.sessionToken ?? "signed-out")" else { return }
-  dependencies.properties.configure(address:dependencies.zerodha.address,token:dependencies.zerodha.sessionToken)
+  guard canSave,authorized,scope == "\(dependencies.zerodha.address):\(dependencies.auth.sessionToken ?? "signed-out")" else { return }
+  dependencies.properties.configure(address:dependencies.zerodha.address,token:dependencies.auth.sessionToken)
   if await dependencies.properties.save(id:id,name:name.trimmingCharacters(in:.whitespacesAndNewlines),value:PropertyInput.clean(value),date:PropertyInput.dateFormatter.string(from:date),cost:PropertyInput.clean(cost),classification:classification,location:location.trimmingCharacters(in:.whitespacesAndNewlines)) {
    await dependencies.portfolio.refresh();dismiss()
   }

@@ -17,7 +17,8 @@ struct HTTPPortfolioAPI: PortfolioAPI {
         if let sessionToken { request.setValue("Bearer \(sessionToken)", forHTTPHeaderField: "Authorization") }
         let (data, response) = try await session.data(for: request)
         guard let http = response as? HTTPURLResponse else { throw PortfolioAPIError.invalidSnapshot }
-        guard (200..<300).contains(http.statusCode) else {
+        checkAppSession(http, data: data, token: sessionToken)
+  guard (200..<300).contains(http.statusCode) else {
             if let error = try? JSONDecoder().decode(APIErrorResponse.self, from: data) { throw ZerodhaError.message(error.error.message + " (HTTP \(http.statusCode))") }
             throw HTTPPortfolioError.status(http.statusCode)
         }

@@ -5,7 +5,7 @@ struct SumoraApp: App {
     @State private var dependencies = AppDependencies()
     var body: some Scene {
         WindowGroup {
-            MainTabView()
+            RootView()
                 .environment(dependencies)
                 .environment(dependencies.portfolio)
                 .environment(dependencies.preferences)

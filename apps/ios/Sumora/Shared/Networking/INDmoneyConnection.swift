@@ -31,6 +31,8 @@ final class INDmoneyConnection: NSObject, ASWebAuthenticationPresentationContext
  private(set) var status: INDmoneyStatus?
  private(set) var isBusy = false
  var errorMessage: String?
+ @ObservationIgnored private let session: URLSession
+ init(session: URLSession = .shared) { self.session = session; super.init() }
  @ObservationIgnored private var address = ""
  @ObservationIgnored private var token: String?
  @ObservationIgnored private var generation = UUID()
@@ -106,14 +108,15 @@ final class INDmoneyConnection: NSObject, ASWebAuthenticationPresentationContext
   UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.flatMap(\.windows).first(where: \.isKeyWindow) ?? ASPresentationAnchor()
  }
  private func send<T: Decodable>(_ path: String, method: String = "POST", body: [String: String]? = nil) async throws -> T {
-  guard let token, let base = APIConfiguration.baseURL(address) else { throw ZerodhaError.message("Connect Zerodha first to link INDmoney.") }
+  guard let token, let base = APIConfiguration.baseURL(address) else { throw ZerodhaError.message("Sign in to Sumora first to link INDmoney.") }
   var request = URLRequest(url: base.appendingPathComponent("v1/indmoney/\(path)"))
   request.httpMethod = method; request.timeoutInterval = 30
   request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
   request.setValue("application/json", forHTTPHeaderField: "Content-Type")
   if let body { request.httpBody = try JSONEncoder().encode(body) }
-  let (data, response) = try await URLSession.shared.data(for: request)
+  let (data, response) = try await session.data(for: request)
   guard let http = response as? HTTPURLResponse else { throw PortfolioAPIError.invalidSnapshot }
+  checkAppSession(http, data: data, token: token)
   guard (200..<300).contains(http.statusCode) else {
    throw ZerodhaError.message((try? JSONDecoder().decode(APIErrorResponse.self, from: data).error.message) ?? "INDmoney request failed.")
   }

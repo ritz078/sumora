@@ -26,7 +26,7 @@ struct StocksView: View {
  private var costKnown: Bool { !holdings.isEmpty && holdings.allSatisfy { usesUSD ? $0.investedUSD != nil : $0.costBasisKnown != false } }
  private var gain: DecimalValue? { costKnown ? value.map { DecimalValue($0.value - invested.value) } : nil }
  private var percent: DecimalValue? { invested.value > 0 ? gain.map { DecimalValue($0.value / invested.value * 100) } : nil }
- private var scope: String { "\(dependencies.isLivePortfolio):\(dependencies.zerodha.address):\(dependencies.zerodha.sessionToken ?? "demo")" }
+ private var scope: String { "\(dependencies.isLivePortfolio):\(dependencies.zerodha.address):\(dependencies.auth.sessionToken ?? "demo")" }
 
  var body: some View {
   ScrollView {
@@ -50,7 +50,7 @@ struct StocksView: View {
    .preference(key: InstrumentPageKey.self,value:true)
    .refreshable { await store.refresh(); await history.refresh() }
    .task(id:scope) {
-    history.configure(address:dependencies.zerodha.address,token:dependencies.isLivePortfolio ? dependencies.zerodha.sessionToken : nil)
+    history.configure(address:dependencies.zerodha.address,token:dependencies.isLivePortfolio ? dependencies.auth.sessionToken : nil)
     await history.refresh()
    }
  }

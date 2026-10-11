@@ -4,12 +4,12 @@ struct BondsConnectionSection: View {
  @Environment(AppDependencies.self) private var dependencies
  @State private var password = ""
  @State private var confirmRemove = false
- private var scope: String { "\(dependencies.zerodha.address):\(dependencies.zerodha.sessionToken ?? "signed-out")" }
+ private var scope: String { "\(dependencies.zerodha.address):\(dependencies.auth.sessionToken ?? "signed-out")" }
  private var validPAN: Bool { password.range(of: "^[A-Z]{5}[0-9]{4}[A-Z]$",options:.regularExpression) != nil }
  var body: some View {
   @Bindable var bonds = dependencies.bonds
   Section {
-   if dependencies.zerodha.sessionToken == nil {
+   if dependencies.auth.sessionToken == nil {
     Text("Sign in to Sumora and connect Gmail to import bond statements.").font(.footnote).foregroundStyle(.secondary)
    } else {
     if let balance = bonds.status?.balance {
@@ -54,7 +54,7 @@ struct BondsConnectionSection: View {
   .disabled(bonds.isBusy || dependencies.gmail.isBusy)
   .task(id:scope) {
    password = ""
-   bonds.configure(address:dependencies.zerodha.address,token:dependencies.zerodha.sessionToken)
+   bonds.configure(address:dependencies.zerodha.address,token:dependencies.auth.sessionToken)
    await bonds.refresh()
   }
   .confirmationDialog("Stop bond imports?",isPresented:$confirmRemove,titleVisibility:.visible) {

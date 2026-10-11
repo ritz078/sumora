@@ -19,6 +19,15 @@ struct SettingsView: View {
                 }.padding(.vertical, 8)
                 DemoBadge()
             }
+            if let account = dependencies.auth.account {
+                Section("App account") {
+                    Text(account.email)
+                    Button("Log out", role: .destructive) { Task { await dependencies.logout() } }
+                        .accessibilityIdentifier("app-logout").disabled(dependencies.auth.isBusy)
+                    if let error = dependencies.auth.errorMessage { Text(error).font(.footnote).foregroundStyle(.orange) }
+                    Text("Your holdings, saved document passwords and provider connections stay on the server.").font(.footnote).foregroundStyle(.secondary)
+                }
+            }
             Section("Preferences") {
                 Toggle("Hide balances", isOn: $preferences.hideBalances)
                 Picker("Appearance", selection: $preferences.appearance) {
@@ -31,7 +40,7 @@ struct SettingsView: View {
             }
             Section("Manual assets") {
                 NavigationLink { RealEstateView() } label: { Label("Real estate",systemImage:"house.fill") }
-                if dependencies.zerodha.sessionToken == nil { Text("Sign in to add manual properties.").font(.footnote).foregroundStyle(.secondary) }
+                if dependencies.auth.sessionToken == nil { Text("Sign in to add manual properties.").font(.footnote).foregroundStyle(.secondary) }
             }
             GmailDocumentsSection()
             GoldConnectionSection()

@@ -75,7 +75,7 @@ struct HomeConnectionsCard: View {
    await dependencies.syncGmailDocuments()
    if let message = dependencies.gmail.errorMessage { store.presentErrorToast(message) }
   } else if dependencies.isLivePortfolio, connection.id == "indmoney" {
-   dependencies.indmoney.configure(address: dependencies.zerodha.address, token: dependencies.zerodha.sessionToken)
+   dependencies.indmoney.configure(address: dependencies.zerodha.address, token: dependencies.auth.sessionToken)
    await dependencies.indmoney.sync()
    if let message = dependencies.indmoney.errorMessage { store.presentErrorToast(message) }
    await store.refresh()

@@ -12,13 +12,13 @@ struct ConnectionsView: View {
                     .font(.subheadline).foregroundStyle(.secondary)
             }
             Section {
-                Text(dependencies.zerodha.sessionToken == nil ? "Connect your Zerodha account to import equity holdings and Coin mutual funds." : "Your Zerodha account is linked. Kite sessions need periodic reconnection.")
+                Text(!dependencies.zerodha.connected ? "Connect your Zerodha account to import equity holdings and Coin mutual funds." : "Your Zerodha account is linked. Kite sessions need periodic reconnection.")
                     .font(.subheadline).foregroundStyle(.secondary)
-                Button(dependencies.zerodha.sessionToken == nil ? "Connect Zerodha" : "Reconnect Zerodha") {
+                Button(!dependencies.zerodha.connected ? "Connect Zerodha" : "Reconnect Zerodha") {
                     Task { await dependencies.connectZerodha() }
                 }.accessibilityIdentifier("connect-zerodha").disabled(dependencies.zerodha.isConnecting)
                 if dependencies.zerodha.isConnecting { ProgressView("Opening Zerodha login…") }
-                if dependencies.zerodha.sessionToken != nil {
+                if dependencies.zerodha.connected {
                     Button("Show Zerodha portfolio") { Task { await dependencies.showZerodhaPortfolio() } }
                         .disabled(dependencies.zerodha.isConnecting)
                     Button("Disconnect Zerodha", role: .destructive) { Task { await dependencies.disconnectZerodha() } }

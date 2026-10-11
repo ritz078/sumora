@@ -17,7 +17,7 @@ struct GmailDocumentSyncControls: View {
 }
 struct GmailDocumentsSection: View {
  @Environment(AppDependencies.self) private var dependencies
- private var scope: String { "\(dependencies.zerodha.address):\(dependencies.zerodha.sessionToken ?? "signed-out")" }
+ private var scope: String { "\(dependencies.zerodha.address):\(dependencies.auth.sessionToken ?? "signed-out")" }
  var body: some View {
   Section {
    GmailDocumentSyncControls()
@@ -29,7 +29,7 @@ struct GmailDocumentsSection: View {
    Text("One sync updates all enabled Gullak, HDFC, NPS and CDSL bond sources. Failed imports retain your previous balances.")
   }
   .task(id:scope) {
-   dependencies.gmail.configure(address:dependencies.zerodha.address,token:dependencies.zerodha.sessionToken)
+   dependencies.gmail.configure(address:dependencies.zerodha.address,token:dependencies.auth.sessionToken)
    await dependencies.gmail.refresh()
   }
  }

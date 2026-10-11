@@ -3,12 +3,12 @@ import SwiftUI
 struct GmailConnectionSection: View {
  @Environment(AppDependencies.self) private var dependencies
  @State private var confirmDisconnect = false
- private var scope: String { "\(dependencies.zerodha.address):\(dependencies.zerodha.sessionToken ?? "signed-out")" }
+ private var scope: String { "\(dependencies.zerodha.address):\(dependencies.auth.sessionToken ?? "signed-out")" }
  var body: some View {
   @Bindable var gmail = dependencies.gmail
   Section {
-   if dependencies.zerodha.sessionToken == nil {
-    Text("Connect Zerodha first to sign in to Sumora, then link Gmail.")
+   if dependencies.auth.sessionToken == nil {
+    Text("Sign in to Sumora, then link Gmail.")
      .font(.footnote).foregroundStyle(.secondary)
     Button("Connect Gmail") {}.disabled(true).accessibilityIdentifier("connect-gmail")
    } else if let status = gmail.status, status.connected {
@@ -30,7 +30,7 @@ struct GmailConnectionSection: View {
   }
   .disabled(gmail.isBusy)
   .task(id: scope) {
-   gmail.configure(address: dependencies.zerodha.address, token: dependencies.zerodha.sessionToken)
+   gmail.configure(address: dependencies.zerodha.address, token: dependencies.auth.sessionToken)
    await gmail.refresh()
   }
   .confirmationDialog("Disconnect Gmail?", isPresented: $confirmDisconnect, titleVisibility: .visible) {

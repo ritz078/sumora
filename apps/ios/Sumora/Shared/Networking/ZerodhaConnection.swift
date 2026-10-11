@@ -55,35 +55,41 @@ enum SessionKeychain {
 
 @MainActor @Observable
 final class ZerodhaConnection: NSObject, ASWebAuthenticationPresentationContextProviding {
-    private(set) var sessionToken: String?
+    @ObservationIgnored private var sessionToken: String?
+    private(set) var connected = false
     private(set) var isConnecting = false
     var errorMessage: String?
     @ObservationIgnored private var authentication: ASWebAuthenticationSession?
     private(set) var address: String
-    @ObservationIgnored private let restoreSession: Bool
+    @ObservationIgnored private var generation = UUID()
 
-    init(address: String, restoreSession: Bool = true) {
-        self.address = address
-        self.restoreSession = restoreSession
-        sessionToken = restoreSession ? SessionKeychain.read(address) : nil
-        super.init()
+    init(address: String) { self.address = address; super.init() }
+
+    func configure(address: String, token: String?) {
+        guard self.address != address || sessionToken != token else { return }
+        generation = UUID(); authentication?.cancel(); authentication = nil
+        self.address = address; sessionToken = token; connected = false; isConnecting = false; errorMessage = nil
     }
-
-    func configure(address: String) {
-        guard self.address != address else { return }
-        self.address = address
-        sessionToken = restoreSession ? SessionKeychain.read(address) : nil
+    func refresh() async {
+        guard sessionToken != nil else { return }
+        let current = generation
+        do {
+            let result: ConnectionStatus = try await send("connection", method: "GET", token: sessionToken)
+            guard current == generation else { return }
+            connected = result.connected
+        } catch { if current == generation { errorMessage = error.localizedDescription } }
     }
 
     func connect() async -> Bool {
-        guard !isConnecting else { return false }
+        guard sessionToken != nil, !isConnecting else { return false }
+        let current = generation
         isConnecting = true
         errorMessage = nil
-        defer { isConnecting = false; authentication = nil }
+        defer { if current == generation { isConnecting = false; authentication = nil } }
         do {
             let verifier = UUID().uuidString.replacingOccurrences(of: "-", with: "") + UUID().uuidString.replacingOccurrences(of: "-", with: "")
             let challenge = SHA256.hash(data: Data(verifier.utf8)).map { String(format: "%02x", $0) }.joined()
-            let start: StartResponse = try await send("start", body: ["challenge": challenge])
+            let start: StartResponse = try await send("start", body: ["challenge": challenge], token: sessionToken)
             guard let url = URL(string: start.loginURL), url.scheme == "https", url.host == "kite.zerodha.com" else {
                 throw ZerodhaError.message("The server returned an invalid Zerodha login address.")
             }
@@ -97,27 +103,28 @@ final class ZerodhaConnection: NSObject, ASWebAuthenticationPresentationContextP
                 authentication = auth
                 if !auth.start() { continuation.resume(throwing: ZerodhaError.message("The login window couldn't open.")) }
             }
+            guard current == generation else { return false }
             let code = try ZerodhaCallback.code(from: callback, expectedState: start.state)
-            let claim: ClaimResponse = try await send("claim", body: ["code": code, "verifier": verifier])
-            guard claim.sessionToken.range(of: "^[a-f0-9]{64}$", options: .regularExpression) != nil else { throw PortfolioAPIError.invalidSnapshot }
-            try SessionKeychain.write(claim.sessionToken, address: address)
-            sessionToken = claim.sessionToken
+            let claim: ClaimResponse = try await send("claim", body: ["code": code, "verifier": verifier], token: sessionToken)
+            guard current == generation else { return false }
+            connected = claim.connected
             return true
         } catch {
-            if (error as? ASWebAuthenticationSessionError)?.code != .canceledLogin { errorMessage = error.localizedDescription }
+            if current == generation && (error as? ASWebAuthenticationSessionError)?.code != .canceledLogin { errorMessage = error.localizedDescription }
             return false
         }
     }
 
     func disconnect() async -> Bool {
         guard let sessionToken else { return true }
+        let current = generation
         do {
             let _: DisconnectResponse = try await send("connection", method: "DELETE", token: sessionToken)
-            SessionKeychain.remove(address)
-            self.sessionToken = nil
+            guard current == generation else { return false }
+            connected = false
             errorMessage = nil
             return true
-        } catch { errorMessage = error.localizedDescription; return false }
+        } catch { if current == generation { errorMessage = error.localizedDescription }; return false }
     }
 
     func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
@@ -135,13 +142,15 @@ final class ZerodhaConnection: NSObject, ASWebAuthenticationPresentationContextP
         if let body { request.httpBody = try JSONEncoder().encode(body) }
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse else { throw PortfolioAPIError.invalidSnapshot }
-        guard (200..<300).contains(http.statusCode) else {
+        checkAppSession(http, data: data, token: sessionToken)
+  guard (200..<300).contains(http.statusCode) else {
             throw ZerodhaError.message((try? JSONDecoder().decode(APIErrorResponse.self, from: data).error.message) ?? "Zerodha request failed (HTTP \(http.statusCode)).")
         }
         return try JSONDecoder().decode(T.self, from: data)
     }
     private struct StartResponse: Decodable { let state: String; let loginURL: String }
-    private struct ClaimResponse: Decodable { let sessionToken: String }
+    private struct ClaimResponse: Decodable { let connected: Bool }
+    private struct ConnectionStatus: Decodable { let connected: Bool }
     private struct DisconnectResponse: Decodable { let disconnected: Bool }
 }
 

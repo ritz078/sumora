@@ -31,7 +31,7 @@ struct StatementInstrumentView: View {
  }
  private var gain:DecimalValue? { if !isFD,npsCostKnown { return DecimalValue(npsSummaries.reduce(0) { $0 + $1.gain.value }) };guard let value,let invested else { return nil };return DecimalValue(value.value-invested.value) }
  private var percent:DecimalValue? { guard let gain,let invested,invested.value > 0 else { return nil };return DecimalValue(gain.value/invested.value*100) }
- private var scope:String { "\(dependencies.isLivePortfolio):\(dependencies.zerodha.address):\(dependencies.zerodha.sessionToken ?? "demo")" }
+ private var scope:String { "\(dependencies.isLivePortfolio):\(dependencies.zerodha.address):\(dependencies.auth.sessionToken ?? "demo")" }
  private var sorted:[Holding] {
   holdings.sorted { left,right in
    switch (amount(left)?.value,amount(right)?.value) {
@@ -63,7 +63,7 @@ struct StatementInstrumentView: View {
    .toolbar(.hidden,for:.navigationBar).preference(key:InstrumentPageKey.self,value:true)
    .refreshable { await store.refresh();await history.refresh() }
    .task(id:scope) {
-    history.configure(address:dependencies.zerodha.address,token:dependencies.isLivePortfolio ? dependencies.zerodha.sessionToken : nil)
+    history.configure(address:dependencies.zerodha.address,token:dependencies.isLivePortfolio ? dependencies.auth.sessionToken : nil)
     await history.refresh()
    }
  }

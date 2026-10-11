@@ -66,6 +66,7 @@ final class HomeHistoryConnection {
   var request = URLRequest(url: url.url!); request.timeoutInterval = 20
   request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
   let (data, response) = try await session.data(for: request)
+  if let http=response as? HTTPURLResponse { checkAppSession(http,data:data,token:token) }
   guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else { throw PortfolioAPIError.invalidSnapshot }
   return try JSONDecoder().decode(Page.self, from: data)
  }

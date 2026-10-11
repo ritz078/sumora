@@ -6,12 +6,12 @@ struct GoldConnectionSection: View {
  @Environment(PortfolioStore.self) private var store
  @State private var mobile = ""
  @State private var confirmRemove = false
- private var scope: String { "\(dependencies.zerodha.address):\(dependencies.zerodha.sessionToken ?? "signed-out")" }
+ private var scope: String { "\(dependencies.zerodha.address):\(dependencies.auth.sessionToken ?? "signed-out")" }
  var body: some View {
   @Bindable var gold = dependencies.gold
   Section {
-   if dependencies.zerodha.sessionToken == nil {
-    Text("Connect Zerodha to sign in, then connect Gmail under Connections to import Gullak gold.")
+   if dependencies.auth.sessionToken == nil {
+    Text("Sign in to Sumora, then connect Gmail to import Gullak gold.")
      .font(.footnote).foregroundStyle(.secondary)
    } else {
     if let quote = gold.status?.quote {
@@ -56,7 +56,7 @@ struct GoldConnectionSection: View {
   .disabled(gold.isBusy || dependencies.gmail.isBusy)
   .task(id:scope) {
    mobile = ""
-   gold.configure(address:dependencies.zerodha.address,token:dependencies.zerodha.sessionToken)
+   gold.configure(address:dependencies.zerodha.address,token:dependencies.auth.sessionToken)
    await gold.refresh()
   }
   .confirmationDialog("Remove the decryption password?",isPresented:$confirmRemove,titleVisibility:.visible) {

@@ -17,8 +17,8 @@ struct RealEstateView: View {
  @State private var history = HomeHistoryConnection(assetClass:.realEstate)
  @State private var editing: PropertyDraft?
  @State private var descending = true
- private var scope: String { "\(dependencies.isLivePortfolio):\(dependencies.zerodha.address):\(dependencies.zerodha.sessionToken ?? "demo")" }
- private var editorScope: String { "\(dependencies.zerodha.address):\(dependencies.zerodha.sessionToken ?? "signed-out")" }
+ private var scope: String { "\(dependencies.isLivePortfolio):\(dependencies.zerodha.address):\(dependencies.auth.sessionToken ?? "demo")" }
+ private var editorScope: String { "\(dependencies.zerodha.address):\(dependencies.auth.sessionToken ?? "signed-out")" }
  private var properties: [PropertyEntry] { store.snapshot?.holdings.filter { $0.assetClass == .realEstate }.compactMap(\.propertyTerms) ?? [] }
  private var valuation: PropertyValuation { PropertyValuation(properties:properties) }
  private var sorted: [PropertyEntry] { properties.sorted { $0.estimatedValue.value == $1.estimatedValue.value ? $0.id < $1.id : descending ? $0.estimatedValue.value > $1.estimatedValue.value : $0.estimatedValue.value < $1.estimatedValue.value } }
@@ -43,8 +43,8 @@ struct RealEstateView: View {
    .toolbar(.hidden,for:.navigationBar).preference(key:InstrumentPageKey.self,value:true)
    .refreshable { await store.refresh(); await history.refresh() }
    .task(id:scope) {
-    history.configure(address:dependencies.zerodha.address,token:dependencies.isLivePortfolio ? dependencies.zerodha.sessionToken : nil)
-    dependencies.properties.configure(address:dependencies.zerodha.address,token:dependencies.zerodha.sessionToken)
+    history.configure(address:dependencies.zerodha.address,token:dependencies.isLivePortfolio ? dependencies.auth.sessionToken : nil)
+    dependencies.properties.configure(address:dependencies.zerodha.address,token:dependencies.auth.sessionToken)
     await history.refresh()
    }
    .onChange(of:scope) { _,_ in editing = nil }

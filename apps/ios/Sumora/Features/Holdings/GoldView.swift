@@ -14,7 +14,7 @@ struct GoldView: View {
  private var cost: DecimalValue { DecimalValue(holdings.reduce(0) { $0 + ($1.costBasisKnown == false ? 0 : $1.invested.value) }) }
  private var gain: DecimalValue? { costKnown ? value.map { DecimalValue($0.value - cost.value) } : nil }
  private var percent: DecimalValue? { cost.value > 0 ? gain.map { DecimalValue($0.value / cost.value * 100) } : nil }
- private var scope: String { "\(dependencies.isLivePortfolio):\(dependencies.zerodha.address):\(dependencies.zerodha.sessionToken ?? "demo")" }
+ private var scope: String { "\(dependencies.isLivePortfolio):\(dependencies.zerodha.address):\(dependencies.auth.sessionToken ?? "demo")" }
  private var sorted: [Holding] {
   holdings.sorted { left,right in
    switch (left.value?.value,right.value?.value) {
@@ -42,7 +42,7 @@ struct GoldView: View {
    .toolbar(.hidden,for:.navigationBar).preference(key:InstrumentPageKey.self,value:true)
    .refreshable { await refresh() }
    .task(id:scope) {
-    history.configure(address:dependencies.zerodha.address,token:dependencies.isLivePortfolio ? dependencies.zerodha.sessionToken : nil)
+    history.configure(address:dependencies.zerodha.address,token:dependencies.isLivePortfolio ? dependencies.auth.sessionToken : nil)
     await history.refresh()
    }
  }

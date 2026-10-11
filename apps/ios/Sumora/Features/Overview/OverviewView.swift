@@ -24,7 +24,7 @@ struct OverviewView: View {
         .toolbar(.hidden, for: .navigationBar)
     }
 
-    private var connectionScope: String { "\(dependencies.zerodha.address):\(dependencies.zerodha.sessionToken ?? "demo"):\(dependencies.isLivePortfolio)" }
+    private var connectionScope: String { "\(dependencies.zerodha.address):\(dependencies.auth.sessionToken ?? "demo"):\(dependencies.isLivePortfolio)" }
 
     private func dashboard(_ snapshot: PortfolioSnapshot) -> some View {
         ScrollView {
@@ -42,10 +42,10 @@ struct OverviewView: View {
         }
         .refreshable { await store.refresh(); await history.refresh() }
         .task(id: connectionScope) {
-            history.configure(address: dependencies.zerodha.address, token: dependencies.isLivePortfolio ? dependencies.zerodha.sessionToken : nil)
+            history.configure(address: dependencies.zerodha.address, token: dependencies.isLivePortfolio ? dependencies.auth.sessionToken : nil)
             if dependencies.isLivePortfolio {
                 async let saved: () = history.refresh()
-                dependencies.gmail.configure(address: dependencies.zerodha.address, token: dependencies.zerodha.sessionToken)
+                dependencies.gmail.configure(address: dependencies.zerodha.address, token: dependencies.auth.sessionToken)
                 await dependencies.gmail.refresh()
                 await saved
             }

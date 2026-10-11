@@ -64,6 +64,7 @@ final class PropertiesConnection {
   if let body { request.httpBody=try JSONEncoder().encode(body) }
   let (data,response)=try await session.data(for:request)
   guard let http=response as? HTTPURLResponse else { throw PortfolioAPIError.invalidSnapshot }
+  checkAppSession(http, data: data, token: token)
   guard (200..<300).contains(http.statusCode) else { throw ZerodhaError.message((try? JSONDecoder().decode(APIErrorResponse.self,from:data).error.message) ?? "Property request failed. Previous data is retained.") }
   return try JSONDecoder().decode(T.self,from:data)
  }

@@ -5,7 +5,7 @@ final class GoldSettingsTests: XCTestCase {
   let app=XCUIApplication();app.launchArguments=["--ui-testing"];app.launch()
   XCTAssertTrue(app.buttons["homeSettings"].waitForExistence(timeout:10))
   app.buttons["homeSettings"].tap()
-  let guidance=app.staticTexts["Connect Zerodha to sign in, then connect Gmail under Connections to import Gullak gold."]
+  let guidance=app.staticTexts["Sign in to Sumora, then connect Gmail to import Gullak gold."]
   for _ in 0..<6 where !guidance.isHittable {app.swipeUp()}
   XCTAssertTrue(guidance.isHittable)
   XCTAssertFalse(app.buttons["sync-gullak"].exists)

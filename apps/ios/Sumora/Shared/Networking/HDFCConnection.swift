@@ -81,7 +81,7 @@ final class HDFCConnection {
   } catch { if generation == current { errorMessage = error.localizedDescription } }
  }
  private func send<T: Decodable>(_ path: String, method: String, body: [String: String]? = nil) async throws -> T {
-  guard let token, let base = APIConfiguration.baseURL(address) else { throw ZerodhaError.message("Connect Zerodha first to sign in to Sumora.") }
+  guard let token, let base = APIConfiguration.baseURL(address) else { throw ZerodhaError.message("Sign in to Sumora first.") }
   var request = URLRequest(url: base.appendingPathComponent("v1/hdfc/\(path)"))
   request.httpMethod = method; request.timeoutInterval = 60
   request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -89,6 +89,7 @@ final class HDFCConnection {
   if let body { request.httpBody = try JSONEncoder().encode(body) }
   let (data,response) = try await session.data(for: request)
   guard let http = response as? HTTPURLResponse else { throw PortfolioAPIError.invalidSnapshot }
+  checkAppSession(http, data: data, token: token)
   guard (200..<300).contains(http.statusCode) else {
    throw ZerodhaError.message((try? JSONDecoder().decode(APIErrorResponse.self,from:data).error.message) ?? "HDFC request failed.")
   }
