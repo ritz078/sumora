@@ -150,7 +150,7 @@ struct StatementInstrumentView: View {
    }.frame(maxWidth:.infinity,alignment:.leading)
    VStack(alignment:.trailing,spacing:4) {
     MoneyText(amount:holding.value,currency:currency).font(.appFont(.caption,weight:.bold,size:13))
-    Text(npsReturn(holding)).font(.appFont(.caption2,weight:.medium,size:11)).foregroundStyle(gainColor(holding.costBasisKnown == false ? nil : holding.gain)).lineLimit(1)
+    if let text=npsReturn(holding) { Text(text).font(.appFont(.caption2,weight:.medium,size:11)).foregroundStyle(gainColor(holding.gain)).lineLimit(1) }
    }.fixedSize(horizontal:true,vertical:false)
   }.padding(.vertical,12)
  }
@@ -166,9 +166,9 @@ struct StatementInstrumentView: View {
    } else { Text("Deposit terms unavailable").font(.appFont(.caption2,size:11)).foregroundStyle(HomeStyle.secondary) }
   }.padding(.vertical,12)
  }
- private func npsReturn(_ holding:Holding) -> String {
+ private func npsReturn(_ holding:Holding) -> String? {
+  guard holding.costBasisKnown != false,holding.value != nil,let percent=holding.gainPercent else { return nil }
   guard !preferences.hideBalances else { return "••••" }
-  guard holding.costBasisKnown != false,holding.value != nil,let percent=holding.gainPercent else { return "Scheme gain unavailable" }
   return (percent.value >= 0 ? "+" : "")+DisplayFormat.decimal(percent.value)+"%"
  }
  private func amount(_ holding:Holding) -> DecimalValue? { isFD ? holding.depositTerms?.maturityAmount ?? holding.value : holding.value }

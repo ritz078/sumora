@@ -165,7 +165,7 @@ final class SumoraHomepageTests: XCTestCase {
         XCTAssertTrue(c.exists && e.exists)
         XCTAssertTrue(c.label.contains("800 units"))
         XCTAssertTrue(c.label.contains("NAV"))
-        XCTAssertTrue(c.label.contains("Scheme gain unavailable"))
+        XCTAssertFalse(c.label.contains("unavailable"))
         XCTAssertLessThan(c.frame.minY,e.frame.minY)
         let rows = XCTAttachment(screenshot:app.screenshot()); rows.name = "NPS holdings"; rows.lifetime = .keepAlways; add(rows)
         app.buttons["statementBack"].tap()
