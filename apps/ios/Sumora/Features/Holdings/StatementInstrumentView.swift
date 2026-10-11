@@ -93,7 +93,7 @@ struct StatementInstrumentView: View {
     ForEach(npsSummaries,id:\.tier) { summary in
      HStack(spacing:6) {
       Text(npsSummaries.count == 1 ? "XIRR (annualized):" : "Tier \(summary.tier) XIRR (annualized):").foregroundStyle(HomeStyle.muted)
-      Text(preferences.hideBalances ? "••••" : summary.xirr.map { DisplayFormat.decimal($0.value)+"%" } ?? "—").fontWeight(.semibold).accessibilityIdentifier("npsXIRR-"+summary.tier)
+      Text(preferences.hideBalances ? "••••" : summary.xirr.map { DisplayFormat.decimal($0.value)+"%" } ?? "—").fontWeight(.semibold).foregroundStyle(gainColor(summary.xirr)).accessibilityIdentifier("npsXIRR-"+summary.tier)
      }.font(.appFont(.caption,size:12)).padding(.top,8)
     }
    }
