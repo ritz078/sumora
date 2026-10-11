@@ -4,7 +4,7 @@ struct NetWorthCard:View {
  @Environment(AppPreferences.self) private var preferences
  @Environment(AppDependencies.self) private var dependencies
  let snapshot:PortfolioSnapshot
- private var costKnown:Bool { snapshot.holdings.allSatisfy {$0.costBasisKnown != false} }
+ private var costKnown:Bool { snapshot.costBasisKnown ?? snapshot.holdings.allSatisfy {$0.costBasisKnown != false} }
  var body:some View {
   VStack(alignment:.leading,spacing:0) {
    HStack(spacing:4) {

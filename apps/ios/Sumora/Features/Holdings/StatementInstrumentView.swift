@@ -21,12 +21,15 @@ struct StatementInstrumentView: View {
   guard !holdings.isEmpty,holdings.allSatisfy({ amount($0) != nil }) else { return nil }
   return DecimalValue(holdings.reduce(0) { $0 + amount($1)!.value })
  }
+ private var npsSummaries:[NPSSummary] { (store.snapshot?.npsSummaries ?? []).filter { summary in holdings.contains { $0.id.hasPrefix("nps:\(summary.tier):") } } }
+ private var npsCostKnown:Bool { !holdings.isEmpty && holdings.allSatisfy { h in npsSummaries.contains { h.id.hasPrefix("nps:\($0.tier):") } } }
  private var invested:DecimalValue? {
   guard !isFD,!holdings.isEmpty else { return nil }
+  if npsCostKnown { return DecimalValue(npsSummaries.reduce(0) { $0 + $1.invested.value }) }
   guard holdings.allSatisfy({ $0.costBasisKnown != false }) else { return nil }
   return DecimalValue(holdings.reduce(0) { $0 + $1.invested.value })
  }
- private var gain:DecimalValue? { guard let value,let invested else { return nil };return DecimalValue(value.value-invested.value) }
+ private var gain:DecimalValue? { if !isFD,npsCostKnown { return DecimalValue(npsSummaries.reduce(0) { $0 + $1.gain.value }) };guard let value,let invested else { return nil };return DecimalValue(value.value-invested.value) }
  private var percent:DecimalValue? { guard let gain,let invested,invested.value > 0 else { return nil };return DecimalValue(gain.value/invested.value*100) }
  private var scope:String { "\(dependencies.isLivePortfolio):\(dependencies.zerodha.address):\(dependencies.zerodha.sessionToken ?? "demo")" }
  private var sorted:[Holding] {
@@ -87,6 +90,12 @@ struct StatementInstrumentView: View {
      HStack { investedLabel;Spacer(minLength:8);gainLabel }
      VStack(alignment:.leading,spacing:8) { investedLabel;gainLabel }
     }.padding(.top,8)
+    ForEach(npsSummaries,id:\.tier) { summary in
+     HStack(spacing:6) {
+      Text(npsSummaries.count == 1 ? "XIRR (annualized):" : "Tier \(summary.tier) XIRR (annualized):").foregroundStyle(HomeStyle.muted)
+      Text(preferences.hideBalances ? "••••" : summary.xirr.map { DisplayFormat.decimal($0.value)+"%" } ?? "—").fontWeight(.semibold).accessibilityIdentifier("npsXIRR-"+summary.tier)
+     }.font(.appFont(.caption,size:12)).padding(.top,8)
+    }
    }
    if isFD { Text("Statement maturity amount · counted toward net worth").font(.appFont(.caption2,size:10)).foregroundStyle(HomeStyle.secondary).padding(.top,4) }
    if value == nil && !holdings.isEmpty { Text("Some statement valuations are unavailable. Recorded holdings are retained.").font(.appFont(.caption2,size:10)).foregroundStyle(.orange).padding(.top,8) }

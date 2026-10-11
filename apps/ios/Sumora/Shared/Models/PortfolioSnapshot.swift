@@ -117,6 +117,14 @@ struct Connection: Codable, Identifiable, Sendable {
     let description: String
 }
 
+struct NPSSummary: Codable, Sendable {
+    let tier: String
+    let value: DecimalValue
+    let invested: DecimalValue
+    let gain: DecimalValue
+    let xirr: DecimalValue?
+}
+
 struct PortfolioSnapshot: Codable, Sendable {
     let id: String
     let reportingCurrency: String
@@ -135,6 +143,8 @@ struct PortfolioSnapshot: Codable, Sendable {
     let history: [HistoryPoint]
     let connections: [Connection]
     var dailyBaselineDate: String? = nil
+    var npsSummaries: [NPSSummary]? = nil
+    var costBasisKnown: Bool? = nil
 
     func holding(id: String) -> Holding? { holdings.first { $0.id == id } }
 }

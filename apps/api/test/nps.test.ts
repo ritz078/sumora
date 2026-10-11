@@ -26,6 +26,29 @@ test('NPS imports replace whole tier snapshots without counting contribution his
  assert.equal((await npsPortfolio(env,p,'owner')).holdings.length,2);assert.equal((await npsPortfolio(env,base,'other')).value,'0');
  assert.ok(!JSON.stringify(db.prepare('SELECT * FROM nps_snapshots').all()).includes('123456789012'));
 });
+test('NPS preserves account contributions and cumulative gains without inventing scheme costs or annualizing them',async()=>{
+ const parsed=parseNPSStatement(raw,at);
+ assert.deepEqual(parsed.summary,{invested:'1500',gain:'500',xirr:'6.51'});
+ const {env}=setupGold();await saveNPSSnapshot(env,'owner',parsed,'summary','summary',at);
+ const base=zerodhaSnapshot('{"status":"success","data":[]}','{"status":"success","data":[]}',at);
+ const value=await npsPortfolio(env,base,'owner');
+ assert.equal(value.invested,'1500');assert.equal(value.coveredInvested,'1500');assert.equal(value.gain,'500');
+ assert.ok(Number(value.gainPercent)>33.33 && Number(value.gainPercent)<33.34);
+ assert.equal(value.holdings[0].costBasisKnown,false);
+ assert.deepEqual(value.npsSummaries,[{tier:'I',value:'2000',invested:'1500',gain:'500',xirr:'6.51'}]);
+ const twice=await npsPortfolio(env,value,'owner');assert.equal(twice.invested,'1500');assert.equal(twice.gain,'500');
+ const withdrawn=parseNPSStatement(raw.replace('4 1500.00 0.00 5.00 2000.00 500.00','4 1500.00 500.00 5.00 2000.00 1000.00'),at);
+ assert.equal(withdrawn.summary.invested,'1000');assert.equal(withdrawn.summary.gain,'1000');
+ assert.throws(()=>parseNPSStatement(raw.replace('2000.00 500.00','2000.00 600.00'),at));
+});
+test('NPS upgrades a previously imported statement with summary fields without changing valuation',async()=>{
+ const {env,db}=setupGold();const parsed=parseNPSStatement(raw,at);
+ await saveNPSSnapshot(env,'owner',parsed,'m','h',at);
+ db.prepare('UPDATE nps_snapshots SET summary=NULL').run();
+ assert.equal(await saveNPSSnapshot(env,'owner',parsed,'m','h',at),'imported');
+ assert.equal(db.prepare('SELECT total FROM nps_snapshots').get()?.total,'2000');
+ assert.equal(JSON.parse(String(db.prepare('SELECT summary FROM nps_snapshots').get()?.summary)).invested,'1500');
+});
 test('NPS requires an authenticated KFintech statement sender and rejects forwarded lookalikes',()=>{
  assert.equal(trustedNPSMessage({headers}),true);
  for(const bad of [headers.filter(h=>h.name!=='Authentication-Results'),headers.map(h=>({...h,value:h.value.replace('dmarc=pass','dmarc=fail')})),headers.map(h=>h.name==='From'?{...h,value:'attacker@example.com'}:h),headers.map(h=>h.name==='Subject'?{...h,value:'Confirmation for subsequent contribution in your NPS account'}:h)])assert.equal(trustedNPSMessage({headers:bad}),false);

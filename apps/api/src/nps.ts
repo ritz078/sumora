@@ -24,9 +24,14 @@ function pdfs(part:Part):Part[] {
 export async function extractNPSPDF(bytes:Uint8Array,password:string) {return extractStatementPDF(bytes,password);}
 export async function saveNPSSnapshot(env:Pick<KiteEnvironment,'DB'>,owner:string,parsed:Checkpoint,message:string,hash:string,at:Date,lease?:number) {
  if(lease!==undefined && !await env.DB.prepare('SELECT owner_id FROM nps_settings WHERE owner_id=? AND lease_until=?').bind(owner,lease).first())throw new Error('NPS settings changed during sync.');
- const previous=await env.DB.prepare('SELECT valuation_date,content_hash,account_hash FROM nps_snapshots WHERE owner_id=? AND tier=?').bind(owner,parsed.tier).first<{valuation_date:string;content_hash:string;account_hash:string}>();
+ const previous=await env.DB.prepare('SELECT valuation_date,content_hash,account_hash,summary FROM nps_snapshots WHERE owner_id=? AND tier=?').bind(owner,parsed.tier).first<{valuation_date:string;content_hash:string;account_hash:string;summary:string|null}>();
  const seen=await env.DB.prepare('SELECT status FROM nps_imports WHERE owner_id=? AND content_hash=?').bind(owner,hash).first<{status:string}>();
- if(seen && seen.status!=='needs_review')return 'duplicate';
+ if(seen && seen.status!=='needs_review' && !(previous?.content_hash===hash && !previous.summary))return 'duplicate';
+ if(previous?.content_hash===hash && !previous.summary) {
+  const upgraded=await env.DB.prepare('UPDATE nps_snapshots SET summary=? WHERE owner_id=? AND tier=? AND content_hash=? AND summary IS NULL AND (? IS NULL OR EXISTS(SELECT 1 FROM nps_settings WHERE owner_id=? AND lease_until=?)) RETURNING content_hash').bind(JSON.stringify(parsed.summary),owner,parsed.tier,hash,lease??null,owner,lease??null).first();
+  if(!upgraded)throw new Error('NPS sync superseded.');
+  return 'imported';
+ }
  if(previous?.content_hash===hash) {
   await env.DB.prepare("INSERT INTO nps_imports(owner_id,content_hash,message_id,status,imported_at) VALUES(?,?,?,'imported',?) ON CONFLICT(owner_id,content_hash) DO UPDATE SET status='imported',error=NULL").bind(owner,hash,message,at.getTime()).run();
   return 'duplicate';
@@ -36,20 +41,20 @@ export async function saveNPSSnapshot(env:Pick<KiteEnvironment,'DB'>,owner:strin
  if(previous?.valuation_date===parsed.valuationDate)throw new Error('Conflicting NPS statement.');
  const status=previous && parsed.valuationDate<previous.valuation_date?'ignored':'imported';
  if(status==='imported') {
- const saved=await env.DB.prepare(`INSERT INTO nps_snapshots(owner_id,tier,account_hash,statement_date,valuation_date,total,schemes,message_id,content_hash,imported_at) SELECT ?,?,?,?,?,?,?,?,?,? WHERE (? IS NULL OR EXISTS(SELECT 1 FROM nps_settings WHERE owner_id=? AND lease_until=?))
- ON CONFLICT(owner_id,tier) DO UPDATE SET statement_date=excluded.statement_date,valuation_date=excluded.valuation_date,total=excluded.total,schemes=excluded.schemes,message_id=excluded.message_id,content_hash=excluded.content_hash,imported_at=excluded.imported_at WHERE excluded.valuation_date>nps_snapshots.valuation_date RETURNING content_hash`).bind(owner,parsed.tier,accountHash,parsed.statementDate,parsed.valuationDate,parsed.total,JSON.stringify(parsed.schemes),message,hash,at.getTime(),lease??null,owner,lease??null).first<{content_hash:string}>();
+ const saved=await env.DB.prepare(`INSERT INTO nps_snapshots(owner_id,tier,account_hash,statement_date,valuation_date,total,schemes,message_id,content_hash,imported_at,summary) SELECT ?,?,?,?,?,?,?,?,?,?,? WHERE (? IS NULL OR EXISTS(SELECT 1 FROM nps_settings WHERE owner_id=? AND lease_until=?))
+ ON CONFLICT(owner_id,tier) DO UPDATE SET statement_date=excluded.statement_date,valuation_date=excluded.valuation_date,total=excluded.total,schemes=excluded.schemes,summary=excluded.summary,message_id=excluded.message_id,content_hash=excluded.content_hash,imported_at=excluded.imported_at WHERE excluded.valuation_date>nps_snapshots.valuation_date RETURNING content_hash`).bind(owner,parsed.tier,accountHash,parsed.statementDate,parsed.valuationDate,parsed.total,JSON.stringify(parsed.schemes),message,hash,at.getTime(),JSON.stringify(parsed.summary),lease??null,owner,lease??null).first<{content_hash:string}>();
  if(!saved)throw new Error('NPS sync superseded.');
  }
  await env.DB.prepare('INSERT INTO nps_imports(owner_id,content_hash,message_id,status,imported_at) VALUES(?,?,?,?,?) ON CONFLICT(owner_id,content_hash) DO UPDATE SET status=excluded.status,error=NULL,imported_at=excluded.imported_at').bind(owner,hash,message,status,at.getTime()).run();
  return status;
 }
 export async function npsPortfolio(env:Pick<KiteEnvironment,'DB'>,snapshot:Portfolio,owner:string):Promise<Portfolio> {
- const result=await env.DB.prepare("SELECT json_group_array(json_object('tier',tier,'date',valuation_date,'schemes',json(schemes))) AS rows FROM nps_snapshots WHERE owner_id=?").bind(owner).first<{rows:string}>();
- const rows=JSON.parse(result?.rows??'[]') as {tier:string;date:string;schemes:Checkpoint['schemes']}[];
+ const result=await env.DB.prepare("SELECT json_group_array(json_object('tier',tier,'date',valuation_date,'schemes',json(schemes),'summary',json(summary),'total',total)) AS rows FROM nps_snapshots WHERE owner_id=?").bind(owner).first<{rows:string}>();
+ const rows=JSON.parse(result?.rows??'[]') as {tier:string;date:string;schemes:Checkpoint['schemes'];total:string;summary:Checkpoint['summary']|null}[];
  if(!rows.length)return snapshot;
  const holdings:Portfolio['holdings']=rows.flatMap(row=>row.schemes.map(s=>({id:`nps:${row.tier}:${s.code}`,name:s.name.replace('NPS TRUST- A/C ','').replace('PENSION FUND MANAGEMENT LIMITED','').trim(),symbol:`Tier ${row.tier} · ${s.code}`,assetClass:'nps',accountID:'nps',quantity:s.quantity,unit:'units',invested:'0',costBasisKnown:false,value:s.value,gain:null,gainPercent:null,quote:s.nav,quoteAt:row.date+'T00:00:00Z',quoteCurrency:'INR',fxRate:'1',fxAt:null,history:[],source:'KFintech NPS statement',priceBasis:`Statement valuation as of ${row.date}. Updated when a new statement arrives; no live NAV or daily gain estimate.`})));
  const latest=rows.map(r=>r.date).sort().at(-1)!;
- return portfolioTotals({...snapshot,holdings:[...snapshot.holdings.filter(h=>!h.id.startsWith('nps:')),...holdings],connections:[...snapshot.connections.filter(c=>c.id!=='nps'),{id:'nps',name:'NPS · KFintech',symbol:'N',status:'connected',lastSyncAt:latest+'T00:00:00Z',description:'Statement balances as of '+latest}]});
+ return portfolioTotals({...snapshot,npsSummaries:rows.flatMap(r=>r.summary?[{tier:r.tier,value:r.total,...r.summary}]:[]),holdings:[...snapshot.holdings.filter(h=>!h.id.startsWith('nps:')),...holdings],connections:[...snapshot.connections.filter(c=>c.id!=='nps'),{id:'nps',name:'NPS · KFintech',symbol:'N',status:'connected',lastSyncAt:latest+'T00:00:00Z',description:'Statement balances as of '+latest}]});
 }
 export async function syncNPS(env:GmailEnvironment,owner:string,fetcher:typeof fetch=fetch,at=new Date()) {
  const lease=at.getTime()+120000;
@@ -75,7 +80,7 @@ export async function syncNPS(env:GmailEnvironment,owner:string,fetcher:typeof f
   const messages=(list.messages??[]).slice(0,10);
   for(const message of messages) {
    if(typeof message.id!=='string' || !/^[a-zA-Z0-9_-]+$/.test(message.id))continue;
-   const seen=await env.DB.prepare("SELECT status FROM nps_imports WHERE owner_id=? AND message_id=? AND status IN ('imported','ignored')").bind(owner,message.id).first();
+   const seen=await env.DB.prepare("SELECT status FROM nps_imports WHERE owner_id=? AND message_id=? AND status IN ('imported','ignored') AND NOT EXISTS(SELECT 1 FROM nps_snapshots WHERE nps_snapshots.owner_id=nps_imports.owner_id AND nps_snapshots.content_hash=nps_imports.content_hash AND summary IS NULL)").bind(owner,message.id).first();
    if(seen)continue;
    const detail=await gmailJSON(fetcher,`https://gmail.googleapis.com/gmail/v1/users/me/messages/${message.id}?format=full`,{headers});
    if(!trustedNPSMessage(detail.payload??{}))continue;
@@ -92,7 +97,7 @@ export async function syncNPS(env:GmailEnvironment,owner:string,fetcher:typeof f
    const binary=atob(data.replaceAll('-','+').replaceAll('_','/'));const bytes=Uint8Array.from(binary,c=>c.charCodeAt(0));
    const hashBytes=await crypto.subtle.digest('SHA-256',bytes);const hash=Array.from(new Uint8Array(hashBytes),b=>b.toString(16).padStart(2,'0')).join('');
    const duplicate=await env.DB.prepare('SELECT status FROM nps_imports WHERE owner_id=? AND content_hash=?').bind(owner,hash).first<{status:string}>();
-   if(duplicate && duplicate.status!=='needs_review')continue;
+   if(duplicate && duplicate.status!=='needs_review' && !await env.DB.prepare('SELECT tier FROM nps_snapshots WHERE owner_id=? AND content_hash=? AND summary IS NULL').bind(owner,hash).first())continue;
    try {
     const candidates=[...new Set<string>((detail.payload.headers??[]).filter((h:{name:string;value:string})=>h.name.toLowerCase()==='x-apiheader').map((h:{value:string})=>/^SCH_SOT_CRA_(\d{12})_\d+$/.exec(h.value.trim())?.[1]).filter((v:unknown):v is string=>typeof v==='string'))];
     const password=settings.encrypted_password?await decrypt(settings.encrypted_password,env.KITE_ENCRYPTION_KEY):candidates.length===1?candidates[0]:null;

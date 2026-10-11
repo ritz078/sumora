@@ -33,7 +33,12 @@ export function parseNPSStatement(raw:string,at=new Date()) {
   return {name,code:id,quantity:quantity.toFixed(),nav:nav.toFixed(),value:value.toFixed()};
  });
  if(!schemes.length || body.replace(/(NPS TRUST- A\/C [A-Z0-9 &().-]+? SCHEME [A-Z] - TIER (?:II|I)) POP [\d,]+\.\d+ [\d,]+\.\d+ [\d,]+\.\d{2}(?: -?\d+\.\d+%)?/g,'').trim())throw new Error('Unparsed NPS scheme rows.');
- const summary=/Notional Gain\/Loss \(₹\) \d+ [\d,.]+ [\d,.]+ [\d,.]+ ([\d,.]+) -?[\d,.]+/.exec(text);
- if(!summary || !new Decimal(summary[1].replaceAll(',','')).eq(total) || !schemes.reduce((s,v)=>s.plus(v.value),new Decimal(0)).eq(total))throw new Error('NPS totals do not reconcile.');
- return {tier,pran,statementDate,valuationDate,total,schemes};
+ const summaryRow=/Notional Gain\/Loss \(₹\) \d+ ([\d,.]+) ([\d,.]+) ([\d,.]+) ([\d,.]+) (-?[\d,.]+)/.exec(text);
+ if(!summaryRow)throw new Error('Missing NPS contribution summary.');
+ const [contributions,withdrawals,charges,summaryValue,gain]=summaryRow.slice(1).map(n=>new Decimal(n.replaceAll(',','')));
+ const invested=contributions.minus(withdrawals);
+ if(contributions.lt(0) || withdrawals.lt(0) || charges.lt(0) || invested.lt(0) || !summaryValue.eq(total) || !summaryValue.minus(invested).eq(gain) || !schemes.reduce((s,v)=>s.plus(v.value),new Decimal(0)).eq(total))throw new Error('NPS totals do not reconcile.');
+ const rates=[...new Set([...body.matchAll(/(-?\d+\.\d+)%/g)].map(m=>new Decimal(m[1]).toFixed()))];
+ const summary={invested:invested.toFixed(),gain:gain.toFixed(),xirr:rates.length===1?rates[0]:null};
+ return {tier,pran,statementDate,valuationDate,total,schemes,summary};
 }

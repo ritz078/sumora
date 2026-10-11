@@ -11,9 +11,9 @@
   "gainPercent": null,
   "holdings": [
     {
-      "id": "nps:1:E",
+      "id": "nps:I:E",
       "name": "Pension Fund Scheme E \u2013 Tier I",
-      "symbol": "Tier 1 \u00b7 E",
+      "symbol": "Tier I \u00b7 E",
       "assetClass": "nps",
       "accountID": "nps",
       "quantity": "1200.5",
@@ -42,9 +42,9 @@
       "costBasisKnown": false
     },
     {
-      "id": "nps:1:C",
+      "id": "nps:I:C",
       "name": "Pension Fund Scheme C \u2013 Tier I",
-      "symbol": "Tier 1 \u00b7 C",
+      "symbol": "Tier I \u00b7 C",
       "assetClass": "nps",
       "accountID": "nps",
       "quantity": "800",
@@ -171,5 +171,14 @@
       "value": "432020.0"
     }
   ],
-  "connections": []
+  "connections": [],
+  "npsSummaries": [
+    {
+      "tier": "I",
+      "value": "72020",
+      "invested": "60000",
+      "gain": "12020",
+      "xirr": "6.51"
+    }
+  ]
 }

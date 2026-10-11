@@ -4,7 +4,8 @@ import { priceTime, type MarketPrice } from './daily-prices';
 import type { zerodhaSnapshot } from './zerodha-portfolio';
 
 type BrokerPortfolio = ReturnType<typeof zerodhaSnapshot>;
-export type Portfolio = Omit<BrokerPortfolio, 'holdings' | 'connections'> & { connections: (Omit<BrokerPortfolio['connections'][number], 'lastSyncAt'> & {lastSyncAt:string|null})[]; holdings: (BrokerPortfolio['holdings'][number] & { valueUSD?:string|null;investedUSD?:string|null;gainUSD?:string|null;gainPercentUSD?:string|null;costBasisKnown?: boolean; quoteTimestampIsRetrieval?:boolean; propertyTerms?:PropertyEntry; bondTerms?: {coupon:string|null;maturesOn:string|null;redemptionCheck:boolean;investedAmount?:string|null;accruedAtPurchase?:string|null;interestGross?:string;interestNet?:string;tds?:string;principalReceived?:string;nextPayout?:string|null;frequency?:string|null;repayment?:string|null;quotedCoupon?:string|null;ytm?:string|null;projectedMaturityValue?:string|null;projectionUsesOrderDate?:boolean;statementValue?:string;valuationBasis?:string;reconciliationNote?:string|null;payoutDifference?:string}; depositTerms?: {originalPrincipal:string;currentAmount:string;maturityAmount:string;rate:string;openedOn:string;maturesOn:string;lien:string} })[] };
+export type NPSSummary = {tier:string;value:string;invested:string;gain:string;xirr:string|null};
+export type Portfolio = {npsSummaries?:NPSSummary[];costBasisKnown?:boolean} & Omit<BrokerPortfolio, 'holdings' | 'connections'> & { connections: (Omit<BrokerPortfolio['connections'][number], 'lastSyncAt'> & {lastSyncAt:string|null})[]; holdings: (BrokerPortfolio['holdings'][number] & { valueUSD?:string|null;investedUSD?:string|null;gainUSD?:string|null;gainPercentUSD?:string|null;costBasisKnown?: boolean; quoteTimestampIsRetrieval?:boolean; propertyTerms?:PropertyEntry; bondTerms?: {coupon:string|null;maturesOn:string|null;redemptionCheck:boolean;investedAmount?:string|null;accruedAtPurchase?:string|null;interestGross?:string;interestNet?:string;tds?:string;principalReceived?:string;nextPayout?:string|null;frequency?:string|null;repayment?:string|null;quotedCoupon?:string|null;ytm?:string|null;projectedMaturityValue?:string|null;projectionUsesOrderDate?:boolean;statementValue?:string;valuationBasis?:string;reconciliationNote?:string|null;payoutDifference?:string}; depositTerms?: {originalPrincipal:string;currentAmount:string;maturityAmount:string;rate:string;openedOn:string;maturesOn:string;lien:string} })[] };
 const Money = Decimal.clone({ precision: 50 });
 export function holdingISIN(h: Portfolio['holdings'][number]) {
   if (h.assetClass === 'fixedDeposit' || h.assetClass === 'bond' || h.assetClass === 'realEstate') return null;
@@ -34,13 +35,16 @@ export function portfolioTotals(snapshot: Portfolio): Portfolio {
   const holdings=snapshot.holdings;
   const valued = holdings.filter(h => h.value !== null);
   const value = valued.reduce((s,h) => s.plus(h.value!), new Money(0));
-  const invested=holdings.reduce((s,h)=>s.plus(h.invested),new Money(0));
-  const covered = valued.filter(h=>h.costBasisKnown!==false).reduce((s,h) => s.plus(h.invested), new Money(0));
-  const costKnown=valued.every(h=>h.costBasisKnown!==false);
+  const summaries=(snapshot.npsSummaries??[]).filter(n=>valued.some(h=>h.id.startsWith(`nps:${n.tier}:`)));
+ const summarized=(h:Portfolio['holdings'][number])=>h.assetClass==='nps' && summaries.some(n=>h.id.startsWith(`nps:${n.tier}:`));
+ const npsInvested=summaries.reduce((s,n)=>s.plus(n.invested),new Money(0));
+ const invested=holdings.filter(h=>!summarized(h)).reduce((s,h)=>s.plus(h.invested),npsInvested);
+  const covered = valued.filter(h=>!summarized(h) && h.costBasisKnown!==false).reduce((s,h) => s.plus(h.invested), npsInvested);
+  const costKnown=valued.every(h=>h.costBasisKnown!==false || summarized(h));
   const gain = value.minus(covered);
   const available=holdings.length===0 || valued.length>0;
   const capturedAt = new Date(Math.max(Date.parse(snapshot.capturedAt), ...holdings.map(h => Date.parse(h.quoteAt ?? snapshot.capturedAt)))).toISOString().replace('.000Z', 'Z');
-  return { ...snapshot, capturedAt, id: `portfolio-${capturedAt}`, value: available ? value.toFixed() : null, invested:invested.toFixed(), coveredInvested: covered.toFixed(), gain: available && costKnown ? gain.toFixed() : null,
+  return { ...snapshot, costBasisKnown:costKnown, capturedAt, id: `portfolio-${capturedAt}`, value: available ? value.toFixed() : null, invested:invested.toFixed(), coveredInvested: covered.toFixed(), gain: available && costKnown ? gain.toFixed() : null,
     gainPercent: available && costKnown && covered.gt(0) ? gain.div(covered).times(100).toFixed() : null,
     coverage: valued.length === holdings.length ? 'complete' : valued.length ? 'partial' : 'unavailable',
     allocation: ['indianEquity','usEquity','mutualFund','gold','fixedDeposit','nps','bond','realEstate'].flatMap(assetClass => {

@@ -150,6 +150,9 @@ final class SumoraHomepageTests: XCTestCase {
         let app = statementPage("nps")
         XCTAssertTrue(app.staticTexts["statementValue"].waitForExistence(timeout: 5))
         XCTAssertEqual(app.staticTexts["statementValue"].label, "₹72,020")
+        XCTAssertEqual(app.staticTexts["statementPrincipal"].label, "₹60,000")
+        XCTAssertTrue(app.staticTexts["statementGain"].label.contains("12,020"))
+        XCTAssertTrue(app.staticTexts["npsXIRR-I"].label.contains("6.51%"))
         XCTAssertTrue(app.staticTexts["NPS Trajectory"].exists)
         XCTAssertFalse(app.staticTexts["DAILY PERFORMANCE"].exists)
         XCTAssertFalse(app.staticTexts["NSE/BSE Direct"].exists)
@@ -157,8 +160,8 @@ final class SumoraHomepageTests: XCTestCase {
         let sort = app.buttons["Sort NPS holdings"]
         for _ in 0..<3 where !sort.isHittable { app.swipeUp() }
         sort.tap();app.buttons["Value: Low to High"].tap()
-        let c = app.descendants(matching:.any)["statement-holding-nps:1:C"].firstMatch
-        let e = app.descendants(matching:.any)["statement-holding-nps:1:E"].firstMatch
+        let c = app.descendants(matching:.any)["statement-holding-nps:I:C"].firstMatch
+        let e = app.descendants(matching:.any)["statement-holding-nps:I:E"].firstMatch
         XCTAssertTrue(c.exists && e.exists)
         XCTAssertTrue(c.label.contains("800 units"))
         XCTAssertTrue(c.label.contains("NAV"))
