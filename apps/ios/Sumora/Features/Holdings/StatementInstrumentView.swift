@@ -168,7 +168,7 @@ struct StatementInstrumentView: View {
  }
  private func npsReturn(_ holding:Holding) -> String {
   guard !preferences.hideBalances else { return "••••" }
-  guard holding.costBasisKnown != false,holding.value != nil,let percent=holding.gainPercent else { return "Return unavailable" }
+  guard holding.costBasisKnown != false,holding.value != nil,let percent=holding.gainPercent else { return "Scheme gain unavailable" }
   return (percent.value >= 0 ? "+" : "")+DisplayFormat.decimal(percent.value)+"%"
  }
  private func amount(_ holding:Holding) -> DecimalValue? { isFD ? holding.depositTerms?.maturityAmount ?? holding.value : holding.value }
